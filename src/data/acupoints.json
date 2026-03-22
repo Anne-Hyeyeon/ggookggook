@@ -4,12 +4,12 @@
     "name": { "ko": "합곡", "en": "Hegu" },
     "bodyPart": "hand",
     "view": "front",
-    "position": { "x": 120, "y": 450 },
+    "position": { "x": 56, "y": 196 },
     "description": {
       "ko": "엄지와 검지 사이 움푹 들어간 곳",
       "en": "In the depression between thumb and index finger"
     },
-    "benefits": ["headache", "stress", "nausea", "eye_fatigue", "shoulder_pain", "constipation", "facial_swelling"],
+    "benefits": ["headache", "stress", "eye_fatigue", "constipation", "facial_swelling"],
     "technique": {
       "ko": "반대쪽 엄지로 3-5초간 꾹 누른 후 떼기를 반복 (2-3분)",
       "en": "Press firmly with opposite thumb for 3-5 seconds, release, repeat for 2-3 minutes"
@@ -20,12 +20,12 @@
     "name": { "ko": "내관", "en": "Neiguan" },
     "bodyPart": "arm",
     "view": "front",
-    "position": { "x": 140, "y": 390 },
+    "position": { "x": 58, "y": 170 },
     "description": {
       "ko": "손목 안쪽 주름에서 손가락 세 마디 위",
       "en": "Three finger-widths above the wrist crease on the inner forearm"
     },
-    "benefits": ["nausea", "stress", "indigestion", "food_stagnation"],
+    "benefits": ["stress", "indigestion", "nausea", "food_stagnation"],
     "technique": {
       "ko": "엄지로 원을 그리듯 1-2분간 부드럽게 마사지",
       "en": "Gently massage in circular motions with thumb for 1-2 minutes"
@@ -36,7 +36,7 @@
     "name": { "ko": "신문", "en": "Shenmen" },
     "bodyPart": "hand",
     "view": "front",
-    "position": { "x": 108, "y": 470 },
+    "position": { "x": 66, "y": 193 },
     "description": {
       "ko": "손목 안쪽 주름, 새끼손가락 쪽 끝부분 오목한 곳",
       "en": "On the wrist crease, in the depression on the ulnar (pinky) side"
@@ -52,7 +52,7 @@
     "name": { "ko": "족삼리", "en": "Zusanli" },
     "bodyPart": "leg",
     "view": "front",
-    "position": { "x": 180, "y": 620 },
+    "position": { "x": 116, "y": 295 },
     "description": {
       "ko": "무릎 바깥쪽 아래 손가락 네 마디 내려온 곳",
       "en": "Four finger-widths below the outer knee, one finger-width lateral to the shin"
@@ -68,7 +68,7 @@
     "name": { "ko": "삼음교", "en": "Sanyinjiao" },
     "bodyPart": "leg",
     "view": "front",
-    "position": { "x": 165, "y": 680 },
+    "position": { "x": 84, "y": 360 },
     "description": {
       "ko": "안쪽 복숭아뼈에서 손가락 네 마디 위",
       "en": "Four finger-widths above the inner ankle bone"
@@ -84,7 +84,7 @@
     "name": { "ko": "용천", "en": "Yongquan" },
     "bodyPart": "foot",
     "view": "front",
-    "position": { "x": 170, "y": 790 },
+    "position": { "x": 87, "y": 398 },
     "description": {
       "ko": "발바닥 앞쪽 1/3 지점, 발가락을 구부렸을 때 생기는 움푹한 곳",
       "en": "On the sole of the foot, in the depression when toes are curled, at the anterior 1/3"
@@ -100,7 +100,7 @@
     "name": { "ko": "풍지", "en": "Fengchi" },
     "bodyPart": "neck",
     "view": "back",
-    "position": { "x": 200, "y": 120 },
+    "position": { "x": 113, "y": 47 },
     "description": {
       "ko": "뒷목 두개골 아래, 두 근육 사이 오목한 곳 (좌우 각각)",
       "en": "Below the base of the skull, in the depression between the two neck muscles (bilateral)"
@@ -116,7 +116,7 @@
     "name": { "ko": "견정", "en": "Jianjing" },
     "bodyPart": "shoulder",
     "view": "back",
-    "position": { "x": 130, "y": 180 },
+    "position": { "x": 73, "y": 68 },
     "description": {
       "ko": "목과 어깨 끝의 중간 지점, 승모근 위",
       "en": "Midpoint between the neck and the tip of the shoulder, on top of the trapezius muscle"
@@ -132,7 +132,7 @@
     "name": { "ko": "백회", "en": "Baihui" },
     "bodyPart": "head",
     "view": "back",
-    "position": { "x": 200, "y": 40 },
+    "position": { "x": 100, "y": 8 },
     "description": {
       "ko": "머리 정수리 중앙, 양쪽 귀를 잇는 선과 코에서 올라오는 선이 만나는 곳",
       "en": "At the crown of the head, at the intersection of a line connecting both ears and the midline"
@@ -148,7 +148,7 @@
     "name": { "ko": "위중", "en": "Weizhong" },
     "bodyPart": "leg",
     "view": "back",
-    "position": { "x": 200, "y": 560 },
+    "position": { "x": 113, "y": 318 },
     "description": {
       "ko": "무릎 뒤 오금의 정중앙",
       "en": "At the midpoint of the popliteal crease, at the back of the knee"
@@ -164,12 +164,12 @@
     "name": { "ko": "명문", "en": "Mingmen" },
     "bodyPart": "back",
     "view": "back",
-    "position": { "x": 200, "y": 350 },
+    "position": { "x": 100, "y": 178 },
     "description": {
       "ko": "척추 두 번째와 세 번째 요추 사이, 허리 중앙",
       "en": "Between the 2nd and 3rd lumbar vertebrae, at the midline of the lower back"
     },
-    "benefits": ["back_pain"],
+    "benefits": ["back_pain", "cold_extremities"],
     "technique": {
       "ko": "손가락 관절로 1-2분간 위아래로 문지르거나 따뜻하게 온열 자극한다",
       "en": "Rub up and down with knuckles for 1-2 minutes or apply gentle heat"
@@ -180,12 +180,12 @@
     "name": { "ko": "중완", "en": "Zhongwan" },
     "bodyPart": "abdomen",
     "view": "front",
-    "position": { "x": 200, "y": 310 },
+    "position": { "x": 100, "y": 152 },
     "description": {
       "ko": "명치와 배꼽의 정중간, 복부 중앙선 위",
       "en": "Midpoint between the sternum and the navel, on the midline of the abdomen"
     },
-    "benefits": ["indigestion", "food_stagnation"],
+    "benefits": ["indigestion", "nausea", "food_stagnation"],
     "technique": {
       "ko": "세 손가락으로 부드럽게 원을 그리며 2-3분간 마사지한다",
       "en": "Gently massage in circular motions with three fingers for 2-3 minutes"
@@ -196,7 +196,7 @@
     "name": { "ko": "관원", "en": "Guanyuan" },
     "bodyPart": "abdomen",
     "view": "front",
-    "position": { "x": 200, "y": 390 },
+    "position": { "x": 100, "y": 185 },
     "description": {
       "ko": "배꼽에서 손가락 네 마디 아래, 복부 중앙선",
       "en": "Four finger-widths below the navel, on the midline of the abdomen"
@@ -212,7 +212,7 @@
     "name": { "ko": "천추", "en": "Tianshu" },
     "bodyPart": "abdomen",
     "view": "front",
-    "position": { "x": 160, "y": 360 },
+    "position": { "x": 88, "y": 168 },
     "description": {
       "ko": "배꼽 양옆 손가락 두 마디 바깥쪽 (좌우 각각)",
       "en": "Two finger-widths lateral to the navel, on both sides"
@@ -221,6 +221,326 @@
     "technique": {
       "ko": "집게손가락과 중지로 양쪽을 동시에 1-2분간 부드럽게 누른다",
       "en": "Gently press both sides simultaneously with index and middle fingers for 1-2 minutes"
+    }
+  },
+  {
+    "id": "EX-HN3",
+    "name": { "ko": "인당", "en": "Yintang" },
+    "bodyPart": "face",
+    "view": "front",
+    "position": { "x": 100, "y": 21 },
+    "description": {
+      "ko": "양쪽 눈썹 사이 정중앙 (미간)",
+      "en": "At the midpoint between the medial ends of the eyebrows (third eye point)"
+    },
+    "benefits": ["headache", "insomnia", "concentration"],
+    "technique": {
+      "ko": "중지로 가볍게 원을 그리며 1-2분간 마사지한다",
+      "en": "Gently massage in circular motions with middle finger for 1-2 minutes"
+    }
+  },
+  {
+    "id": "ST2",
+    "name": { "ko": "사백", "en": "Sibai" },
+    "bodyPart": "face",
+    "view": "front",
+    "position": { "x": 94, "y": 28 },
+    "description": {
+      "ko": "눈 아래 뼈 가장자리에서 손가락 한 마디 아래 오목한 곳",
+      "en": "In the depression one finger-width below the midpoint of the lower orbital ridge"
+    },
+    "benefits": ["eye_fatigue", "facial_swelling"],
+    "technique": {
+      "ko": "검지로 눈 아래 오목한 곳을 30초씩 3회 부드럽게 누른다",
+      "en": "Gently press the depression below the eye with index finger, 30 seconds, 3 times"
+    }
+  },
+  {
+    "id": "LI20",
+    "name": { "ko": "영향", "en": "Yingxiang" },
+    "bodyPart": "face",
+    "view": "front",
+    "position": { "x": 96, "y": 33 },
+    "description": {
+      "ko": "콧볼 바깥쪽 팔자주름 위 오목한 곳",
+      "en": "In the nasolabial groove, at the level of the midpoint of the lateral border of the nostril"
+    },
+    "benefits": ["facial_swelling"],
+    "technique": {
+      "ko": "양쪽 검지로 콧볼 옆을 1-2분간 위아래로 문지른다",
+      "en": "Rub up and down beside the nostrils with both index fingers for 1-2 minutes"
+    }
+  },
+  {
+    "id": "CV17",
+    "name": { "ko": "전중", "en": "Danzhong" },
+    "bodyPart": "chest",
+    "view": "front",
+    "position": { "x": 100, "y": 105 },
+    "description": {
+      "ko": "양쪽 유두를 잇는 선의 정중앙, 가슴뼈 위",
+      "en": "At the midpoint of the line connecting both nipples, on the sternum"
+    },
+    "benefits": ["stress", "nausea"],
+    "technique": {
+      "ko": "중지로 가슴뼈 위를 1-2분간 부드럽게 원을 그리며 마사지한다",
+      "en": "Gently massage the sternum in circular motions with middle finger for 1-2 minutes"
+    }
+  },
+  {
+    "id": "GB30",
+    "name": { "ko": "환도", "en": "Huantiao" },
+    "bodyPart": "hip",
+    "view": "back",
+    "position": { "x": 82, "y": 230 },
+    "description": {
+      "ko": "엉덩이 바깥쪽, 대퇴골 대전자와 천골 사이 1/3 지점",
+      "en": "On the lateral buttock, one-third of the distance between the greater trochanter and the sacrum"
+    },
+    "benefits": ["back_pain"],
+    "technique": {
+      "ko": "테니스공 위에 앉거나 엄지로 2-3분간 깊이 눌러준다",
+      "en": "Sit on a tennis ball or press deeply with thumb for 2-3 minutes"
+    }
+  },
+  {
+    "id": "EX-HN5",
+    "name": { "ko": "태양", "en": "Taiyang" },
+    "bodyPart": "head",
+    "view": "front",
+    "position": { "x": 79, "y": 23 },
+    "description": {
+      "ko": "눈썹 끝과 눈 바깥쪽 끝 사이 뒤쪽 오목한 곳 (관자놀이)",
+      "en": "In the depression behind the midpoint between the lateral end of the eyebrow and the outer canthus (temple)"
+    },
+    "benefits": ["headache", "eye_fatigue", "concentration"],
+    "technique": {
+      "ko": "양쪽 관자놀이를 검지로 동시에 1-2분간 원을 그리며 마사지한다",
+      "en": "Massage both temples simultaneously in circular motions with index fingers for 1-2 minutes"
+    }
+  },
+  {
+    "id": "GV14",
+    "name": { "ko": "대추", "en": "Dazhui" },
+    "bodyPart": "neck",
+    "view": "back",
+    "position": { "x": 100, "y": 60 },
+    "description": {
+      "ko": "목을 앞으로 숙였을 때 가장 튀어나온 뼈(제7경추) 아래 오목한 곳",
+      "en": "In the depression below the spinous process of C7, the most prominent vertebra when the neck is flexed"
+    },
+    "benefits": ["shoulder_pain", "neck_pain", "cold_extremities"],
+    "technique": {
+      "ko": "중지로 1-2분간 눌러주거나 따뜻한 수건으로 온열 자극한다",
+      "en": "Press with middle finger for 1-2 minutes or apply warm towel for heat stimulation"
+    }
+  },
+  {
+    "id": "SI11",
+    "name": { "ko": "천종", "en": "Tianzong" },
+    "bodyPart": "back",
+    "view": "back",
+    "position": { "x": 84, "y": 120 },
+    "description": {
+      "ko": "견갑골(날개뼈) 중앙 오목한 곳",
+      "en": "In the depression at the center of the scapula (shoulder blade)"
+    },
+    "benefits": ["shoulder_pain"],
+    "technique": {
+      "ko": "반대쪽 손으로 등 뒤를 넘겨 1-2분간 누르거나 테니스공으로 자극한다",
+      "en": "Reach over the opposite shoulder to press for 1-2 minutes, or use a tennis ball against a wall"
+    }
+  },
+  {
+    "id": "LI11",
+    "name": { "ko": "곡지", "en": "Quchi" },
+    "bodyPart": "arm",
+    "view": "front",
+    "position": { "x": 54, "y": 120 },
+    "description": {
+      "ko": "팔꿈치를 구부렸을 때 주름 바깥쪽 끝",
+      "en": "At the lateral end of the elbow crease when the elbow is flexed"
+    },
+    "benefits": ["shoulder_pain", "constipation"],
+    "technique": {
+      "ko": "반대쪽 엄지로 팔꿈치 주름 끝을 2-3분간 꾹 누른다",
+      "en": "Press firmly at the end of the elbow crease with opposite thumb for 2-3 minutes"
+    }
+  },
+  {
+    "id": "TE5",
+    "name": { "ko": "외관", "en": "Waiguan" },
+    "bodyPart": "arm",
+    "view": "front",
+    "position": { "x": 52, "y": 162 },
+    "description": {
+      "ko": "손목 바깥쪽 주름에서 손가락 두 마디 위, 두 뼈 사이",
+      "en": "Two finger-widths above the outer wrist crease, between the radius and ulna"
+    },
+    "benefits": ["neck_pain"],
+    "technique": {
+      "ko": "반대쪽 엄지와 검지로 팔뚝 안팎을 감싸듯 1-2분간 누른다",
+      "en": "Press with opposite thumb and index finger, sandwiching the forearm, for 1-2 minutes"
+    }
+  },
+  {
+    "id": "LU7",
+    "name": { "ko": "열결", "en": "Lieque" },
+    "bodyPart": "arm",
+    "view": "front",
+    "position": { "x": 56, "y": 178 },
+    "description": {
+      "ko": "손목 안쪽 주름에서 손가락 한 마디 반 위, 요골 경상돌기 위",
+      "en": "One and a half finger-widths above the wrist crease, on the radial styloid process"
+    },
+    "benefits": ["headache", "neck_pain"],
+    "technique": {
+      "ko": "양손 호구(엄지와 검지 사이)를 교차하여 검지 끝이 닿는 곳을 1-2분간 누른다",
+      "en": "Cross both hands at the tiger's mouth (between thumb and index); press where index finger tip touches for 1-2 minutes"
+    }
+  },
+  {
+    "id": "SI3",
+    "name": { "ko": "후계", "en": "Houxi" },
+    "bodyPart": "hand",
+    "view": "front",
+    "position": { "x": 68, "y": 205 },
+    "description": {
+      "ko": "새끼손가락 아래 손금 끝, 주먹을 쥘 때 튀어나오는 곳",
+      "en": "At the end of the transverse crease below the 5th metacarpal, in the depression when making a fist"
+    },
+    "benefits": ["back_pain"],
+    "technique": {
+      "ko": "반대쪽 엄지로 손날 부분을 1-2분간 꾹 눌러준다",
+      "en": "Press firmly on the edge of the hand with opposite thumb for 1-2 minutes"
+    }
+  },
+  {
+    "id": "BL23",
+    "name": { "ko": "신수", "en": "Shenshu" },
+    "bodyPart": "back",
+    "view": "back",
+    "position": { "x": 112, "y": 172 },
+    "description": {
+      "ko": "배꼽 높이의 등쪽, 척추에서 손가락 두 마디 바깥쪽",
+      "en": "At the level of the navel on the back, two finger-widths lateral to the spine"
+    },
+    "benefits": ["back_pain", "cold_extremities"],
+    "technique": {
+      "ko": "양쪽 주먹으로 허리를 1-2분간 가볍게 두드리거나 따뜻하게 한다",
+      "en": "Gently tap both sides of the lower back with fists for 1-2 minutes or apply warmth"
+    }
+  },
+  {
+    "id": "BL13",
+    "name": { "ko": "폐수", "en": "Feishu" },
+    "bodyPart": "back",
+    "view": "back",
+    "position": { "x": 112, "y": 100 },
+    "description": {
+      "ko": "제3흉추 아래, 척추에서 손가락 두 마디 바깥쪽",
+      "en": "Below the 3rd thoracic vertebra, two finger-widths lateral to the spine"
+    },
+    "benefits": ["stress"],
+    "technique": {
+      "ko": "테니스공을 등과 벽 사이에 놓고 1-2분간 부드럽게 굴리며 자극한다",
+      "en": "Place a tennis ball between your back and a wall, gently roll for 1-2 minutes"
+    }
+  },
+  {
+    "id": "GB34",
+    "name": { "ko": "양릉천", "en": "Yanglingquan" },
+    "bodyPart": "leg",
+    "view": "front",
+    "position": { "x": 118, "y": 280 },
+    "description": {
+      "ko": "무릎 바깥쪽 아래, 비골 머리 앞쪽 아래 오목한 곳",
+      "en": "In the depression anterior and inferior to the head of the fibula, below the outer knee"
+    },
+    "benefits": ["shoulder_pain"],
+    "technique": {
+      "ko": "엄지로 무릎 옆 오목한 곳을 1-2분간 꾹 눌러 자극한다",
+      "en": "Press firmly in the depression beside the knee with thumb for 1-2 minutes"
+    }
+  },
+  {
+    "id": "BL57",
+    "name": { "ko": "승산", "en": "Chengshan" },
+    "bodyPart": "leg",
+    "view": "back",
+    "position": { "x": 113, "y": 355 },
+    "description": {
+      "ko": "종아리 뒤쪽 근육이 만나는 V자 오목한 곳",
+      "en": "In the V-shaped depression where the two bellies of the gastrocnemius muscle meet on the back of the calf"
+    },
+    "benefits": ["back_pain"],
+    "technique": {
+      "ko": "엄지로 종아리 오목한 곳을 1-2분간 꾹 누른다",
+      "en": "Press firmly in the depression on the calf with thumb for 1-2 minutes"
+    }
+  },
+  {
+    "id": "LR3",
+    "name": { "ko": "태충", "en": "Taichong" },
+    "bodyPart": "foot",
+    "view": "front",
+    "position": { "x": 108, "y": 392 },
+    "description": {
+      "ko": "엄지발가락과 둘째발가락 사이 뼈가 만나는 곳 앞 오목한 곳",
+      "en": "On the dorsum of the foot, in the depression before the junction of the 1st and 2nd metatarsal bones"
+    },
+    "benefits": ["stress", "menstrual_pain"],
+    "technique": {
+      "ko": "엄지로 발등의 뼈 사이를 1-2분간 꾹 눌러준다",
+      "en": "Press firmly between the bones on the top of the foot with thumb for 1-2 minutes"
+    }
+  },
+  {
+    "id": "KD3",
+    "name": { "ko": "태계", "en": "Taixi" },
+    "bodyPart": "foot",
+    "view": "front",
+    "position": { "x": 80, "y": 390 },
+    "description": {
+      "ko": "안쪽 복숭아뼈와 아킬레스건 사이 오목한 곳",
+      "en": "In the depression between the medial malleolus and the Achilles tendon"
+    },
+    "benefits": ["insomnia"],
+    "technique": {
+      "ko": "엄지로 복숭아뼈 뒤 오목한 곳을 30초씩 3회 부드럽게 누른다",
+      "en": "Gently press the depression behind the inner ankle bone with thumb, 30 seconds, 3 times"
+    }
+  },
+  {
+    "id": "BL60",
+    "name": { "ko": "곤륜", "en": "Kunlun" },
+    "bodyPart": "foot",
+    "view": "back",
+    "position": { "x": 120, "y": 390 },
+    "description": {
+      "ko": "바깥쪽 복숭아뼈와 아킬레스건 사이 오목한 곳",
+      "en": "In the depression between the lateral malleolus and the Achilles tendon"
+    },
+    "benefits": ["neck_pain"],
+    "technique": {
+      "ko": "엄지로 바깥 복숭아뼈 뒤 오목한 곳을 1-2분간 누른다. 임산부는 사용 금지",
+      "en": "Press the depression behind the outer ankle bone with thumb for 1-2 minutes. Avoid during pregnancy"
+    }
+  },
+  {
+    "id": "CV6",
+    "name": { "ko": "기해", "en": "Qihai" },
+    "bodyPart": "abdomen",
+    "view": "front",
+    "position": { "x": 100, "y": 176 },
+    "description": {
+      "ko": "배꼽에서 손가락 한 마디 반 아래, 복부 중앙선",
+      "en": "One and a half finger-widths below the navel, on the midline of the abdomen"
+    },
+    "benefits": ["indigestion", "menstrual_pain", "cold_extremities", "constipation"],
+    "technique": {
+      "ko": "손바닥으로 따뜻하게 배를 감싸고 시계방향으로 2-3분간 부드럽게 마사지한다",
+      "en": "Warm the abdomen with palm and gently massage clockwise for 2-3 minutes"
     }
   }
 ]
