@@ -1,0 +1,51 @@
+{
+  "common": {
+    "appName": "ggookggook",
+    "home": "Home",
+    "favorites": "Favorites",
+    "my": "My",
+    "login": "Login",
+    "logout": "Logout",
+    "search": "Search",
+    "back": "Back"
+  },
+  "tabs": {
+    "bodyPart": "Body Part",
+    "symptom": "Symptom",
+    "search": "Search"
+  },
+  "body": {
+    "front": "Front",
+    "back": "Back",
+    "zoomOut": "Full view",
+    "head": "Head", "face": "Face", "neck": "Neck",
+    "shoulder": "Shoulder", "arm": "Arm", "hand": "Hand",
+    "chest": "Chest", "abdomen": "Abdomen", "back_region": "Back",
+    "hip": "Hip", "leg": "Leg", "foot": "Foot"
+  },
+  "detail": {
+    "benefits": "Benefits",
+    "technique": "Technique",
+    "timer": "Acupressure Timer",
+    "start": "Start",
+    "pause": "Pause",
+    "video": "Video",
+    "seconds": "s",
+    "prev": "← Prev",
+    "next": "Next →"
+  },
+  "favorites_page": {
+    "title": "Favorites",
+    "empty": "No favorite acupoints yet",
+    "goHome": "Go to Home"
+  },
+  "search_page": {
+    "placeholder": "Search acupoints...",
+    "empty": "No results found",
+    "suggestion": "Try a different keyword"
+  },
+  "auth": {
+    "loginWith": "Login with {provider}",
+    "loginRequired": "Login required"
+  }
+}

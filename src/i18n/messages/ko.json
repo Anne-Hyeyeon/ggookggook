@@ -1,0 +1,51 @@
+{
+  "common": {
+    "appName": "꾹꾹",
+    "home": "홈",
+    "favorites": "즐겨찾기",
+    "my": "마이",
+    "login": "로그인",
+    "logout": "로그아웃",
+    "search": "검색",
+    "back": "뒤로"
+  },
+  "tabs": {
+    "bodyPart": "부위",
+    "symptom": "증상",
+    "search": "검색"
+  },
+  "body": {
+    "front": "전면",
+    "back": "후면",
+    "zoomOut": "전체 보기",
+    "head": "머리", "face": "얼굴", "neck": "목",
+    "shoulder": "어깨", "arm": "팔", "hand": "손",
+    "chest": "가슴", "abdomen": "배", "back_region": "등",
+    "hip": "엉덩이", "leg": "다리", "foot": "발"
+  },
+  "detail": {
+    "benefits": "효능",
+    "technique": "지압법",
+    "timer": "지압 타이머",
+    "start": "시작",
+    "pause": "일시정지",
+    "video": "지압 영상",
+    "seconds": "초",
+    "prev": "← 이전",
+    "next": "다음 →"
+  },
+  "favorites_page": {
+    "title": "즐겨찾기",
+    "empty": "즐겨찾기한 혈자리가 없습니다",
+    "goHome": "홈으로 가기"
+  },
+  "search_page": {
+    "placeholder": "혈자리 검색...",
+    "empty": "검색 결과가 없습니다",
+    "suggestion": "다른 키워드를 시도해보세요"
+  },
+  "auth": {
+    "loginWith": "{provider}로 로그인",
+    "loginRequired": "로그인이 필요합니다"
+  }
+}
