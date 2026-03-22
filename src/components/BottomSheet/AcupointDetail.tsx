@@ -1,9 +1,11 @@
 "use client";
 
+import clsx from "clsx";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { useAppStore } from "@/store/useAppStore";
+import { useFavorites } from "@/lib/hooks/useFavorites";
 import { useSetGuideStore } from "@/store/useSetGuideStore";
 import { getAcupointById, getSymptoms } from "@/lib/utils/data";
 import { getLocalizedText } from "@/lib/utils/locale";
@@ -20,6 +22,7 @@ export const AcupointDetail = () => {
   const router = useRouter();
   const { user } = useAuth();
   const { selectedAcupointId } = useAppStore();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const { symptomId, acupointIds, currentIndex, goToNext, goToPrevious, timerDuration, setTimerDuration } = useSetGuideStore();
 
   if (!selectedAcupointId) return null;
@@ -41,7 +44,7 @@ export const AcupointDetail = () => {
       router.push(`/login?next=/`);
       return;
     }
-    // TODO: implement favorite toggle with useFavorites hook (Task 12)
+    toggleFavorite(selectedAcupointId);
   };
 
   const handleSetNavigate = (direction: "next" | "prev") => {
@@ -88,8 +91,12 @@ export const AcupointDetail = () => {
             {locale === "ko" ? acupoint.name.en : acupoint.name.ko} · {acupoint.bodyPart}
           </p>
         </div>
-        <button onClick={handleFavoriteToggle} className="text-2xl" aria-label="Toggle favorite">
-          ♡
+        <button
+          onClick={handleFavoriteToggle}
+          className={clsx("text-2xl", isFavorite(selectedAcupointId) && "text-red-500")}
+          aria-label="Toggle favorite"
+        >
+          {isFavorite(selectedAcupointId) ? "♥" : "♡"}
         </button>
       </div>
 
