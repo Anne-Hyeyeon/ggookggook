@@ -1,17 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 
 export const useFavorites = () => {
   const { user } = useAuth();
-  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [rawFavoriteIds, setRawFavoriteIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      setFavoriteIds([]);
-      return;
-    }
+    if (!user) return;
     const fetchFavorites = async () => {
       setIsLoading(true);
       const supabase = createClient();
@@ -19,19 +16,24 @@ export const useFavorites = () => {
         .from("favorites")
         .select("acupoint_id")
         .eq("user_id", user.id);
-      setFavoriteIds(data?.map((f) => f.acupoint_id) ?? []);
+      setRawFavoriteIds(data?.map((f) => f.acupoint_id) ?? []);
       setIsLoading(false);
     };
     fetchFavorites();
+    return () => { setRawFavoriteIds([]); };
   }, [user]);
+
+  const favoriteIds = useMemo(
+    () => (user ? rawFavoriteIds : []),
+    [user, rawFavoriteIds]
+  );
 
   const toggleFavorite = useCallback(async (acupointId: string) => {
     if (!user) return;
     const supabase = createClient();
-    const isFavorited = favoriteIds.includes(acupointId);
+    const isFavorited = rawFavoriteIds.includes(acupointId);
 
-    // Optimistic update
-    setFavoriteIds((prev) =>
+    setRawFavoriteIds((prev) =>
       isFavorited ? prev.filter((id) => id !== acupointId) : [...prev, acupointId]
     );
 
@@ -46,7 +48,7 @@ export const useFavorites = () => {
         .from("favorites")
         .insert({ user_id: user.id, acupoint_id: acupointId });
     }
-  }, [user, favoriteIds]);
+  }, [user, rawFavoriteIds]);
 
   const isFavorite = useCallback(
     (acupointId: string) => favoriteIds.includes(acupointId),
