@@ -1,0 +1,82 @@
+[
+  {
+    "id": "headache",
+    "name": { "ko": "두통", "en": "Headache" },
+    "acupointIds": ["LI4", "GB20", "GV20"]
+  },
+  {
+    "id": "insomnia",
+    "name": { "ko": "불면", "en": "Insomnia" },
+    "acupointIds": ["HT7", "GV20", "KD1"]
+  },
+  {
+    "id": "stress",
+    "name": { "ko": "스트레스", "en": "Stress" },
+    "acupointIds": ["LI4", "HT7", "PC6"]
+  },
+  {
+    "id": "indigestion",
+    "name": { "ko": "소화불량", "en": "Indigestion" },
+    "acupointIds": ["ST36", "PC6", "CV12"]
+  },
+  {
+    "id": "shoulder_pain",
+    "name": { "ko": "어깨통증", "en": "Shoulder Pain" },
+    "acupointIds": ["GB21", "LI4"]
+  },
+  {
+    "id": "back_pain",
+    "name": { "ko": "허리통증", "en": "Back Pain" },
+    "acupointIds": ["BL40", "GV4"]
+  },
+  {
+    "id": "eye_fatigue",
+    "name": { "ko": "눈피로", "en": "Eye Fatigue" },
+    "acupointIds": ["GB20", "LI4"]
+  },
+  {
+    "id": "nausea",
+    "name": { "ko": "메스꺼움", "en": "Nausea" },
+    "acupointIds": ["PC6", "ST36"]
+  },
+  {
+    "id": "neck_pain",
+    "name": { "ko": "목통증", "en": "Neck Pain" },
+    "acupointIds": ["GB20", "GB21"]
+  },
+  {
+    "id": "menstrual_pain",
+    "name": { "ko": "생리통", "en": "Menstrual Pain" },
+    "acupointIds": ["SP6", "CV4"]
+  },
+  {
+    "id": "cold_extremities",
+    "name": { "ko": "수족냉증", "en": "Cold Hands & Feet" },
+    "acupointIds": ["ST36", "KD1", "SP6"]
+  },
+  {
+    "id": "concentration",
+    "name": { "ko": "집중력", "en": "Concentration" },
+    "acupointIds": ["GV20", "HT7"]
+  },
+  {
+    "id": "urgent_bowel",
+    "name": { "ko": "급똥참기", "en": "Urgent Bowel Relief" },
+    "acupointIds": ["ST25", "CV4"]
+  },
+  {
+    "id": "food_stagnation",
+    "name": { "ko": "식체", "en": "Food Stagnation" },
+    "acupointIds": ["CV12", "ST36", "PC6"]
+  },
+  {
+    "id": "constipation",
+    "name": { "ko": "변비", "en": "Constipation" },
+    "acupointIds": ["ST25", "ST36", "LI4"]
+  },
+  {
+    "id": "facial_swelling",
+    "name": { "ko": "얼굴 부종", "en": "Facial Swelling" },
+    "acupointIds": ["ST36", "SP6", "LI4"]
+  }
+]
