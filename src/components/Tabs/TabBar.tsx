@@ -18,7 +18,10 @@ export const TabBar = () => {
   };
 
   return (
-    <div className="flex gap-2 px-4 py-3" role="tablist">
+    <nav
+      className="flex w-full bg-surface-container-low rounded-full p-1.5 gap-1"
+      role="tablist"
+    >
       {TABS.map((tab) => (
         <button
           key={tab}
@@ -26,15 +29,15 @@ export const TabBar = () => {
           aria-selected={activeTab === tab}
           onClick={() => setActiveTab(tab)}
           className={clsx(
-            "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+            "flex-1 py-2.5 text-center rounded-full cursor-pointer text-sm transition-all duration-300",
             activeTab === tab
-              ? "bg-blue-600 text-white"
-              : "border border-gray-300 text-gray-600 hover:bg-gray-50"
+              ? "bg-primary text-on-primary font-bold shadow-sm"
+              : "text-on-surface-variant font-semibold"
           )}
         >
           {tabLabels[tab]}
         </button>
       ))}
-    </div>
+    </nav>
   );
 };

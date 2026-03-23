@@ -1,12 +1,14 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { RotateCcw, ArrowLeft } from "lucide-react";
 import { useBodySvg } from "@/lib/hooks/useBodySvg";
 import { BodySvgFront } from "./BodySvgFront";
 import { BodySvgBack } from "./BodySvgBack";
 import { AcupointDot } from "./AcupointDot";
 import { useAppStore } from "@/store/useAppStore";
 import { getAcupoints } from "@/lib/utils/data";
+import clsx from "clsx";
 
 interface IBodySvgViewerProps {
   highlightedAcupointIds?: string[];
@@ -24,23 +26,26 @@ export const BodySvgViewer = ({ highlightedAcupointIds = [] }: IBodySvgViewerPro
   });
 
   return (
-    <div className="relative flex flex-col items-center px-4">
-      <div className="mb-2 flex gap-2">
+    <div className="relative flex flex-col items-center px-6">
+      {/* View toggle — Figma: bg=#f1f1ec r=9999 p=6, active bg=#fff r=9999 shadow(y=1 blur=2) 14px w700 #476241, inactive 14px w500 #5a5c58 */}
+      <div className="flex bg-surface-container-low p-1.5 rounded-full mb-4 w-fit self-end gap-1">
         <button
           type="button"
           onClick={toggleBodyView}
-          className="rounded-full border border-gray-300 px-3 py-1 text-xs"
+          className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-bold transition-all bg-white text-primary shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
           aria-label={bodyView === "front" ? t("back") : t("front")}
         >
+          <RotateCcw className="h-3 w-3" />
           {bodyView === "front" ? t("back") : t("front")}
         </button>
         {isZoomed && (
           <button
             type="button"
             onClick={handleZoomOut}
-            className="rounded-full border border-gray-300 px-3 py-1 text-xs"
+            className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium text-on-surface-variant transition-all"
           >
-            ← {t("zoomOut")}
+            <ArrowLeft className="h-3 w-3" />
+            {t("zoomOut")}
           </button>
         )}
       </div>

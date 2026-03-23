@@ -25,7 +25,7 @@ export const BottomSheet = ({ isOpen, onClose, children }: IBottomSheetProps) =>
     <>
       <div
         className={clsx(
-          "fixed inset-0 z-40 bg-black/30 transition-opacity duration-300",
+          "fixed inset-0 z-40 bg-on-surface/5 transition-opacity duration-300",
           isOpen ? "opacity-100" : "pointer-events-none opacity-0"
         )}
         onClick={onClose}
@@ -35,14 +35,15 @@ export const BottomSheet = ({ isOpen, onClose, children }: IBottomSheetProps) =>
         role="dialog"
         aria-modal="true"
         className={clsx(
-          "fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-md rounded-t-2xl bg-white shadow-xl",
-          "transition-transform duration-300 ease-out",
-          "max-h-[85vh] overflow-y-auto",
+          "fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-xl",
+          "rounded-t-[2.5rem] bg-surface-container-lowest shadow-[0_-8px_40px_rgba(48,51,46,0.08)]",
+          "transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]",
+          "max-h-[85vh] overflow-y-auto scrollbar-thin",
           isOpen ? "translate-y-0" : "translate-y-full"
         )}
       >
-        <div className="flex justify-center py-2">
-          <div className="h-1 w-10 rounded-full bg-gray-300" />
+        <div className="sticky top-0 z-10 flex justify-center pt-4 pb-4">
+          <div className="h-[6px] w-12 rounded-full bg-[#e8e9e3]" />
         </div>
         {children}
       </div>

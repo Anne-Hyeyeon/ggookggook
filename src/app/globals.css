@@ -1,1 +1,112 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
+
+@theme {
+  /* Primary — Sage Green (from Figma) */
+  --color-primary: #476241;
+  --color-primary-dim: #3a5235;
+  --color-primary-container: #d4f4c8;
+  --color-primary-fixed-dim: #c4dbbb;
+  --color-on-primary: #eaffe1;
+  --color-on-primary-container: #3a5235;
+
+  /* Surface — Warm Cream Tones (from Figma) */
+  --color-surface: #f7f7f2;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f1f1ec;
+  --color-surface-container: #eeeee8;
+  --color-surface-container-high: #e8e9e2;
+  --color-surface-container-highest: #e1e3db;
+  --color-surface-variant: #e1e3db;
+  --color-surface-dim: #d9dbd3;
+
+  /* Text */
+  --color-on-surface: #2d2f2c;
+  --color-on-surface-variant: #5a5c58;
+
+  /* Outline */
+  --color-outline: #767773;
+  --color-outline-variant: #b1b3ab;
+
+  /* Secondary */
+  --color-secondary: #536169;
+  --color-secondary-container: #d6e5ef;
+  --color-on-secondary-container: #46545c;
+
+  /* Error */
+  --color-error: #a73b21;
+  --color-error-container: #fd795a;
+
+  /* Brand (from Figma: 꾹꾹이 logo color) */
+  --color-brand: #476241;
+
+  /* Font */
+  --font-sans: 'Plus Jakarta Sans', 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+  --font-headline: 'Plus Jakarta Sans', 'Noto Sans KR', sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Minimum touch targets */
+button, a, [role="button"], [role="tab"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Prevent accidental pull-to-refresh */
+body {
+  overscroll-behavior: contain;
+}
+
+/* Custom scrollbar */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--color-outline-variant);
+  border-radius: 9999px;
+  opacity: 0.3;
+}
+
+/* Timer completion */
+@keyframes timer-complete {
+  0%, 100% { background-color: var(--color-primary-container); }
+  50% { background-color: #c4dbbb; }
+}
+.animate-timer-complete {
+  animation: timer-complete 0.6s ease-in-out 3;
+}
+
+/* Fade in */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out;
+}
+
+/* Glass panel */
+.glass-panel {
+  background: rgba(247, 247, 242, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
