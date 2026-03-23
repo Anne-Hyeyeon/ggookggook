@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useTimer } from "@/lib/hooks/useTimer";
+import { Play, Pause, Minus, Plus } from "lucide-react";
 import clsx from "clsx";
 
 interface IAcupressureTimerProps {
@@ -42,86 +43,79 @@ export const AcupressureTimer = ({ initialDuration, onDurationChange }: IAcupres
     setIsEditing(false);
   };
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  };
-
   return (
     <div className={clsx(
-      "rounded-xl bg-gray-50 p-4 text-center",
-      isComplete && "animate-pulse bg-green-50"
+      "rounded-[48px] bg-surface-container-low p-6 transition-colors duration-300",
+      isComplete && "animate-timer-complete"
     )}>
-      <h3 className="mb-2 text-xs font-bold">{t("timer")}</h3>
+      {/* DURATION label — Figma: 12px w700 ls=1.2 #767773 */}
+      <span className="text-xs font-bold text-outline uppercase tracking-[1.2px]">DURATION</span>
 
-      {/* Presets */}
-      <div className="mb-3 flex justify-center gap-2">
-        {PRESETS.map((p) => (
-          <button
-            key={p}
-            onClick={() => handleDurationChange(p)}
-            className={clsx(
-              "rounded-full px-3.5 py-1 text-xs",
-              duration === p && !isRunning
-                ? "bg-blue-600 text-white"
-                : "border border-gray-300"
-            )}
-          >
-            {p}{t("seconds")}
-          </button>
-        ))}
-      </div>
-
-      {/* Adjustment + display */}
-      <div className="mb-3 flex items-center justify-center gap-4">
+      {/* Horizontal timer display — Figma: gap=24 */}
+      <div className="mt-3 flex items-center gap-6">
+        {/* Minus button — Figma: rounded-full bg=surface-container-high */}
         <button
           onClick={() => handleDurationChange(duration - STEP)}
           disabled={isRunning || duration <= MIN_DURATION}
-          className="rounded-full border border-gray-300 px-3 py-1 text-lg disabled:opacity-30"
+          className="w-9 h-9 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant active:scale-90 transition-transform disabled:opacity-25"
           aria-label="Decrease duration"
         >
-          −
+          <Minus className="h-4 w-4" />
         </button>
 
-        {isEditing ? (
-          <input
-            type="number"
-            defaultValue={duration}
-            onBlur={(e) => handleDirectInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleDirectInput((e.target as HTMLInputElement).value)}
-            autoFocus
-            className="w-20 rounded border border-blue-500 text-center text-3xl font-bold"
-            min={MIN_DURATION}
-            max={MAX_DURATION}
-          />
-        ) : (
-          <button
-            onClick={() => !isRunning && setIsEditing(true)}
-            className="text-4xl font-bold tracking-wider"
-            aria-label="Edit timer duration"
-          >
-            {formatTime(timeLeft)}
-          </button>
-        )}
+        {/* Time display — Figma: large 36px+ w800 */}
+        <div className="flex-1 flex items-baseline justify-center">
+          {isEditing ? (
+            <input
+              type="number"
+              defaultValue={duration}
+              onBlur={(e) => handleDirectInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleDirectInput((e.target as HTMLInputElement).value)}
+              autoFocus
+              className="w-20 rounded-xl bg-surface-container-lowest text-center text-4xl font-extrabold text-on-surface focus:outline-none"
+              min={MIN_DURATION}
+              max={MAX_DURATION}
+            />
+          ) : (
+            <button
+              onClick={() => !isRunning && setIsEditing(true)}
+              className="text-4xl font-extrabold tracking-tighter text-on-surface"
+              aria-label="Edit timer duration"
+            >
+              {timeLeft}
+            </button>
+          )}
+          <span className="text-sm text-on-surface-variant font-medium ml-1">{t("seconds")}</span>
+        </div>
 
+        {/* Plus button */}
         <button
           onClick={() => handleDurationChange(duration + STEP)}
           disabled={isRunning || duration >= MAX_DURATION}
-          className="rounded-full border border-gray-300 px-3 py-1 text-lg disabled:opacity-30"
+          className="w-9 h-9 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant active:scale-90 transition-transform disabled:opacity-25"
           aria-label="Increase duration"
         >
-          +
+          <Plus className="h-4 w-4" />
+        </button>
+
+        {/* Start/Pause CTA — Figma: r=9999, bg=primary, text=white, icon+text horizontal */}
+        <button
+          onClick={isRunning ? pause : start}
+          className={clsx(
+            "flex items-center gap-2 px-5 py-3 rounded-full font-bold text-sm transition-all active:scale-95",
+            isRunning
+              ? "bg-surface-container-high text-on-surface"
+              : "bg-primary text-on-primary shadow-lg shadow-primary/20"
+          )}
+        >
+          {isRunning ? (
+            <Pause className="h-4 w-4" fill="currentColor" />
+          ) : (
+            <Play className="h-4 w-4" fill="currentColor" />
+          )}
+          {isRunning ? t("pause") : t("start")}
         </button>
       </div>
-
-      {/* Start/Pause */}
-      <button
-        onClick={isRunning ? pause : start}
-        className="rounded-full bg-blue-600 px-8 py-2 text-sm font-bold text-white hover:bg-blue-700"
-      >
-        {isRunning ? t("pause") : t("start")}
-      </button>
     </div>
   );
 };
