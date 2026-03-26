@@ -1,49 +1,49 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  /* Primary — Sage Green (from Figma) */
-  --color-primary: #476241;
-  --color-primary-dim: #3a5235;
-  --color-primary-container: #d4f4c8;
-  --color-primary-fixed-dim: #c4dbbb;
-  --color-on-primary: #eaffe1;
-  --color-on-primary-container: #3a5235;
+  /* Primary */
+  --color-primary: #1f6f66;
+  --color-primary-dim: #154e48;
+  --color-primary-container: #d5f3ed;
+  --color-primary-fixed-dim: #b7dfd7;
+  --color-on-primary: #f4fffc;
+  --color-on-primary-container: #174f49;
 
-  /* Surface — Warm Cream Tones (from Figma) */
-  --color-surface: #f7f7f2;
+  /* Surface */
+  --color-surface: #f4f6f3;
   --color-surface-container-lowest: #ffffff;
-  --color-surface-container-low: #f1f1ec;
-  --color-surface-container: #eeeee8;
-  --color-surface-container-high: #e8e9e2;
-  --color-surface-container-highest: #e1e3db;
-  --color-surface-variant: #e1e3db;
-  --color-surface-dim: #d9dbd3;
+  --color-surface-container-low: #eef2ef;
+  --color-surface-container: #e7ece8;
+  --color-surface-container-high: #dde4de;
+  --color-surface-container-highest: #d3dbd4;
+  --color-surface-variant: #d9dfda;
+  --color-surface-dim: #c6cdc7;
 
   /* Text */
-  --color-on-surface: #2d2f2c;
-  --color-on-surface-variant: #5a5c58;
+  --color-on-surface: #18201d;
+  --color-on-surface-variant: #61706b;
 
   /* Outline */
-  --color-outline: #767773;
-  --color-outline-variant: #b1b3ab;
+  --color-outline: #7a8a84;
+  --color-outline-variant: #b8c2bd;
 
   /* Secondary */
-  --color-secondary: #536169;
-  --color-secondary-container: #d6e5ef;
-  --color-on-secondary-container: #46545c;
+  --color-secondary: #51656c;
+  --color-secondary-container: #d8e9ef;
+  --color-on-secondary-container: #41525a;
 
   /* Error */
-  --color-error: #a73b21;
-  --color-error-container: #fd795a;
+  --color-error: #b84c37;
+  --color-error-container: #ffd9cf;
 
-  /* Brand (from Figma: 꾹꾹이 logo color) */
-  --color-brand: #476241;
+  /* Brand */
+  --color-brand: #15211c;
 
   /* Font */
-  --font-sans: 'Plus Jakarta Sans', 'Noto Sans KR', system-ui, -apple-system, sans-serif;
-  --font-headline: 'Plus Jakarta Sans', 'Noto Sans KR', sans-serif;
+  --font-sans: 'Manrope', 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+  --font-headline: 'Manrope', 'Noto Sans KR', sans-serif;
 }
 
 html {
@@ -71,6 +71,10 @@ button, a, [role="button"], [role="tab"] {
 /* Prevent accidental pull-to-refresh */
 body {
   overscroll-behavior: contain;
+  background:
+    radial-gradient(circle at top left, rgba(145, 214, 197, 0.2), transparent 30%),
+    radial-gradient(circle at top right, rgba(209, 232, 227, 0.85), transparent 28%),
+    linear-gradient(180deg, #f8fbf9 0%, #eff3f0 44%, #edf1ee 100%);
 }
 
 /* Custom scrollbar */
@@ -106,7 +110,35 @@ body {
 
 /* Glass panel */
 .glass-panel {
-  background: rgba(247, 247, 242, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+}
+
+.app-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+.app-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(151, 225, 207, 0.28), transparent 24%),
+    radial-gradient(circle at 92% 18%, rgba(255, 255, 255, 0.92), transparent 18%),
+    radial-gradient(circle at 48% 85%, rgba(203, 216, 255, 0.16), transparent 20%);
+}
+
+.premium-panel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 250, 247, 0.86));
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 30px rgba(29, 46, 39, 0.06);
+}
+
+.soft-divider {
+  border-color: rgba(122, 138, 132, 0.14);
 }

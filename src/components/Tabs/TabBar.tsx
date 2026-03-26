@@ -19,7 +19,7 @@ export const TabBar = () => {
 
   return (
     <nav
-      className="flex w-full bg-surface-container-low rounded-full p-1.5 gap-1"
+      className="glass-panel flex w-full gap-1 rounded-[28px] p-1.5 shadow-[0_10px_28px_rgba(24,32,29,0.05)]"
       role="tablist"
     >
       {TABS.map((tab) => (
@@ -29,10 +29,10 @@ export const TabBar = () => {
           aria-selected={activeTab === tab}
           onClick={() => setActiveTab(tab)}
           className={clsx(
-            "flex-1 py-2.5 text-center rounded-full cursor-pointer text-sm transition-all duration-300",
+            "flex-1 rounded-[22px] px-4 py-3 text-center text-sm transition-all duration-300 cursor-pointer",
             activeTab === tab
-              ? "bg-primary text-on-primary font-bold shadow-sm"
-              : "text-on-surface-variant font-semibold"
+              ? "bg-brand text-white font-bold shadow-[0_14px_24px_rgba(21,33,28,0.12)]"
+              : "text-on-surface-variant font-semibold hover:text-on-surface"
           )}
         >
           {tabLabels[tab]}

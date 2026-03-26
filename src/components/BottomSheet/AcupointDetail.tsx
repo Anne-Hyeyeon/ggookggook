@@ -61,10 +61,9 @@ export const AcupointDetail = () => {
 
   return (
     <div className="flex flex-col gap-6 px-6 pb-8">
-      {/* Set navigation — Figma: "두통 세트 2/4" 16px w700 ls=-0.4 #476241, chevrons r=9999 p=8 */}
       {isInSet && (
-        <div>
-          <p className="text-base font-medium text-on-surface-variant mb-1 text-center">
+        <div className="premium-panel rounded-[28px] px-4 py-4">
+          <p className="mb-1 text-center text-sm font-medium text-on-surface-variant">
             현재 진행 중인 코스
           </p>
           <nav className="flex items-center justify-between">
@@ -76,7 +75,7 @@ export const AcupointDetail = () => {
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <span className="text-base font-bold tracking-[-0.4px] text-primary">
+            <span className="text-base font-bold tracking-[-0.04em] text-primary">
               {getLocalizedText(currentSymptom!.name, locale)} 세트 {currentIndex + 1}/{acupointIds.length}
             </span>
             <button
@@ -91,29 +90,26 @@ export const AcupointDetail = () => {
         </div>
       )}
 
-      {/* Acupoint identity — Figma: title 30px w800 #2d2f2c, LI4 badge bg=#d4f4c8 r=9999 p=4/12 14px w700 */}
       <div className="flex items-start justify-between">
         <div className="flex flex-col gap-2">
           <span className="self-start rounded-full bg-primary-container px-3 py-1 text-sm font-bold text-primary">
             {acupoint.id}
           </span>
-          <h3 className="text-[30px] font-extrabold leading-tight tracking-tight text-on-surface">
+          <h3 className="text-[32px] font-extrabold leading-tight tracking-[-0.06em] text-on-surface">
             {getLocalizedText(acupoint.name, locale)} ({locale === "ko" ? acupoint.name.en : acupoint.name.ko})
           </h3>
-          {/* Body part label */}
           <div className="flex items-center gap-2 text-sm text-on-surface-variant">
             <MapPin className="h-4 w-4" />
             <span>Body Part: {acupoint.bodyPart}</span>
           </div>
         </div>
-        {/* Heart button — Figma: 48x48 bg=#f1f1ec r=9999 shadow */}
         <button
           onClick={handleFavoriteToggle}
           className={clsx(
-            "flex h-12 w-12 items-center justify-center rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.05)] transition-all active:scale-90",
+            "flex h-12 w-12 items-center justify-center rounded-full shadow-[0_12px_20px_rgba(24,32,29,0.08)] transition-all active:scale-90",
             favorited
               ? "bg-primary-container text-primary"
-              : "bg-surface-container-low text-on-surface-variant"
+              : "bg-white text-on-surface-variant"
           )}
           aria-label="Toggle favorite"
         >
@@ -121,15 +117,13 @@ export const AcupointDetail = () => {
         </button>
       </div>
 
-      {/* Zoomed body part SVG with technique overlay — Figma: bg=#f1f1ec r=32 */}
-      <div className="relative w-full overflow-hidden rounded-[32px] bg-surface-container-low">
+      <div className="relative w-full overflow-hidden rounded-[32px] premium-panel">
         <div className="flex items-center justify-center p-6">
           <svg viewBox={regionBounds.viewBox} className="h-44 w-auto">
             {acupoint.view === "front"
               ? <BodySvgFront onRegionClick={() => {}} />
               : <BodySvgBack onRegionClick={() => {}} />
             }
-            {/* Red dot indicator — Figma: fill=#b02500, white stroke */}
             <g
               className="cursor-pointer"
               role="button"
@@ -162,15 +156,13 @@ export const AcupointDetail = () => {
             </g>
           </svg>
         </div>
-        {/* Technique overlay inside SVG container */}
-        <div className="absolute bottom-4 left-4 right-4 rounded-md border border-white/50 bg-white/70 p-3.5 px-4 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+        <div className="absolute bottom-4 left-4 right-4 rounded-[20px] border border-white/70 bg-white/78 p-4 shadow-[0_12px_24px_rgba(24,32,29,0.08)] backdrop-blur-xl">
           <p className="text-sm font-medium leading-relaxed text-on-surface">
             {getLocalizedText(acupoint.technique, locale)}
           </p>
         </div>
       </div>
 
-      {/* Benefits — Figma: first bg=#83f19f r=9999 "# 두통" 12px w700 #00592a, rest bg=#e2e3dd #5a5c58 */}
       <div className="flex flex-wrap gap-2">
         {benefitLabels.map((label, i) => (
           <span
@@ -178,8 +170,8 @@ export const AcupointDetail = () => {
             className={clsx(
               "rounded-full px-4 py-2 text-xs font-bold",
               i === 0
-                ? "bg-[#83f19f] text-[#00592a]"
-                : "bg-[#e2e3dd] text-on-surface-variant"
+                ? "bg-primary-container text-primary"
+                : "bg-white text-on-surface-variant shadow-[0_8px_18px_rgba(24,32,29,0.04)]"
             )}
           >
             #{label}

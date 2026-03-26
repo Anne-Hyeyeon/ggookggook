@@ -1,18 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useLocale } from "next-intl";
-import { Play, Activity } from "lucide-react";
+import { Play, Activity, ArrowRight } from "lucide-react";
 import { getSymptoms } from "@/lib/utils/data";
-import { getLocalizedText } from "@/lib/utils/locale";
 import { useAppStore } from "@/store/useAppStore";
 import { useSetGuideStore } from "@/store/useSetGuideStore";
 import { BodySvgViewer } from "@/components/BodySvg/BodySvgViewer";
-import type { Locale } from "@/types";
 import clsx from "clsx";
 
 export const SymptomTab = () => {
-  const locale = useLocale() as Locale;
   const symptoms = getSymptoms();
   const [selectedSymptomId, setSelectedSymptomId] = useState<string | null>(null);
   const { openAcupointDetail } = useAppStore();
@@ -31,17 +27,25 @@ export const SymptomTab = () => {
   };
 
   return (
-    <div className="px-6 flex flex-col gap-8">
-      {/* Header row */}
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-xl font-bold text-on-surface">Select Relief</h2>
-        <span className="text-xs uppercase tracking-widest text-on-surface-variant/50 font-bold">
-          ACUPRESSURE FOCUS
-        </span>
-      </div>
+    <div className="flex flex-col gap-5 px-1">
+      <section className="premium-panel rounded-[32px] px-5 py-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Symptom Library</p>
+            <h2 className="mt-3 text-[30px] font-extrabold tracking-[-0.07em] text-on-surface leading-9">
+              증상부터 고르면
+              <br />
+              필요한 포인트만 남깁니다
+            </h2>
+          </div>
+          <div className="rounded-[24px] bg-white px-4 py-3 text-right shadow-[0_12px_26px_rgba(24,32,29,0.06)]">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-on-surface-variant">Curated</p>
+            <p className="mt-1 text-lg font-bold text-on-surface">{symptoms.length} sets</p>
+          </div>
+        </div>
+      </section>
 
-      {/* Symptom chips — flex wrap */}
-      <div className="flex flex-wrap gap-3">
+      <section className="flex flex-wrap gap-2.5">
         {symptoms.map((symptom) => {
           const isSelected = selectedSymptomId === symptom.id;
           return (
@@ -49,10 +53,10 @@ export const SymptomTab = () => {
               key={symptom.id}
               onClick={() => handleSymptomClick(symptom.id)}
               className={clsx(
-                "rounded-full px-5 py-2.5 text-sm transition-all active:scale-95 cursor-pointer flex items-center gap-2",
+                "flex cursor-pointer items-center gap-2 rounded-full px-4 py-2.5 text-sm transition-all active:scale-95",
                 isSelected
-                  ? "bg-primary-container text-on-primary-container font-bold"
-                  : "bg-surface-container-high text-on-surface-variant font-semibold"
+                  ? "bg-brand text-white shadow-[0_14px_24px_rgba(21,33,28,0.12)]"
+                  : "premium-panel text-on-surface-variant font-semibold"
               )}
             >
               {isSelected && <Activity className="h-4 w-4" />}
@@ -60,39 +64,50 @@ export const SymptomTab = () => {
             </button>
           );
         })}
-      </div>
+      </section>
 
-      {/* Body SVG area */}
-      <div className="bg-surface-container-low rounded-[2.5rem] py-12 px-8">
-        {selectedSymptom && (
-          <div className="mb-4">
-            <span className="text-[0.65rem] uppercase tracking-[0.2em] text-primary font-bold">
-              Target Area
-            </span>
-            <h3 className="text-lg font-bold text-on-surface mt-1">
-              {selectedSymptom.name.en}/{selectedSymptom.name.ko}
+      <section className="premium-panel rounded-[36px] p-4 sm:p-5">
+        <div className="mb-4 flex items-start justify-between gap-4 px-2">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-on-surface-variant">Target view</p>
+            <h3 className="mt-2 text-lg font-bold text-on-surface">
+              {selectedSymptom
+                ? `${selectedSymptom.name.en}/${selectedSymptom.name.ko}`
+                : "원하는 증상을 선택하면 대응 부위를 바로 강조합니다"}
             </h3>
           </div>
-        )}
-        <BodySvgViewer highlightedAcupointIds={selectedSymptom?.acupointIds ?? []} />
-      </div>
-
-      {/* Recommend card at bottom when symptom selected */}
-      {selectedSymptom && (
-        <div className="bg-primary rounded-[32px] p-6 flex items-center justify-between shadow-[0_12px_40px_rgba(71,98,65,0.2)]">
-          <div className="flex flex-col">
-            <span className="text-xs font-bold tracking-[1.2px] text-primary-container mb-1">RECOMMENDED</span>
-            <p className="text-white font-bold text-lg leading-7">
-              Start {selectedSymptom.name.en} Relief Set
-            </p>
-            <p className="text-[#dcfcd0] text-sm mt-0.5">
-              Estimated time: 3 min
-            </p>
-          </div>
-          <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-            <Play className="h-[14px] w-[18px] text-white" fill="currentColor" />
-          </div>
+          {selectedSymptom && (
+            <span className="rounded-full bg-primary-container px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
+              {selectedSymptom.acupointIds.length} points
+            </span>
+          )}
         </div>
+        <div className="rounded-[28px] bg-[linear-gradient(180deg,rgba(255,255,255,0.72),rgba(224,234,228,0.7))] px-2 py-4">
+          <BodySvgViewer highlightedAcupointIds={selectedSymptom?.acupointIds ?? []} />
+        </div>
+      </section>
+
+      {selectedSymptom && (
+        <section className="rounded-[32px] bg-[linear-gradient(135deg,#173c36,#205149_55%,#2d6c62)] p-6 text-white shadow-[0_24px_40px_rgba(21,33,28,0.18)]">
+          <div className="flex items-start justify-between gap-5">
+            <div className="flex flex-col">
+              <span className="mb-2 text-[11px] font-semibold tracking-[0.16em] text-white/68 uppercase">Recommended set</span>
+              <p className="text-xl font-bold leading-7">
+              Start {selectedSymptom.name.en} Relief Set
+              </p>
+              <p className="mt-2 text-sm text-white/72">
+                선택한 증상에 맞는 혈자리 흐름을 순서대로 안내합니다. 예상 시간 3분.
+              </p>
+            </div>
+            <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-white/14">
+              <Play className="h-[14px] w-[18px] text-white" fill="currentColor" />
+            </div>
+          </div>
+          <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-sm font-semibold text-white/86">
+            루틴 열기
+            <ArrowRight className="h-4 w-4" />
+          </div>
+        </section>
       )}
     </div>
   );

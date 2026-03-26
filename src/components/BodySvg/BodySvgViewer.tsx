@@ -8,8 +8,6 @@ import { BodySvgBack } from "./BodySvgBack";
 import { AcupointDot } from "./AcupointDot";
 import { useAppStore } from "@/store/useAppStore";
 import { getAcupoints } from "@/lib/utils/data";
-import clsx from "clsx";
-
 interface IBodySvgViewerProps {
   highlightedAcupointIds?: string[];
 }
@@ -27,12 +25,11 @@ export const BodySvgViewer = ({ highlightedAcupointIds = [] }: IBodySvgViewerPro
 
   return (
     <div className="relative flex flex-col items-center px-6">
-      {/* View toggle — Figma: bg=#f1f1ec r=9999 p=6, active bg=#fff r=9999 shadow(y=1 blur=2) 14px w700 #476241, inactive 14px w500 #5a5c58 */}
-      <div className="flex bg-surface-container-low p-1.5 rounded-full mb-4 w-fit self-end gap-1">
+      <div className="mb-4 flex w-fit self-end gap-1 rounded-full bg-white/80 p-1.5 shadow-[0_10px_22px_rgba(24,32,29,0.06)]">
         <button
           type="button"
           onClick={toggleBodyView}
-          className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-bold transition-all bg-white text-primary shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+          className="inline-flex items-center gap-1 rounded-full bg-brand px-4 py-2 text-sm font-bold text-white transition-all"
           aria-label={bodyView === "front" ? t("back") : t("front")}
         >
           <RotateCcw className="h-3 w-3" />
@@ -42,7 +39,7 @@ export const BodySvgViewer = ({ highlightedAcupointIds = [] }: IBodySvgViewerPro
           <button
             type="button"
             onClick={handleZoomOut}
-            className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium text-on-surface-variant transition-all"
+            className="inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium text-on-surface-variant transition-all"
           >
             <ArrowLeft className="h-3 w-3" />
             {t("zoomOut")}

@@ -23,7 +23,7 @@ export default async function RootLayout({
       lang={locale}
       className="h-full antialiased"
     >
-      <body className="min-h-full flex flex-col bg-surface font-sans text-on-surface pb-20">
+      <body className="min-h-full app-shell flex flex-col bg-surface font-sans text-on-surface pb-24">
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             {children}
