@@ -15,7 +15,8 @@ export const useFavorites = () => {
       const { data } = await supabase
         .from("favorites")
         .select("acupoint_id")
-        .eq("user_id", user.id);
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
       setRawFavoriteIds(data?.map((f) => f.acupoint_id) ?? []);
       setIsLoading(false);
     };
@@ -34,7 +35,7 @@ export const useFavorites = () => {
     const isFavorited = rawFavoriteIds.includes(acupointId);
 
     setRawFavoriteIds((prev) =>
-      isFavorited ? prev.filter((id) => id !== acupointId) : [...prev, acupointId]
+      isFavorited ? prev.filter((id) => id !== acupointId) : [acupointId, ...prev]
     );
 
     if (isFavorited) {
