@@ -151,6 +151,9 @@ export const BodySvgFront = ({ onRegionClick }: IBodySvgProps) => (
       role="button"
       aria-label="Hands"
     >
+      {/* Click area */}
+      <rect x="40" y="182" width="34" height="38" fill="transparent" />
+      <rect x="126" y="182" width="34" height="38" fill="transparent" />
       {/* Left hand */}
       <path
         d="M50 186 C47 192 46 198 48 204 C50 211 56 216 62 215 C69 214 72 208 72 200 C72 194 70 189 68 186 Z"
@@ -185,6 +188,7 @@ export const BodySvgFront = ({ onRegionClick }: IBodySvgProps) => (
       role="button"
       aria-label="Legs"
     >
+      <rect x="74" y="228" width="52" height="160" fill="transparent" />
       {/* Left leg */}
       <path
         d="M88 232 C86 255 82 280 80 310 C78 340 78 370 80 388 L96 388 C96 370 96 340 96 310 C96 280 98 255 98 232 Z"
@@ -211,6 +215,7 @@ export const BodySvgFront = ({ onRegionClick }: IBodySvgProps) => (
       role="button"
       aria-label="Feet"
     >
+      <rect x="72" y="385" width="56" height="25" fill="transparent" />
       {/* Left foot */}
       <path
         d="M80 388 C76 392 74 397 76 401 C78 405 84 407 90 405 C96 403 98 398 96 392 L96 388 Z"

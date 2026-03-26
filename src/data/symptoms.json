@@ -2,7 +2,7 @@
   {
     "id": "headache",
     "name": { "ko": "두통", "en": "Headache" },
-    "acupointIds": ["LI4", "GB20", "GV20", "EX-HN3", "EX-HN5", "LU7"]
+    "acupointIds": ["LI4", "GB20", "GV20", "EX-HN3", "BL2", "EX-HN5", "LU7"]
   },
   {
     "id": "insomnia",
@@ -12,7 +12,7 @@
   {
     "id": "stress",
     "name": { "ko": "스트레스", "en": "Stress" },
-    "acupointIds": ["LI4", "HT7", "PC6", "CV17", "LR3", "BL13"]
+    "acupointIds": ["EX-HN3", "HT7", "PC6", "CV17", "LI4", "LR3", "BL13"]
   },
   {
     "id": "indigestion",
@@ -22,7 +22,7 @@
   {
     "id": "shoulder_pain",
     "name": { "ko": "어깨통증", "en": "Shoulder Pain" },
-    "acupointIds": ["GB21", "LI11", "SI11", "GV14", "GB34"]
+    "acupointIds": ["GB21", "LI15", "LI11", "SI11", "GV14", "GB34"]
   },
   {
     "id": "back_pain",
@@ -32,12 +32,12 @@
   {
     "id": "eye_fatigue",
     "name": { "ko": "눈피로", "en": "Eye Fatigue" },
-    "acupointIds": ["GB20", "ST2", "EX-HN5", "LI4"]
+    "acupointIds": ["GB20", "BL2", "ST2", "EX-HN5", "LI4"]
   },
   {
     "id": "nausea",
     "name": { "ko": "메스꺼움", "en": "Nausea" },
-    "acupointIds": ["PC6", "ST36", "CV17", "CV12"]
+    "acupointIds": ["PC6", "SP4", "ST36", "CV17", "CV12"]
   },
   {
     "id": "neck_pain",
@@ -52,7 +52,7 @@
   {
     "id": "cold_extremities",
     "name": { "ko": "수족냉증", "en": "Cold Hands & Feet" },
-    "acupointIds": ["ST36", "KD1", "SP6", "BL23", "GV4", "CV6"]
+    "acupointIds": ["ST36", "KD1", "SP6", "BL23", "GV4", "GV14", "CV6"]
   },
   {
     "id": "concentration",
