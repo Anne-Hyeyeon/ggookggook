@@ -21,6 +21,7 @@ Expo, React Native, and AWS CDK APIs change often. Check the installed package d
 - `npm test -w @ggookggook/mobile`: app tests (jest-expo)
 - `cd apps/mobile && npx expo start`: run the app (Expo Go or a dev build)
 - `npm run sync-content -w @ggookggook/mobile`: rebuild content and copy it into the app (run after changing content/data or images)
+- `cd apps/mobile && EXPO_PUBLIC_GUIDE_SPEED=60 npx expo run:ios && maestro test e2e/core-flow.yaml`: core-flow E2E on the iOS simulator (speed only for tests)
 
 ## Toolchain
 

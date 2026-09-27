@@ -8,7 +8,6 @@
     "userInterfaceStyle": "light",
     "backgroundColor": "#F8F8F7",
     "icon": "./assets/icon.png",
-    "splash": { "image": "./assets/splash-icon.png", "resizeMode": "contain", "backgroundColor": "#F8F8F7" },
     "ios": { "bundleIdentifier": "kr.ggookggook.app", "supportsTablet": false },
     "android": {
       "package": "kr.ggookggook.app",
