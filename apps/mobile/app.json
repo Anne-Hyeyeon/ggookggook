@@ -8,17 +8,36 @@
     "userInterfaceStyle": "light",
     "backgroundColor": "#F8F8F7",
     "icon": "./assets/icon.png",
-    "ios": { "bundleIdentifier": "kr.ggookggook.app", "supportsTablet": false },
+    "ios": {
+      "bundleIdentifier": "kr.ggookggook.app",
+      "supportsTablet": false
+    },
     "android": {
       "package": "kr.ggookggook.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "monochromeImage": "./assets/android-icon-monochrome.png",
         "backgroundColor": "#F8F8F7"
       }
     },
-    "plugins": ["expo-router", "expo-status-bar", "expo-font", "expo-sqlite", "expo-image"],
-    "experiments": { "typedRoutes": true }
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-font",
+      "expo-sqlite",
+      "expo-image",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#F8F8F7"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
   }
 }
