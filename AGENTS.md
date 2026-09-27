@@ -1,4 +1,4 @@
-# ggookggook (꾹꾹이)
+# 꾹꾹 (ggookggook)
 
 Acupressure guide app being rebuilt as an Expo (React Native) app with an AWS CDK backend.
 
