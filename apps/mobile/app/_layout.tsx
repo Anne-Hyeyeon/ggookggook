@@ -2,7 +2,10 @@ import { NotoSerifKR_700Bold } from '@expo-google-fonts/noto-serif-kr';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { DbProvider, useDb } from '@/db/DbProvider';
+import { useSettings } from '@/state/settings';
 import { colors } from '@/theme';
 
 export default function RootLayout() {
@@ -16,7 +19,32 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
+      <DbProvider>
+        <Routes />
+      </DbProvider>
     </SafeAreaProvider>
+  );
+}
+
+function Routes() {
+  const db = useDb();
+  const loaded = useSettings((state) => state.loaded);
+  const accepted = useSettings((state) => state.disclaimerAcceptedAt !== null);
+  const load = useSettings((state) => state.load);
+
+  useEffect(() => {
+    void load(db);
+  }, [db, load]);
+
+  if (!loaded) return null;
+  return (
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+      <Stack.Protected guard={accepted}>
+        <Stack.Screen name="(tabs)" />
+      </Stack.Protected>
+      <Stack.Protected guard={!accepted}>
+        <Stack.Screen name="welcome" />
+      </Stack.Protected>
+    </Stack>
   );
 }
