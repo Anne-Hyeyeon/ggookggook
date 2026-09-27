@@ -1,20 +1,126 @@
-import { StyleSheet, View } from 'react-native';
+import type { BodyMap, BodyMapId, Region } from '@ggookggook/shared';
+import { Image } from 'expo-image';
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, space } from '@/theme';
+import { content } from '@/content';
+import { colors, fonts, space } from '@/theme';
+import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
 
+const MAP_ASPECT = 2 / 3; // width : height, matching the source drawing
+const HIT_SIZE = 44;
+const DOT_SIZE = 8;
+
+function regionAcupointCount(mapId: BodyMapId, region: Region): number {
+  return content
+    .acupointsForRegion(mapId, region.id)
+    .reduce((sum, group) => sum + group.acupoints.length, 0);
+}
+
+function BodyMapImage({ map, height }: { map: BodyMap; height: number }) {
+  const width = height * MAP_ASPECT;
+  const image = content.image(map.id);
+  return (
+    <View style={[styles.mapFrame, { width, height }]}>
+      {image !== null && (
+        <Image source={image} style={StyleSheet.absoluteFill} contentFit="contain" accessibilityIgnoresInvertColors />
+      )}
+      {map.regions.map((region) => {
+        if (region.x === null || region.y === null) return null;
+        const left = region.x * width - HIT_SIZE / 2;
+        const top = region.y * height - HIT_SIZE / 2;
+        return (
+          <Pressable
+            key={region.id}
+            accessibilityRole="button"
+            accessibilityLabel={region.name}
+            onPress={() => router.push(`/region/${map.id}/${region.id}`)}
+            style={[styles.hitArea, { left, top }]}
+          >
+            <View style={styles.dot} />
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+function RegionRow({ mapId, region }: { mapId: BodyMapId; region: Region }) {
+  const count = regionAcupointCount(mapId, region);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.push(`/region/${mapId}/${region.id}`)}
+      style={styles.row}
+    >
+      <Txt style={styles.rowName}>{`${region.name} · 혈자리 ${count}곳`}</Txt>
+    </Pressable>
+  );
+}
+
 export default function BrowseScreen() {
+  const [side, setSide] = useState<'front' | 'back'>('front');
+  const { height: windowHeight } = useWindowDimensions();
+  const mapId: BodyMapId = side === 'front' ? 'body-front' : 'body-back';
+  const map = content.map(mapId);
+  const mapHeight = Math.min(windowHeight * 0.42, 380);
+
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
-      <View style={styles.body}>
+      <ScrollView contentContainerStyle={styles.body}>
         <Txt variant="heading">찾아보기</Txt>
-        <Txt variant="sub">전신 지도는 곧 열려요.</Txt>
-      </View>
+        <View style={styles.tabs}>
+          <Pressable accessibilityRole="button" hitSlop={8} onPress={() => setSide('front')} style={styles.tabItem}>
+            <Txt style={[styles.tabLabel, side === 'front' && styles.tabActive]}>앞면</Txt>
+          </Pressable>
+          <Pressable accessibilityRole="button" hitSlop={8} onPress={() => setSide('back')} style={styles.tabItem}>
+            <Txt style={[styles.tabLabel, side === 'back' && styles.tabActive]}>뒷면</Txt>
+          </Pressable>
+        </View>
+
+        {side === 'front' && map ? (
+          <BodyMapImage map={map} height={mapHeight} />
+        ) : (
+          <Txt variant="sub">뒷면 그림은 준비 중이에요.</Txt>
+        )}
+
+        <View>
+          {map?.regions.map((region) => (
+            <View key={region.id}>
+              <Rule />
+              <RegionRow mapId={mapId} region={region} />
+            </View>
+          ))}
+          <Rule />
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  body: { padding: space(5), gap: space(2) },
+  body: { padding: space(5), gap: space(4), paddingBottom: space(10) },
+  tabs: { flexDirection: 'row', gap: space(5) },
+  tabItem: { paddingBottom: space(1.5) },
+  tabLabel: { fontFamily: fonts.regular, fontSize: 14, color: colors.faint },
+  tabActive: {
+    fontFamily: fonts.bold,
+    color: colors.ink,
+    borderBottomWidth: 1.5,
+    borderBottomColor: colors.ink,
+    paddingBottom: 2,
+  },
+  mapFrame: {
+    alignSelf: 'center',
+    backgroundColor: colors.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.rule,
+  },
+  hitArea: { position: 'absolute', width: HIT_SIZE, height: HIT_SIZE, alignItems: 'center', justifyContent: 'center' },
+  dot: { width: DOT_SIZE, height: DOT_SIZE, borderRadius: DOT_SIZE / 2, backgroundColor: colors.accent },
+  row: { paddingVertical: space(3.5), minHeight: 48, justifyContent: 'center' },
+  rowName: { fontFamily: fonts.semibold, fontSize: 15.5, color: colors.ink },
 });
