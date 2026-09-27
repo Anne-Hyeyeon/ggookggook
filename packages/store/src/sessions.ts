@@ -44,6 +44,14 @@ export async function latestCompletedSession(db: SqlDatabase): Promise<SessionLo
   return row ? toLog(row) : null;
 }
 
+export async function listCompletedSessions(db: SqlDatabase, limit: number): Promise<SessionLog[]> {
+  const rows = await db.getAllAsync<SessionRow>(
+    'SELECT * FROM sessions WHERE completed_at IS NOT NULL ORDER BY completed_at DESC LIMIT ?',
+    [limit],
+  );
+  return rows.map(toLog);
+}
+
 export async function countSessionsByFeedback(db: SqlDatabase, feedback: SessionFeedback): Promise<number> {
   const row = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM sessions WHERE feedback = ?', [feedback]);
   return row?.count ?? 0;

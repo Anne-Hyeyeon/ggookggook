@@ -19,3 +19,25 @@ export function formatDuration(seconds: number): string {
   if (minutes === 0) return `${rest}초`;
   return rest === 0 ? `${minutes}분` : `${minutes}분 ${rest}초`;
 }
+
+export function formatDayHeader(iso: string, now: Date): string {
+  const date = new Date(iso);
+  const days = Math.round((startOfDay(now) - startOfDay(date)) / 86_400_000);
+  if (days <= 0) return '오늘';
+  if (days === 1) return '어제';
+  return formatDateLine(date);
+}
+
+export function formatTimeOfDay(iso: string): string {
+  const date = new Date(iso);
+  const hours = date.getHours();
+  const period = hours < 12 ? '오전' : '오후';
+  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${period} ${hour12}:${minutes}`;
+}
+
+export function localDayKey(iso: string): string {
+  const date = new Date(iso);
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}

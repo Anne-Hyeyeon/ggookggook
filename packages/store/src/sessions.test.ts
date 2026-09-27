@@ -8,6 +8,7 @@ import {
   getSession,
   insertSession,
   latestCompletedSession,
+  listCompletedSessions,
   setSessionFeedback,
 } from './sessions';
 import { openTestDb } from './test-db';
@@ -78,6 +79,27 @@ describe('sessions', () => {
       await insertSession(db, log('open', null));
       await insertSession(db, { ...log('user', '2026-09-28T00:04:00.000Z'), routine: { kind: 'user', routineId: 'r1' } });
       expect(await countSessionsBySymptom(db)).toEqual({});
+    });
+  });
+
+  describe('listCompletedSessions', () => {
+    it('lists completed sessions newest first', async () => {
+      await insertSession(db, log('old', '2026-09-27T00:04:00.000Z'));
+      await insertSession(db, log('new', '2026-09-28T00:04:00.000Z'));
+      expect((await listCompletedSessions(db, 60)).map((session) => session.id)).toEqual(['new', 'old']);
+    });
+
+    it('excludes open sessions', async () => {
+      await insertSession(db, log('open', null));
+      await insertSession(db, log('done', '2026-09-28T00:04:00.000Z'));
+      expect((await listCompletedSessions(db, 60)).map((session) => session.id)).toEqual(['done']);
+    });
+
+    it('respects the limit', async () => {
+      await insertSession(db, log('a', '2026-09-28T00:01:00.000Z'));
+      await insertSession(db, log('b', '2026-09-28T00:02:00.000Z'));
+      await insertSession(db, log('c', '2026-09-28T00:03:00.000Z'));
+      expect((await listCompletedSessions(db, 2)).map((session) => session.id)).toEqual(['c', 'b']);
     });
   });
 });

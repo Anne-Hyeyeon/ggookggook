@@ -152,6 +152,13 @@ async function runFlow(page) {
   await page.getByRole('button', { name: '설정' }).click();
   await page.getByText('앱 정보').waitFor();
   await shoot(page, '10-settings.png');
+
+  // 11. 내 루틴 (mine) tab, showing the just-finished session as a history row grouped
+  // under "오늘" with its time, duration, and the "나아졌어요" feedback recorded in step 8.
+  await page.getByRole('button', { name: '뒤로' }).click();
+  await page.getByRole('tab', { name: '내 루틴' }).click();
+  await page.getByText('나아졌어요', { exact: true }).waitFor();
+  await shoot(page, '11-mine.png');
 }
 
 async function main() {
