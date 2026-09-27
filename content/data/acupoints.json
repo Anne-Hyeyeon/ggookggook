@@ -1,0 +1,372 @@
+[
+  {
+    "id": "LI4",
+    "name": { "ko": "합곡", "hanja": "合谷", "en": "Hegu" },
+    "sides": "sequential",
+    "location": "손등에서 엄지와 검지 뼈 사이입니다. 검지 뼈 가운데쯤, 엄지 쪽 가장자리를 누르면 뻐근합니다.",
+    "technique": "반대쪽 엄지로 검지 뼈 쪽을 향해 꾹 누르세요. 뻐근할 정도가 적당합니다.",
+    "defaultSeconds": 60,
+    "cautions": ["pregnancy"],
+    "whoLocation": "On the dorsum of the hand, radial to the midpoint of the second metacarpal bone."
+  },
+  {
+    "id": "SI3",
+    "name": { "ko": "후계", "hanja": "後谿", "en": "Houxi" },
+    "sides": "sequential",
+    "location": "주먹을 가볍게 쥐었을 때 새끼손가락 뿌리 관절 바로 뒤(손목 쪽), 손날의 오목한 곳입니다. 손바닥 주름 끝이 손날에 닿는 자리입니다.",
+    "technique": "주먹을 가볍게 쥔 채 반대쪽 엄지 끝으로 손바닥 쪽을 향해 꾹 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the dorsum of the hand, in the depression proximal to the fifth metacarpophalangeal joint, at the border of the red and white flesh on the ulnar side."
+  },
+  {
+    "id": "PC6",
+    "name": { "ko": "내관", "hanja": "內關", "en": "Neiguan" },
+    "sides": "sequential",
+    "location": "손바닥을 위로 하고 손목 안쪽 주름에서 손가락 세 개(검지부터 약지) 너비만큼 올라간 곳입니다. 주먹을 쥐면 도드라지는 가운데 힘줄 두 개 사이입니다.",
+    "technique": "반대쪽 엄지 끝을 두 힘줄 사이에 대고 수직으로 지그시 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the anterior aspect of the forearm, between the tendons of palmaris longus and flexor carpi radialis, 2 B-cun proximal to the palmar wrist crease."
+  },
+  {
+    "id": "HT7",
+    "name": { "ko": "신문", "hanja": "神門", "en": "Shenmen" },
+    "sides": "sequential",
+    "location": "손바닥을 위로 하고 손목 안쪽 주름의 새끼손가락 쪽 끝으로 가면 힘줄이 만져집니다. 그 힘줄 바로 엄지 쪽 옆의 오목한 곳입니다.",
+    "technique": "반대쪽 엄지 끝을 세워 수직으로 지그시 누르세요. 살짝 뻐근할 정도로만 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the anteromedial aspect of the wrist, radial to the flexor carpi ulnaris tendon, on the palmar wrist crease."
+  },
+  {
+    "id": "LU7",
+    "name": { "ko": "열결", "hanja": "列缺", "en": "Lieque" },
+    "sides": "sequential",
+    "location": "엄지 쪽 팔목 옆면에서 손목 안쪽 주름보다 손가락 두 개(검지와 중지) 너비만큼 올라간 곳입니다. 엄지 쪽으로 튀어나온 손목뼈 바로 위, 힘줄 사이의 가느다란 틈입니다.",
+    "technique": "반대쪽 검지 끝으로 뼈 위의 틈을 수직으로 지그시 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the radial aspect of the forearm, between the tendons of abductor pollicis longus and extensor pollicis brevis, in the groove for the abductor pollicis longus tendon, 1.5 B-cun superior to the palmar wrist crease."
+  },
+  {
+    "id": "TE5",
+    "name": { "ko": "외관", "hanja": "外關", "en": "Waiguan" },
+    "sides": "sequential",
+    "location": "손등 쪽 손목 주름에서 손가락 세 개(검지부터 약지) 너비만큼 올라간 곳입니다. 팔뚝의 두 뼈 사이 한가운데입니다.",
+    "technique": "반대쪽 엄지로 두 뼈 사이를 수직으로 꾹 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the posterior aspect of the forearm, midpoint of the interosseous space between the radius and the ulna, 2 B-cun proximal to the dorsal wrist crease."
+  },
+  {
+    "id": "LI11",
+    "name": { "ko": "곡지", "hanja": "曲池", "en": "Quchi" },
+    "sides": "sequential",
+    "location": "팔꿈치를 끝까지 굽혔을 때 생기는 주름의 엄지 쪽 끝, 오목한 곳입니다. 팔을 펴면 팔꿈치 안쪽 힘줄과 바깥쪽 튀어나온 뼈의 가운데쯤입니다.",
+    "technique": "팔꿈치를 살짝 굽히고 반대쪽 엄지로 뼈 쪽을 향해 꾹 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the lateral aspect of the elbow, at the midpoint of the line connecting LU5 with the lateral epicondyle of the humerus."
+  },
+  {
+    "id": "LI15",
+    "name": { "ko": "견우", "hanja": "肩髃", "en": "Jianyu" },
+    "sides": "sequential",
+    "location": "팔을 옆으로 어깨높이까지 들면 어깨 끝에 오목한 곳이 두 개 생깁니다. 그중 앞쪽의 오목한 곳입니다.",
+    "technique": "팔을 내려 힘을 뺀 뒤 반대쪽 중지 끝으로 어깨 안쪽을 향해 지그시 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the shoulder girdle, in the depression between the anterior end of the lateral border of the acromion and the greater tubercle of the humerus."
+  },
+  {
+    "id": "GV20",
+    "name": { "ko": "백회", "hanja": "百會", "en": "Baihui" },
+    "sides": "single",
+    "location": "양쪽 귀의 꼭대기를 머리 위로 이은 선과 머리 한가운데 선이 만나는 곳입니다. 정수리에서 살짝 오목하게 만져지는 자리입니다.",
+    "technique": "중지 끝으로 머리 중심을 향해 수직으로 지그시 누르세요. 기분 좋게 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the head, 5 B-cun superior to the anterior hairline, on the anterior median line."
+  },
+  {
+    "id": "GV29",
+    "name": { "ko": "인당", "hanja": "印堂", "en": "Yintang" },
+    "sides": "single",
+    "location": "양쪽 눈썹 안쪽 끝을 이은 선의 한가운데, 오목한 곳입니다.",
+    "technique": "중지 끝으로 이마 안쪽을 향해 지그시 누르거나 작은 원을 그리며 누르세요. 아프지 않을 만큼 부드럽게 하세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the head, in the depression between the medial ends of the two eyebrows."
+  },
+  {
+    "id": "BL2",
+    "name": { "ko": "찬죽", "hanja": "攢竹", "en": "Cuanzhu" },
+    "sides": "together",
+    "location": "눈썹 안쪽 끝의 오목한 곳입니다. 양쪽에 하나씩 있습니다.",
+    "technique": "눈을 감고 양손 엄지를 양쪽에 대고 이마 쪽 위를 향해 지그시 누르세요. 눈알을 누르지 않도록 주의하세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the head, in the depression at the medial end of the eyebrow."
+  },
+  {
+    "id": "ST2",
+    "name": { "ko": "사백", "hanja": "四白", "en": "Sibai" },
+    "sides": "together",
+    "location": "정면을 볼 때 눈동자 바로 아래, 광대뼈 위의 작은 오목한 곳입니다. 눈 밑 뼈 가장자리에서 조금 더 내려온 자리입니다.",
+    "technique": "양손 검지 끝을 대고 뼈를 향해 수직으로 가볍게 누르세요. 눈 쪽으로 밀어 올리지 않도록 주의하세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the face, in the infraorbital foramen."
+  },
+  {
+    "id": "LI20",
+    "name": { "ko": "영향", "hanja": "迎香", "en": "Yingxiang" },
+    "sides": "together",
+    "location": "콧방울 바깥쪽 가장자리의 가운데 높이에서, 코 옆 팔자 주름 안의 오목한 곳입니다.",
+    "technique": "양손 검지 끝을 양쪽에 대고 콧방울 쪽을 향해 지그시 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the face, in the nasolabial sulcus, at the same level as the midpoint of the lateral border of the ala of the nose."
+  },
+  {
+    "id": "EX-HN5",
+    "name": { "ko": "태양", "hanja": "太陽", "en": "Taiyang" },
+    "sides": "together",
+    "location": "눈썹 바깥쪽 끝과 눈꼬리의 가운데에서 귀 쪽으로 손가락 하나 너비만큼 간 오목한 곳입니다. 관자놀이에 있는 자리입니다.",
+    "technique": "양손 검지나 중지 끝을 양쪽에 대고 작은 원을 그리며 지그시 누르세요. 편안하게 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "In the depression about one finger-breadth posterior to the midpoint between the lateral end of the eyebrow and the outer canthus."
+  },
+  {
+    "id": "GB20",
+    "name": { "ko": "풍지", "hanja": "風池", "en": "Fengchi" },
+    "sides": "together",
+    "location": "뒷머리뼈 바로 아래, 목 뒤 굵은 근육 두 개 사이의 오목한 곳입니다. 양쪽에 하나씩 있습니다.",
+    "technique": "양손 엄지를 양쪽에 대고 머리 쪽 위를 향해 지그시 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "In the nape, inferior to the occipital bone, in the depression between the upper attachments of the sternocleidomastoid and trapezius muscles."
+  },
+  {
+    "id": "GV14",
+    "name": { "ko": "대추", "hanja": "大椎", "en": "Dazhui" },
+    "sides": "single",
+    "location": "고개를 숙이면 목 뒤 아래쪽에 가장 크게 튀어나오는 뼈가 있습니다. 그 뼈 바로 아래의 오목한 곳입니다.",
+    "technique": "고개를 살짝 숙이고 중지 끝으로 아래쪽을 향해 지그시 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "In the posterior region of the neck, in the depression inferior to the spinous process of the seventh cervical vertebra (C7), on the posterior median line."
+  },
+  {
+    "id": "GB21",
+    "name": { "ko": "견정", "hanja": "肩井", "en": "Jianjing" },
+    "sides": "sequential",
+    "location": "목 뒤 아래쪽에 가장 크게 튀어나온 뼈와 어깨 끝의 가운데입니다. 어깨 위 근육의 가장 높은 곳입니다.",
+    "technique": "반대쪽 손의 검지와 중지를 어깨 위에 걸고 아래쪽을 향해 지그시 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": ["pregnancy"],
+    "whoLocation": "In the posterior region of the neck, at the midpoint of the line connecting the spinous process of C7 with the lateral end of the acromion."
+  },
+  {
+    "id": "BL13",
+    "name": { "ko": "폐수", "hanja": "肺兪", "en": "Feishu" },
+    "sides": "together",
+    "location": "목 뒤 아래쪽에 가장 크게 튀어나온 뼈에서 아래로 세 번째 등뼈의 바로 아래 높이입니다. 등 한가운데 선에서 양옆으로 손가락 두 개(검지와 중지) 너비 떨어진 곳입니다.",
+    "technique": "테니스공 두 개를 등과 벽 사이 양쪽에 하나씩 두고 몸을 기대 누르세요. 뻐근할 정도로 기대세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "In the upper back region, at the same level as the inferior border of the spinous process of the third thoracic vertebra (T3), 1.5 B-cun lateral to the posterior median line."
+  },
+  {
+    "id": "SI11",
+    "name": { "ko": "천종", "hanja": "天宗", "en": "Tianzong" },
+    "sides": "sequential",
+    "location": "어깨뼈 윗부분을 가로지르는 뼈 능선의 가운데에서 어깨뼈 아래 끝 쪽으로 3분의 1쯤 내려간 곳입니다. 누르면 뻐근한 오목한 곳입니다.",
+    "technique": "테니스공을 어깨뼈와 벽 사이에 두고 몸을 기대 누르세요. 뻐근할 정도로 기대세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "In the scapular region, in the depression between the upper one third and lower two thirds of the line connecting the midpoint of the spine of the scapula with the inferior angle of the scapula."
+  },
+  {
+    "id": "BL23",
+    "name": { "ko": "신수", "hanja": "腎兪", "en": "Shenshu" },
+    "sides": "together",
+    "location": "양쪽 골반뼈 윗끝을 이은 선에 있는 허리뼈에서 위로 두 번째 허리뼈의 바로 아래 높이입니다. 허리 한가운데 선에서 양옆으로 손가락 두 개(검지와 중지) 너비 떨어진 곳입니다.",
+    "technique": "양손으로 허리를 감싸 쥐고 엄지로 배 쪽을 향해 꾹 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "In the lumbar region, at the same level as the inferior border of the spinous process of the second lumbar vertebra (L2), 1.5 B-cun lateral to the posterior median line."
+  },
+  {
+    "id": "GV4",
+    "name": { "ko": "명문", "hanja": "命門", "en": "Mingmen" },
+    "sides": "single",
+    "location": "양쪽 골반뼈 윗끝을 이은 선에 있는 허리뼈에서 위로 두 번째 허리뼈의 바로 아래, 오목한 곳입니다. 허리 한가운데 선 위입니다.",
+    "technique": "주먹을 가볍게 쥐고 손가락 관절로 배 쪽을 향해 지그시 누르세요. 손이 닿기 어려우면 테니스공을 허리와 벽 사이에 두고 뻐근할 정도로 기대세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "In the lumbar region, in the depression inferior to the spinous process of the second lumbar vertebra (L2), on the posterior median line."
+  },
+  {
+    "id": "GB30",
+    "name": { "ko": "환도", "hanja": "環跳", "en": "Huantiao" },
+    "sides": "sequential",
+    "location": "엉덩이 옆으로 튀어나온 넓적다리뼈 윗부분과 꼬리뼈 위쪽을 이은 선에서, 튀어나온 뼈 쪽으로 3분의 1 지점입니다.",
+    "technique": "테니스공을 엉덩이와 벽 사이에 두고 몸을 기대 누르세요. 엄지로 할 때는 몸 안쪽을 향해 뻐근할 정도로 깊게 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "In the buttock region, at the junction of the lateral one third and medial two thirds of the line connecting the prominence of the greater trochanter with the sacral hiatus."
+  },
+  {
+    "id": "CV17",
+    "name": { "ko": "전중", "hanja": "膻中", "en": "Danzhong" },
+    "sides": "single",
+    "location": "가슴 한가운데 가슴뼈 위입니다. 쇄골 아래부터 갈비뼈 사이 틈을 위에서부터 세어 네 번째 틈과 같은 높이입니다.",
+    "technique": "중지 끝으로 가슴뼈 위를 지그시 누르거나 작은 원을 그리며 누르세요. 뼈 위라서 아프지 않을 만큼 부드럽게 하세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "In the anterior thoracic region, at the same level as the fourth intercostal space, on the anterior median line."
+  },
+  {
+    "id": "CV12",
+    "name": { "ko": "중완", "hanja": "中脘", "en": "Zhongwan" },
+    "sides": "single",
+    "location": "배꼽과 명치 끝(가슴뼈 아래 끝)의 한가운데입니다. 배 한가운데 선 위입니다.",
+    "technique": "검지부터 약지까지 세 손가락을 모아 배 안쪽을 향해 지그시 누르세요. 숨을 내쉬면서 편안할 만큼만 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "In the upper abdomen, 4 B-cun superior to the centre of the umbilicus, on the anterior median line."
+  },
+  {
+    "id": "CV6",
+    "name": { "ko": "기해", "hanja": "氣海", "en": "Qihai" },
+    "sides": "single",
+    "location": "배꼽에서 손가락 두 개(검지와 중지) 너비만큼 아래입니다. 배 한가운데 선 위입니다.",
+    "technique": "검지와 중지를 모아 배 안쪽을 향해 부드럽게 누르세요. 숨을 내쉬면서 편안할 만큼만 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": ["pregnancy"],
+    "whoLocation": "In the lower abdomen, 1.5 B-cun inferior to the centre of the umbilicus, on the anterior median line."
+  },
+  {
+    "id": "CV4",
+    "name": { "ko": "관원", "hanja": "關元", "en": "Guanyuan" },
+    "sides": "single",
+    "location": "배꼽에서 손가락 네 개(검지부터 새끼) 너비만큼 아래입니다. 배 한가운데 선 위입니다.",
+    "technique": "검지부터 약지까지 세 손가락을 모아 배 안쪽을 향해 부드럽게 누르세요. 숨을 내쉬면서 편안할 만큼만 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": ["pregnancy"],
+    "whoLocation": "In the lower abdomen, 3 B-cun inferior to the centre of the umbilicus, on the anterior median line."
+  },
+  {
+    "id": "ST25",
+    "name": { "ko": "천추", "hanja": "天樞", "en": "Tianshu" },
+    "sides": "together",
+    "location": "배꼽에서 양옆으로 손가락 세 개(검지부터 약지) 너비 떨어진 곳입니다. 양쪽에 하나씩 있습니다.",
+    "technique": "양손 검지와 중지를 모아 양쪽에 대고 배 안쪽을 향해 부드럽게 누르세요. 숨을 내쉬면서 편안할 만큼만 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": ["pregnancy"],
+    "whoLocation": "On the abdomen, 2 B-cun lateral to the centre of the umbilicus."
+  },
+  {
+    "id": "ST36",
+    "name": { "ko": "족삼리", "hanja": "足三里", "en": "Zusanli" },
+    "sides": "sequential",
+    "location": "무릎뼈 아래 바깥쪽 오목한 곳에서 손가락 네 개 너비만큼 내려온 곳입니다. 정강이뼈에서 손가락 하나 너비 바깥쪽입니다.",
+    "technique": "엄지로 꾹 누르거나 작은 원을 그리며 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the anterior aspect of the leg, on the line connecting ST35 with ST41, 3 B-cun inferior to ST35."
+  },
+  {
+    "id": "GB34",
+    "name": { "ko": "양릉천", "hanja": "陽陵泉", "en": "Yanglingquan" },
+    "sides": "sequential",
+    "location": "무릎 바깥쪽 아래에 동그랗게 튀어나온 뼈가 있습니다. 이 뼈의 앞쪽 아래 오목한 곳입니다.",
+    "technique": "엄지로 뼈 쪽을 향해 꾹 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the fibular aspect of the leg, in the depression anterior and distal to the head of the fibula."
+  },
+  {
+    "id": "BL40",
+    "name": { "ko": "위중", "hanja": "委中", "en": "Weizhong" },
+    "sides": "sequential",
+    "location": "무릎 뒤 오금 주름의 한가운데입니다.",
+    "technique": "무릎을 살짝 굽히고 엄지나 중지로 무릎 앞쪽을 향해 누르세요. 혈관이 지나는 자리라 가볍게 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the posterior aspect of the knee, at the midpoint of the popliteal crease."
+  },
+  {
+    "id": "BL57",
+    "name": { "ko": "승산", "hanja": "承山", "en": "Chengshan" },
+    "sides": "sequential",
+    "location": "종아리 뒤 한가운데입니다. 발끝으로 서면 종아리 근육 아래에 생기는 ㅅ자 모양 홈의 꼭짓점입니다.",
+    "technique": "앉아서 무릎을 세우고 엄지로 정강이 쪽을 향해 꾹 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the posterior aspect of the leg, at the connecting point of the calcaneal tendon with the two muscle bellies of the gastrocnemius muscle."
+  },
+  {
+    "id": "SP6",
+    "name": { "ko": "삼음교", "hanja": "三陰交", "en": "Sanyinjiao" },
+    "sides": "sequential",
+    "location": "안쪽 복사뼈의 가장 튀어나온 곳에서 손가락 네 개(검지부터 새끼) 너비만큼 올라간 곳입니다. 정강이뼈 안쪽 가장자리 바로 뒤입니다.",
+    "technique": "엄지로 정강이뼈 쪽을 향해 꾹 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": ["pregnancy"],
+    "whoLocation": "On the tibial aspect of the leg, posterior to the medial border of the tibia, 3 B-cun superior to the prominence of the medial malleolus."
+  },
+  {
+    "id": "KI3",
+    "name": { "ko": "태계", "hanja": "太谿", "en": "Taixi" },
+    "sides": "sequential",
+    "location": "안쪽 복사뼈의 가장 튀어나온 곳과 발뒤꿈치 힘줄(아킬레스건) 사이의 오목한 곳입니다.",
+    "technique": "엄지로 복사뼈 쪽을 향해 지그시 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the posteromedial aspect of the ankle, in the depression between the prominence of the medial malleolus and the calcaneal tendon."
+  },
+  {
+    "id": "SP4",
+    "name": { "ko": "공손", "hanja": "公孫", "en": "Gongsun" },
+    "sides": "sequential",
+    "location": "발 안쪽 가장자리를 엄지발가락에서 뒤꿈치 쪽으로 쓸어 가면 볼록한 뼈 끝에 손가락이 걸립니다. 그 앞쪽 아래, 발바닥과 발등 피부가 만나는 경계의 오목한 곳입니다.",
+    "technique": "엄지로 뼈 아래쪽을 향해 밀듯이 꾹 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the medial aspect of the foot, anteroinferior to the base of the first metatarsal bone, at the border of the red and white flesh."
+  },
+  {
+    "id": "BL60",
+    "name": { "ko": "곤륜", "hanja": "崑崙", "en": "Kunlun" },
+    "sides": "sequential",
+    "location": "바깥쪽 복사뼈의 가장 튀어나온 곳과 발뒤꿈치 힘줄(아킬레스건) 사이의 오목한 곳입니다.",
+    "technique": "엄지로 복사뼈 쪽을 향해 지그시 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": ["pregnancy"],
+    "whoLocation": "On the posterolateral aspect of the ankle, in the depression between the prominence of the lateral malleolus and the calcaneal tendon."
+  },
+  {
+    "id": "LR3",
+    "name": { "ko": "태충", "hanja": "太衝", "en": "Taichong" },
+    "sides": "sequential",
+    "location": "발등에서 엄지발가락과 둘째 발가락 사이를 발목 쪽으로 쓸어 올라가면 두 뼈가 만나는 곳에서 손가락이 멈춥니다. 그 바로 발가락 쪽의 오목한 곳입니다.",
+    "technique": "엄지로 발바닥 쪽을 향해 꾹 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the dorsum of the foot, between the first and second metatarsal bones, in the depression distal to the junction of the bases of the two bones, over the dorsalis pedis artery."
+  },
+  {
+    "id": "KI1",
+    "name": { "ko": "용천", "hanja": "湧泉", "en": "Yongquan" },
+    "sides": "sequential",
+    "location": "발가락을 오므렸을 때 발바닥 앞쪽에서 가장 깊게 오목해지는 곳입니다. 둘째와 셋째 발가락 사이에서 뒤꿈치까지 이은 선의 앞쪽 3분의 1 지점입니다.",
+    "technique": "엄지로 발가락 쪽을 향해 밀듯이 꾹 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the sole of the foot, in the deepest depression of the sole when the toes are flexed."
+  }
+]

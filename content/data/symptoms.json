@@ -1,0 +1,212 @@
+[
+  {
+    "id": "headache",
+    "name": "두통",
+    "aliases": [
+      "머리 아플 때"
+    ],
+    "steps": [
+      { "acupointId": "LI4", "seconds": 60 },
+      { "acupointId": "EX-HN5", "seconds": 60 },
+      { "acupointId": "GB20", "seconds": 60 }
+    ],
+    "seeDoctor": "평생 처음 겪는 갑작스럽고 심한 두통이거나, 말이 어눌해지거나 팔다리에 힘이 빠지면 바로 119에 연락하세요."
+  },
+  {
+    "id": "insomnia",
+    "name": "불면",
+    "aliases": [
+      "잠이 안 올 때",
+      "잠 못 잘 때"
+    ],
+    "steps": [
+      { "acupointId": "HT7", "seconds": 60 },
+      { "acupointId": "GV29", "seconds": 60 },
+      { "acupointId": "KI1", "seconds": 60 }
+    ],
+    "seeDoctor": "잠들기 어려운 날이 3주 넘게 이어지거나 낮 생활이 힘들 정도면 병원 진료를 받으세요."
+  },
+  {
+    "id": "stress",
+    "name": "스트레스",
+    "aliases": [
+      "긴장될 때",
+      "불안할 때"
+    ],
+    "steps": [
+      { "acupointId": "PC6", "seconds": 60 },
+      { "acupointId": "GV29", "seconds": 60 }
+    ],
+    "seeDoctor": "우울하거나 불안한 기분이 2주 넘게 이어지면 전문가와 상담하세요. 도움이 필요하면 자살예방 상담전화 109로 연락하세요."
+  },
+  {
+    "id": "indigestion",
+    "name": "소화불량",
+    "aliases": [
+      "소화가 안 될 때",
+      "더부룩할 때"
+    ],
+    "steps": [
+      { "acupointId": "PC6", "seconds": 60 },
+      { "acupointId": "ST36", "seconds": 60 },
+      { "acupointId": "CV12", "seconds": 60 }
+    ],
+    "seeDoctor": "검은 변을 보거나 피를 토하면, 또는 이유 없이 체중이 줄면 병원 진료를 받으세요."
+  },
+  {
+    "id": "shoulder_pain",
+    "name": "어깨 통증",
+    "aliases": [
+      "어깨 결림",
+      "어깨가 뭉쳤을 때"
+    ],
+    "steps": [
+      { "acupointId": "GB21", "seconds": 60 },
+      { "acupointId": "SI3", "seconds": 60 }
+    ],
+    "seeDoctor": "왼쪽 어깨나 팔로 번지는 가슴 통증이 함께 오면 바로 119에 연락하세요. 팔 저림이 계속되면 병원 진료를 받으세요."
+  },
+  {
+    "id": "back_pain",
+    "name": "허리 통증",
+    "aliases": [
+      "허리 아플 때"
+    ],
+    "steps": [
+      { "acupointId": "BL23", "seconds": 60 },
+      { "acupointId": "BL40", "seconds": 60 }
+    ],
+    "seeDoctor": "다리 저림이나 감각 이상, 대소변 장애가 함께 오면 바로 병원에 가세요."
+  },
+  {
+    "id": "eye_fatigue",
+    "name": "눈 피로",
+    "aliases": [
+      "눈이 뻑뻑할 때",
+      "눈이 침침할 때"
+    ],
+    "steps": [
+      { "acupointId": "BL2", "seconds": 60 },
+      { "acupointId": "EX-HN5", "seconds": 60 },
+      { "acupointId": "GB20", "seconds": 60 }
+    ],
+    "seeDoctor": "시야가 갑자기 흐려지거나 눈 통증이 심하면 안과 진료를 받으세요."
+  },
+  {
+    "id": "nausea",
+    "name": "메스꺼움",
+    "aliases": [
+      "속이 울렁거릴 때",
+      "멀미"
+    ],
+    "steps": [
+      { "acupointId": "PC6", "seconds": 60 },
+      { "acupointId": "ST36", "seconds": 60 }
+    ],
+    "seeDoctor": "구토가 하루 넘게 이어지거나 심한 복통, 탈수 증상이 있으면 병원에 가세요."
+  },
+  {
+    "id": "neck_pain",
+    "name": "목 통증",
+    "aliases": [
+      "목 결림",
+      "목이 뻐근할 때"
+    ],
+    "steps": [
+      { "acupointId": "GB20", "seconds": 60 },
+      { "acupointId": "GB21", "seconds": 60 },
+      { "acupointId": "TE5", "seconds": 60 }
+    ],
+    "seeDoctor": "목 통증과 함께 열이 나거나 팔 저림이 있으면 병원 진료를 받으세요."
+  },
+  {
+    "id": "menstrual_pain",
+    "name": "생리통",
+    "aliases": [
+      "생리할 때 배 아플 때"
+    ],
+    "steps": [
+      { "acupointId": "SP6", "seconds": 60 },
+      { "acupointId": "LR3", "seconds": 60 },
+      { "acupointId": "CV4", "seconds": 60 }
+    ],
+    "seeDoctor": "통증이 점점 심해지거나 진통제로도 조절되지 않으면 산부인과 진료를 받으세요."
+  },
+  {
+    "id": "cold_extremities",
+    "name": "수족냉증",
+    "aliases": [
+      "손발이 찰 때"
+    ],
+    "steps": [
+      { "acupointId": "KI1", "seconds": 60 },
+      { "acupointId": "ST36", "seconds": 60 }
+    ],
+    "seeDoctor": "손발 색이 하얗거나 파랗게 변하면서 저리면 병원 진료를 받으세요."
+  },
+  {
+    "id": "concentration",
+    "name": "집중력",
+    "aliases": [
+      "집중이 안 될 때",
+      "머리가 멍할 때"
+    ],
+    "steps": [
+      { "acupointId": "GV20", "seconds": 60 },
+      { "acupointId": "GV29", "seconds": 60 }
+    ],
+    "seeDoctor": "기억력이 떨어지거나 멍한 상태가 계속되면 병원 진료를 받으세요."
+  },
+  {
+    "id": "urgent_bowel",
+    "name": "급똥참기",
+    "aliases": [
+      "화장실이 급할 때",
+      "배가 급할 때"
+    ],
+    "steps": [
+      { "acupointId": "LI4", "seconds": 60 },
+      { "acupointId": "ST36", "seconds": 60 }
+    ],
+    "seeDoctor": "설사가 이틀 넘게 이어지거나 변에 피가 섞이면, 또는 열과 심한 복통이 함께 오면 병원 진료를 받으세요."
+  },
+  {
+    "id": "food_stagnation",
+    "name": "식체",
+    "aliases": [
+      "체했을 때",
+      "얹혔을 때"
+    ],
+    "steps": [
+      { "acupointId": "LI4", "seconds": 60 },
+      { "acupointId": "PC6", "seconds": 60 }
+    ],
+    "seeDoctor": "가슴 통증이나 식은땀이 함께 오면 체한 것이 아닐 수 있습니다. 바로 119에 연락하세요."
+  },
+  {
+    "id": "constipation",
+    "name": "변비",
+    "aliases": [
+      "변이 안 나올 때"
+    ],
+    "steps": [
+      { "acupointId": "ST25", "seconds": 60 },
+      { "acupointId": "LI4", "seconds": 60 },
+      { "acupointId": "ST36", "seconds": 60 }
+    ],
+    "seeDoctor": "변에 피가 섞이거나 배변 습관이 갑자기 바뀌면 병원 진료를 받으세요."
+  },
+  {
+    "id": "facial_swelling",
+    "name": "얼굴 부종",
+    "aliases": [
+      "얼굴 부기",
+      "얼굴이 부었을 때"
+    ],
+    "steps": [
+      { "acupointId": "LI20", "seconds": 60 },
+      { "acupointId": "ST36", "seconds": 60 }
+    ],
+    "seeDoctor": "부기가 며칠 넘게 빠지지 않거나 소변량이 줄면 병원 진료를 받으세요."
+  }
+]
