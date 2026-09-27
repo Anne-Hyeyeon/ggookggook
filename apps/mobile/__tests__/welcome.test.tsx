@@ -25,3 +25,20 @@ it('walks through the intro, pregnancy toggle, and disclaimer', async () => {
   await fireEvent.press(screen.getByRole('button', { name: '확인했어요' }));
   expect(accept).toHaveBeenCalledWith({});
 });
+
+it('shows an inline message and keeps the button usable when accepting fails', async () => {
+  accept.mockRejectedValueOnce(new Error('write failed'));
+  const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+  await render(<WelcomeScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: '다음' }));
+  await fireEvent.press(screen.getByRole('button', { name: '확인했어요' }));
+
+  expect(await screen.findByText('저장하지 못했어요. 다시 눌러 주세요.')).toBeTruthy();
+
+  accept.mockResolvedValueOnce(undefined);
+  await fireEvent.press(screen.getByRole('button', { name: '확인했어요' }));
+  expect(accept).toHaveBeenCalledTimes(2);
+
+  errorSpy.mockRestore();
+});

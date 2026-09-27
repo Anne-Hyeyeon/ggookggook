@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
@@ -21,7 +21,27 @@ export default function WelcomeScreen() {
   const db = useDb();
   const { settings, update, accept } = useSettings();
   const [step, setStep] = useState<0 | 1>(0);
+  const [saveError, setSaveError] = useState(false);
   const cat = content.image('cat-shoulder');
+
+  const handlePregnancyChange = useCallback(
+    (value: boolean) => {
+      setSaveError(false);
+      update(db, { pregnancyMode: value }).catch((error: unknown) => {
+        console.error('Failed to save the pregnancy setting', error);
+        setSaveError(true);
+      });
+    },
+    [db, update],
+  );
+
+  const handleAccept = useCallback(() => {
+    setSaveError(false);
+    accept(db).catch((error: unknown) => {
+      console.error('Failed to accept the disclaimer', error);
+      setSaveError(true);
+    });
+  }, [db, accept]);
 
   if (step === 0) {
     return (
@@ -64,13 +84,18 @@ export default function WelcomeScreen() {
             accessibilityRole="switch"
             accessibilityLabel="임신 중이에요"
             value={settings.pregnancyMode}
-            onValueChange={(value) => void update(db, { pregnancyMode: value })}
+            onValueChange={handlePregnancyChange}
             trackColor={{ true: colors.accent, false: colors.rule }}
           />
         </View>
       </ScrollView>
       <View style={styles.footer}>
-        <Button label="확인했어요" onPress={() => void accept(db)} />
+        {saveError && (
+          <Txt variant="sub" style={styles.error}>
+            저장하지 못했어요. 다시 눌러 주세요.
+          </Txt>
+        )}
+        <Button label="확인했어요" onPress={handleAccept} />
       </View>
     </SafeAreaView>
   );
@@ -87,5 +112,6 @@ const styles = StyleSheet.create({
   noticeText: { paddingVertical: space(3) },
   toggle: { flexDirection: 'row', alignItems: 'center', gap: space(4) },
   toggleText: { flex: 1, gap: space(1) },
-  footer: { padding: space(5) },
+  footer: { padding: space(5), gap: space(2) },
+  error: { color: colors.accent, textAlign: 'center' },
 });

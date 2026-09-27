@@ -9,13 +9,15 @@ import { useSettings } from '@/state/settings';
 import { colors } from '@/theme';
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     'Pretendard-Regular': require('pretendard/dist/public/static/Pretendard-Regular.otf'),
     'Pretendard-SemiBold': require('pretendard/dist/public/static/Pretendard-SemiBold.otf'),
     'Pretendard-Bold': require('pretendard/dist/public/static/Pretendard-Bold.otf'),
     'NotoSerifKR-Bold': NotoSerifKR_700Bold,
   });
-  if (!fontsLoaded) return null;
+  if (fontError) console.error('Failed to load fonts, falling back to system fonts', fontError);
+  // Render as soon as either resolves: a font load failure must not dead-end the app on a blank screen.
+  if (!fontsLoaded && !fontError) return null;
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
