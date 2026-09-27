@@ -1,5 +1,9 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
+# ggookggook (꾹꾹이)
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+Acupressure guide app being rebuilt as an Expo (React Native) app with an AWS CDK backend.
+
+- Design spec: `docs/superpowers/specs/2026-09-27-ggookggook-app-design.md`
+- Content drafts (not yet reviewed against WHO locations): `content/draft/`
+- First-pass illustrations: `content/images/raw/`
+
+Expo, React Native, and AWS CDK APIs change often. Check the installed package docs before writing code, and heed deprecation notices.
