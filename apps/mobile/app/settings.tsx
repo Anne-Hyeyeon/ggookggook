@@ -2,7 +2,7 @@ import { PRESS_SECONDS_MAX, PRESS_SECONDS_MIN, REST_SECONDS_MAX, REST_SECONDS_MI
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
@@ -12,6 +12,12 @@ import { colors, fonts, space } from '@/theme';
 import { BackLink } from '@/ui/BackLink';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
+
+// react-native-web's Switch ignores `thumbColor` for the on-state thumb; `activeThumbColor` is
+// its web-only fix. It isn't part of RN's SwitchProps type, so it's spread in through a
+// platform-guarded object instead of a direct JSX prop, to avoid a TS error on native builds.
+const webActiveThumbColorProps: { activeThumbColor?: string } =
+  Platform.OS === 'web' ? { activeThumbColor: colors.card } : {};
 
 export default function SettingsScreen() {
   const db = useDb();
@@ -139,6 +145,7 @@ function SwitchRow({ label, sub, value, onValueChange }: SwitchRowProps) {
         onValueChange={onValueChange}
         trackColor={{ true: colors.accent, false: colors.rule }}
         thumbColor={colors.card}
+        {...webActiveThumbColorProps}
       />
     </View>
   );

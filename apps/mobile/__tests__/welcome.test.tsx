@@ -18,9 +18,12 @@ beforeEach(() => {
 it('walks through the intro, pregnancy toggle, and disclaimer', async () => {
   await render(<WelcomeScreen />);
   expect(screen.getByText('꾹꾹')).toBeTruthy();
+  expect(screen.getByText('가입 없이 바로 쓸 수 있어요.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: '다음' }));
 
   expect(screen.getByText('시작하기 전에 확인해 주세요')).toBeTruthy();
+  // Native must keep its own thumb rendering; activeThumbColor is a web-only fix (see welcome.tsx).
+  expect(screen.getByRole('switch').props.activeThumbColor).toBeUndefined();
   await fireEvent(screen.getByRole('switch'), 'valueChange', true);
   expect(update).toHaveBeenCalledWith({}, { pregnancyMode: true });
 

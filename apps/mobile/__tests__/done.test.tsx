@@ -30,9 +30,12 @@ it('shows the result and records feedback', async () => {
   expect(screen.getByText('4분')).toBeTruthy();
   expect(screen.getByText('합곡 · 내관')).toBeTruthy();
 
+  expect(screen.queryByText('기록해 둘게요.')).toBeNull();
+
   await fireEvent.press(screen.getByRole('button', { name: '나아졌어요' }));
   expect(mocked.setSessionFeedback).toHaveBeenCalledWith({}, 's1', 'better');
   expect(screen.getByRole('button', { name: '나아졌어요' }).props.accessibilityState).toMatchObject({ selected: true });
+  expect(screen.getByText('기록해 둘게요.')).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('button', { name: '처음으로' }));
   expect(router.dismissTo).toHaveBeenCalledWith('/');

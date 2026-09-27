@@ -131,12 +131,13 @@ async function runFlow(page) {
   await page.waitForFunction(() => document.body.innerText.includes('잠시 떼세요'), null, { timeout: 10_000 });
   await shoot(page, '07-guide-rest.png');
 
-  // 8. Done, after the routine finishes
+  // 8. Done, after the routine finishes. Feedback is given here (rather than after the
+  // shot) so 08-done.png also shows the post-feedback acknowledgement and the selected
+  // option, and so Today's "나아졌어요 N번" line below has something to show.
   await page.waitForURL('**/done**', { timeout: 60_000 });
-  await shoot(page, '08-done.png');
-
-  // 8b. Give feedback so Today's "나아졌어요 N번" line has something to show.
   await page.getByRole('button', { name: '나아졌어요' }).click();
+  await page.getByText('기록해 둘게요.').waitFor();
+  await shoot(page, '08-done.png');
 
   // 9. Today again, showing the just-finished session as the recent row (with its
   // "다시 하기" affordance) and the resulting "나아졌어요 1번" line.

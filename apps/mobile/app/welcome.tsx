@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
@@ -11,6 +11,12 @@ import { colors, space } from '@/theme';
 import { Button } from '@/ui/Button';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
+
+// react-native-web's Switch ignores `thumbColor` for the on-state thumb; `activeThumbColor` is
+// its web-only fix. It isn't part of RN's SwitchProps type, so it's spread in through a
+// platform-guarded object instead of a direct JSX prop, to avoid a TS error on native builds.
+const webActiveThumbColorProps: { activeThumbColor?: string } =
+  Platform.OS === 'web' ? { activeThumbColor: colors.card } : {};
 
 export default function WelcomeScreen() {
   const db = useDb();
@@ -44,12 +50,15 @@ export default function WelcomeScreen() {
       <SafeAreaView style={styles.screen}>
         <View style={styles.intro}>
           {cat !== null && <Image source={cat} style={styles.cat} contentFit="contain" accessibilityIgnoresInvertColors />}
-          <Txt variant="title">꾹꾹</Txt>
+          <Txt variant="display">꾹꾹</Txt>
           <Txt variant="body" style={styles.center}>
             불편한 곳을 고르면{'\n'}누를 곳을 순서대로 알려드려요.
           </Txt>
         </View>
         <View style={styles.footer}>
+          <Txt variant="caption" style={styles.captionCenter}>
+            가입 없이 바로 쓸 수 있어요.
+          </Txt>
           <Button label="다음" onPress={() => setStep(1)} />
         </View>
       </SafeAreaView>
@@ -83,6 +92,7 @@ export default function WelcomeScreen() {
             onValueChange={handlePregnancyChange}
             trackColor={{ true: colors.accent, false: colors.rule }}
             thumbColor={colors.card}
+            {...webActiveThumbColorProps}
           />
         </View>
       </ScrollView>
@@ -103,6 +113,7 @@ const styles = StyleSheet.create({
   intro: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space(4), padding: space(8) },
   cat: { width: 220, height: 220 },
   center: { textAlign: 'center', color: colors.sub },
+  captionCenter: { textAlign: 'center' },
   body: { padding: space(6), gap: space(6) },
   list: { gap: 0 },
   notice: { gap: space(3), paddingTop: 0 },

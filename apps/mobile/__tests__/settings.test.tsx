@@ -32,6 +32,8 @@ it('goes back', async () => {
 
 it('toggles rhythm haptics', async () => {
   await render(<SettingsScreen />);
+  // Native must keep its own thumb rendering; activeThumbColor is a web-only fix (see settings.tsx).
+  expect(screen.getByRole('switch', { name: '리듬 진동' }).props.activeThumbColor).toBeUndefined();
   await fireEvent(screen.getByRole('switch', { name: '리듬 진동' }), 'valueChange', false);
   expect(update).toHaveBeenCalledWith({}, { rhythmHaptics: false });
 });

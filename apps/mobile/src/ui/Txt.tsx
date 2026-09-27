@@ -1,9 +1,10 @@
 import { Platform, StyleSheet, Text, type TextProps, type TextStyle } from 'react-native';
 import { colors, fonts } from '@/theme';
 
-export type TxtVariant = 'title' | 'heading' | 'body' | 'sub' | 'caption' | 'point' | 'pointSmall' | 'number';
+export type TxtVariant = 'display' | 'title' | 'heading' | 'body' | 'sub' | 'caption' | 'point' | 'pointSmall' | 'number';
 
 const styles = StyleSheet.create({
+  display: { fontFamily: fonts.bold, fontSize: 34, lineHeight: 42, letterSpacing: -1, color: colors.ink },
   title: { fontFamily: fonts.bold, fontSize: 25, lineHeight: 33, letterSpacing: -0.6, color: colors.ink },
   heading: { fontFamily: fonts.bold, fontSize: 19, lineHeight: 26, letterSpacing: -0.4, color: colors.ink },
   body: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 22, color: colors.ink },
@@ -14,7 +15,13 @@ const styles = StyleSheet.create({
   number: { fontFamily: fonts.bold, fontSize: 46, lineHeight: 52, letterSpacing: -1.2, color: colors.accent, fontVariant: ['tabular-nums'] },
 });
 
-const CLAMPED_VARIANTS = new Set<TxtVariant>(['number', 'point', 'title']);
+// Per-variant clamp: unlisted variants have no maxFontSizeMultiplier (default RN scaling).
+const MAX_FONT_SIZE_MULTIPLIER: Partial<Record<TxtVariant, number>> = {
+  display: 1.3,
+  number: 1.5,
+  point: 1.5,
+  title: 1.5,
+};
 
 // react-native-web has no CJK line-breaking rules of its own, so a long Korean word
 // (e.g. "적당합니다") can wrap mid-word ("적당합니/다"). `wordBreak` isn't part of native
@@ -24,7 +31,7 @@ type WebOnlyTextStyle = TextStyle & { wordBreak?: 'keep-all' };
 const keepAllStyle: WebOnlyTextStyle | undefined = Platform.OS === 'web' ? { wordBreak: 'keep-all' } : undefined;
 
 export function Txt({ variant = 'body', style, ...props }: TextProps & { variant?: TxtVariant }) {
-  const maxFontSizeMultiplier = CLAMPED_VARIANTS.has(variant) ? 1.5 : undefined;
+  const maxFontSizeMultiplier = MAX_FONT_SIZE_MULTIPLIER[variant];
   return (
     <Text
       maxFontSizeMultiplier={maxFontSizeMultiplier}

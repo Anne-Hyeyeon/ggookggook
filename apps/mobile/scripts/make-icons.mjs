@@ -282,14 +282,31 @@ async function buildAdaptiveIcon() {
   await sharp(black).toFile(path.join(ASSETS, 'android-icon-monochrome.png'));
 }
 
+// Fix round 3: the trimmed cutout used to be resized straight to the final width, so the cat's
+// ink touched the canvas edge (worst on the right, where a paw sits closest to the trim box).
+// This fraction of each final dimension is left as transparent margin on every side instead,
+// comfortably past the brief's 6% minimum.
+const SPLASH_MARGIN_FRACTION = 0.08;
+
 async function buildSplashIcon() {
   // Undilated — the splash keeps the original thin ink line weight.
   const cutout = await fadeBottomEdge(await baseCatCutout(), BOTTOM_FADE_PX);
   const trimmed = await sharp(cutout).trim({ threshold: 10 }).toBuffer();
   const meta = await sharp(trimmed).metadata();
-  const scale = 600 / meta.width;
-  const height = Math.round(meta.height * scale);
-  await sharp(trimmed).resize(600, height).toFile(path.join(ASSETS, 'splash-icon.png'));
+  const canvasWidth = 600;
+  const contentWidth = Math.round(canvasWidth * (1 - SPLASH_MARGIN_FRACTION * 2));
+  const scale = contentWidth / meta.width;
+  const contentHeight = Math.round(meta.height * scale);
+  const canvasHeight = Math.round(contentHeight / (1 - SPLASH_MARGIN_FRACTION * 2));
+  const resized = await sharp(trimmed).resize(contentWidth, contentHeight).toBuffer();
+  const left = Math.round((canvasWidth - contentWidth) / 2);
+  const top = Math.round((canvasHeight - contentHeight) / 2);
+  await sharp({
+    create: { width: canvasWidth, height: canvasHeight, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+  })
+    .composite([{ input: resized, left, top }])
+    .png()
+    .toFile(path.join(ASSETS, 'splash-icon.png'));
 }
 
 await buildIcon();

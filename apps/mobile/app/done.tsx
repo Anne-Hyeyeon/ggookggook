@@ -97,6 +97,11 @@ export default function DoneScreen() {
             );
           })}
         </View>
+        {feedback !== null && (
+          <Txt variant="sub" style={styles.center}>
+            기록해 둘게요.
+          </Txt>
+        )}
       </ScrollView>
       <Pressable accessibilityRole="button" accessibilityLabel="처음으로" onPress={() => router.dismissTo('/')} style={styles.home}>
         <Txt variant="sub" style={styles.homeLabel}>
