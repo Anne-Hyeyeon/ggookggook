@@ -1,0 +1,14 @@
+{
+  "name": "@ggookggook/content",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json",
+    "validate": "tsx src/cli/validate.ts"
+  },
+  "dependencies": {
+    "@ggookggook/shared": "*"
+  }
+}
