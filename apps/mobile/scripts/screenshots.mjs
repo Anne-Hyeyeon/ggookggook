@@ -159,6 +159,22 @@ async function runFlow(page) {
   await page.getByRole('tab', { name: '내 루틴' }).click();
   await page.getByText('나아졌어요', { exact: true }).waitFor();
   await shoot(page, '11-mine.png');
+
+  // 12. 찾아보기 (browse) tab, front-side body map with its region rows below
+  await page.getByRole('tab', { name: '찾아보기' }).click();
+  await page.getByText('손 · 혈자리 5곳', { exact: true }).waitFor();
+  await shoot(page, '12-browse.png');
+
+  // 13. Region detail for 손, listing acupoints from both linked plates
+  // (손목 안쪽 and 손등)
+  await page.getByText('손 · 혈자리 5곳', { exact: true }).click();
+  await page.getByText('합곡', { exact: true }).waitFor();
+  await shoot(page, '13-region-hand.png');
+
+  // 14. Acupoint detail for 합곡, including its routines and pregnancy caution
+  await page.getByText('합곡', { exact: true }).click();
+  await page.getByText('이 혈자리를 쓰는 루틴').waitFor();
+  await shoot(page, '14-acupoint-hapgok.png');
 }
 
 async function main() {
