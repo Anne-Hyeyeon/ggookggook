@@ -82,8 +82,7 @@ export function buildIndex(bundle: ContentBundle, images: Record<string, number>
         });
         return groupAcupoints.length === 0 ? [] : [{ plate, acupoints: groupAcupoints }];
       });
-      // A plate with its own drawing is the more useful stop for a region that links several
-      // plates; Array#sort is stable, so ties keep the region's own plateIds order.
+      // A plate with its own drawing is the more useful stop; stable sort keeps plateIds order otherwise.
       return [...groups].sort((a, b) => Number(image(b.plate.id) !== null) - Number(image(a.plate.id) !== null));
     },
   };

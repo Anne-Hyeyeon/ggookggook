@@ -80,11 +80,7 @@ async function eraseHairRegion(cutoutBuffer) {
     .toBuffer();
 }
 
-// The person's shoulder line runs the full width and height of the crop and would otherwise
-// hit the bottom or right edge at full strength, reading as a hard cut (fix round 2: the same
-// line was clipped square on the right, under the cat's resting paw, in the icon and adaptive
-// icon). Fading only a margin along the given edge tapers the line to nothing before the edge
-// without touching the cat itself.
+// Fades a margin along the given edge to nothing (fix round 2: the shoulder line hit the right edge at full strength too, same as the bottom).
 async function fadeEdge(cutoutBuffer, marginPx, edge) {
   const { data, info } = await sharp(cutoutBuffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const { width, height, channels } = info;
@@ -168,9 +164,7 @@ const ICON_DILATE_RADIUS = 3;
 // Applied last, after any dilation, so it isn't undone by dilation pulling
 // full-strength alpha back in from just outside the fade band.
 const BOTTOM_FADE_PX = 110;
-// Narrower than the bottom fade: the right edge only needs to catch the shoulder/paw line,
-// not a whole band of hair (icon and adaptive icon only; verified against zoomed 1024px
-// crops of the right edge with icon-180/icon-60 previews for the fix report).
+// Narrower than the bottom fade: only needs to catch the shoulder/paw line, not a band of hair.
 const RIGHT_FADE_PX = 60;
 
 async function fitOnCanvas(cutoutBuffer, canvasSize, contentSize) {

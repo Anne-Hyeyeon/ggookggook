@@ -2,9 +2,7 @@ import type { Region } from '@ggookggook/shared';
 
 export const MAX_REGION_HIT_SIZE = 44;
 
-// Two region centers closer together than MAX_REGION_HIT_SIZE would otherwise get overlapping
-// hit areas; each region's hit size shrinks to the gap to its nearest positioned neighbor instead,
-// so touch targets never cover each other even though their dots stay put.
+// Shrinks a region's hit size to the gap to its nearest neighbor, so close touch targets never overlap.
 export function regionHitSizes(regions: Region[], width: number, height: number): Record<string, number> {
   const points = regions
     .filter((region): region is Region & { x: number; y: number } => region.x !== null && region.y !== null)

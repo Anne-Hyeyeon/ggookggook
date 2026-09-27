@@ -57,8 +57,7 @@ function startServer() {
       const url = new URL(req.url, 'http://localhost');
       const requested = path.normalize(decodeURIComponent(url.pathname));
       let filePath = path.resolve(EXPORT_DIR, `.${requested}`);
-      // The requested path could contain `..` segments; reject anything that resolves
-      // outside EXPORT_DIR instead of serving files from elsewhere on disk.
+      // Reject a `..`-resolved path that escapes EXPORT_DIR instead of serving it.
       if (filePath !== EXPORT_DIR && !filePath.startsWith(EXPORT_DIR + path.sep)) {
         res.writeHead(400);
         res.end('Bad request');
@@ -86,8 +85,7 @@ function startServer() {
     }
   });
   return new Promise((resolve) => {
-    // Bound to loopback only: this dev-only harness has no reason to accept connections
-    // from other machines on the network.
+    // Loopback only: this dev-only harness has no reason to accept other machines' connections.
     server.listen(PORT, '127.0.0.1', () => resolve(server));
   });
 }

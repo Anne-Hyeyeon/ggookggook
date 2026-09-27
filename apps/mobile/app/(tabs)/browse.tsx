@@ -11,8 +11,7 @@ import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
 
 const MAP_ASPECT = 2 / 3; // width : height, matching the source drawing
-// Keeps the region list's first row visible above the tab bar on a 390x844 screen; the map's
-// width otherwise drives its size (see BrowseScreen below).
+// Caps the map's height so the region list's first row stays visible above the tab bar on a 390x844 screen.
 const MAX_MAP_HEIGHT = 340;
 const DOT_SIZE = 8;
 
@@ -32,8 +31,7 @@ function BodyMapImage({ map, width, height }: { map: BodyMap; width: number; hei
       )}
       {map.regions.map((region) => {
         if (region.x === null || region.y === null) return null;
-        // Always set for a positioned region (region.x/y !== null, checked above); the fallback
-        // only satisfies noUncheckedIndexedAccess.
+        // Fallback only satisfies noUncheckedIndexedAccess; a positioned region always has a size.
         const hitSize = hitSizes[region.id] ?? MAX_REGION_HIT_SIZE;
         const left = region.x * width - hitSize / 2;
         const top = region.y * height - hitSize / 2;

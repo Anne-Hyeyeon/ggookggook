@@ -182,8 +182,7 @@ it('marks the close confirmation as a modal and hides the routine underneath it 
   await fireEvent.press(screen.getByRole('button', { name: '닫기' }));
   expect(screen.getByText('루틴을 그만할까요?')).toBeTruthy();
   expect(screen.getByTestId('confirm-overlay').props.accessibilityViewIsModal).toBe(true);
-  // includeHiddenElements: this view is the one marked importantForAccessibility="no-hide-descendants",
-  // so RNTL's default hidden-element filtering (working as intended) would otherwise skip it.
+  // This view is marked no-hide-descendants, so RNTL's hidden-element filtering would otherwise skip it.
   expect(screen.getByTestId('guide-body', { includeHiddenElements: true }).props.importantForAccessibility).toBe(
     'no-hide-descendants',
   );
@@ -205,8 +204,7 @@ it('asks for confirmation before closing once progress has been made, pausing th
   await act(async () => {
     jest.advanceTimersByTime(10_000);
   });
-  // The routine underneath is importantForAccessibility="no-hide-descendants" while the
-  // confirmation is open, so this query must opt back in to see it.
+  // The routine underneath is hidden while the confirmation is open, so this query opts back in.
   expect(screen.getByText('1 / 9회', { includeHiddenElements: true })).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('button', { name: '그만하기' }));

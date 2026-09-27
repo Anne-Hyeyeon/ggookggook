@@ -1,4 +1,4 @@
-import { Platform, StyleSheet, Switch, View } from 'react-native';
+import { Platform, StyleSheet, Switch, View, type StyleProp, type ViewStyle } from 'react-native';
 import { colors, space } from '@/theme';
 import { Txt } from './Txt';
 
@@ -13,11 +13,12 @@ interface ToggleProps {
   sub?: string;
   value: boolean;
   onValueChange: (value: boolean) => void;
+  style?: StyleProp<ViewStyle>;
 }
 
-export function Toggle({ label, sub, value, onValueChange }: ToggleProps) {
+export function Toggle({ label, sub, value, onValueChange, style }: ToggleProps) {
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, style]}>
       <View style={styles.text}>
         <Txt variant="body">{label}</Txt>
         {sub && <Txt variant="sub">{sub}</Txt>}

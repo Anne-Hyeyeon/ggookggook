@@ -64,13 +64,12 @@ export default function SettingsScreen() {
 
         <View>
           <Rule />
-          <View style={styles.row}>
-            <Toggle
-              label="리듬 진동"
-              value={settings.rhythmHaptics}
-              onValueChange={(value) => apply({ rhythmHaptics: value })}
-            />
-          </View>
+          <Toggle
+            label="리듬 진동"
+            value={settings.rhythmHaptics}
+            onValueChange={(value) => apply({ rhythmHaptics: value })}
+            style={styles.row}
+          />
           <Rule />
           <StepperRow
             label="누르는 시간"
@@ -90,14 +89,13 @@ export default function SettingsScreen() {
             onIncrement={() => stepRestSeconds(1)}
           />
           <Rule />
-          <View style={styles.row}>
-            <Toggle
-              label="임신 중이에요"
-              sub="켜면 임신 중 피해야 할 혈자리를 빼고 안내해요."
-              value={settings.pregnancyMode}
-              onValueChange={(value) => apply({ pregnancyMode: value })}
-            />
-          </View>
+          <Toggle
+            label="임신 중이에요"
+            sub="켜면 임신 중 피해야 할 혈자리를 빼고 안내해요."
+            value={settings.pregnancyMode}
+            onValueChange={(value) => apply({ pregnancyMode: value })}
+            style={styles.row}
+          />
           <Rule />
           <Pressable
             accessibilityRole="button"
