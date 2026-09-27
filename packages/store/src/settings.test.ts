@@ -32,6 +32,21 @@ describe('settings', () => {
     await setValue(db, 'settings', 'not json', new Date());
     expect(await loadSettings(db)).toEqual(DEFAULT_SETTINGS);
   });
+
+  it('ignores a JSON array and falls back to defaults', async () => {
+    await setValue(db, 'settings', JSON.stringify([1, 2, 3]), new Date());
+    expect(await loadSettings(db)).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it('clamps an out-of-range pressSeconds and restSeconds to the nearest bound', async () => {
+    await setValue(db, 'settings', JSON.stringify({ ...DEFAULT_SETTINGS, pressSeconds: 20, restSeconds: 0 }), new Date());
+    expect(await loadSettings(db)).toEqual({ ...DEFAULT_SETTINGS, pressSeconds: 10, restSeconds: 1 });
+  });
+
+  it('rounds a fractional pressSeconds and restSeconds to the nearest integer', async () => {
+    await setValue(db, 'settings', JSON.stringify({ ...DEFAULT_SETTINGS, pressSeconds: 6.6, restSeconds: 2.4 }), new Date());
+    expect(await loadSettings(db)).toEqual({ ...DEFAULT_SETTINGS, pressSeconds: 7, restSeconds: 2 });
+  });
 });
 
 describe('disclaimer', () => {

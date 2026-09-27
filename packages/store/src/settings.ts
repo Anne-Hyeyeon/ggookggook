@@ -9,10 +9,14 @@ function parse(raw: string | null): Record<string, unknown> {
   if (!raw) return {};
   try {
     const value: unknown = JSON.parse(raw);
-    return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};
+    return typeof value === 'object' && value !== null && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
   } catch {
     return {};
   }
+}
+
+function clampInt(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, Math.round(value)));
 }
 
 export async function loadSettings(db: SqlDatabase): Promise<Settings> {
@@ -22,6 +26,8 @@ export async function loadSettings(db: SqlDatabase): Promise<Settings> {
     const value = stored[key];
     if (typeof value === typeof DEFAULT_SETTINGS[key]) (settings as Record<keyof Settings, unknown>)[key] = value;
   }
+  settings.pressSeconds = clampInt(settings.pressSeconds, 3, 10);
+  settings.restSeconds = clampInt(settings.restSeconds, 1, 5);
   return settings;
 }
 
