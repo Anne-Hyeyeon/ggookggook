@@ -35,6 +35,18 @@ Run lint and typecheck before declaring any task done.
 Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.
 Docs: https://docs.expo.dev/eas/index.md
 
+## E2E tests
+
+`e2e/core-flow.yaml` is a Maestro flow. The guided routine it walks through runs at real-world
+speed by default, so run it with `EXPO_PUBLIC_GUIDE_SPEED=10` to compress the timer and stay
+comfortably under Maestro's 60s `extendedWaitUntil` timeout (the food_stagnation routine finishes
+in about 24s at that speed instead of 240s). This env var is only honored in dev builds
+(`apps/mobile/src/config/env.ts` gates it on `__DEV__`), so it has no effect in production.
+
+```bash
+EXPO_PUBLIC_GUIDE_SPEED=10 maestro test e2e/core-flow.yaml
+```
+
 ## Rules
 
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.

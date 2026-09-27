@@ -5,11 +5,11 @@ appId: kr.ggookggook.app
 - tapOn: "다음"
 - assertVisible: "시작하기 전에 확인해 주세요"
 - tapOn: "확인했어요"
-- assertVisible: "어디가.*"
+- assertVisible: "증상이나 혈자리 이름"
 - tapOn: "식체"
 - assertVisible: "이럴 땐 병원에 가세요"
 - tapOn: "시작"
-- assertVisible: "합곡"
+- assertVisible: "꾹 누르세요"
 - extendedWaitUntil:
     visible: "식체 루틴을 마쳤어요"
     timeout: 60000
