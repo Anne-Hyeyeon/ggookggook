@@ -105,7 +105,7 @@ export default function GuideScreen() {
     );
   }
 
-  const acupoint = content.acupoints.get(segment.acupointId)!;
+  const acupoint = content.requireAcupoint(segment.acupointId);
   const stepCount = new Set(segments.map((s) => s.stepIndex)).size;
   const rhythm = rhythmAt(progress.elapsed, segment.seconds, settings.pressSeconds, settings.restSeconds);
   const doneSeconds = segments.slice(0, progress.index).reduce((sum, s) => sum + s.seconds, 0) + progress.elapsed;

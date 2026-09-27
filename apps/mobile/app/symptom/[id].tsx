@@ -51,7 +51,7 @@ export default function SymptomScreen() {
 
         <View>
           {steps.map((step, index) => {
-            const acupoint = content.acupoints.get(step.acupointId)!;
+            const acupoint = content.requireAcupoint(step.acupointId);
             const sides = sideLabel(acupoint.sides);
             return (
               <View key={step.acupointId}>

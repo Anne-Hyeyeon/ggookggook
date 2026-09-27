@@ -13,6 +13,7 @@ export interface ContentIndex {
   symptoms: Symptom[];
   acupoints: ReadonlyMap<string, Acupoint>;
   symptom(id: string): Symptom | undefined;
+  requireAcupoint(id: string): Acupoint;
   plateFor(acupointId: string): PlateView | null;
   image(id: string): number | null;
 }
@@ -29,6 +30,11 @@ export function buildIndex(bundle: ContentBundle, images: Record<string, number>
     symptoms: bundle.symptoms,
     acupoints,
     symptom: (id) => symptoms.get(id),
+    requireAcupoint(id) {
+      const acupoint = acupoints.get(id);
+      if (!acupoint) throw new Error(`Unknown acupoint: ${id}`);
+      return acupoint;
+    },
     plateFor(acupointId) {
       const plate = bundle.plates
         .filter((candidate) => candidate.acupointIds.includes(acupointId))
