@@ -3,7 +3,7 @@ import * as store from '@ggookggook/store';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
 import GuideScreen from '../app/guide/[id]';
 import { useSettings } from '@/state/settings';
 
@@ -134,4 +134,124 @@ it('lets you leave the empty-state fallback via 닫기', async () => {
   expect(screen.getByText('안내할 혈자리가 없어요.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: '닫기' }));
   expect(router.back).toHaveBeenCalledTimes(1);
+});
+
+it('shows the technique text under the location, and hides the WHO code and hanja', async () => {
+  await render(<GuideScreen />);
+  expect(screen.getByText('반대쪽 엄지로 검지 뼈 쪽을 향해 꾹 누르세요. 뻐근할 정도가 적당합니다.')).toBeTruthy();
+  expect(screen.queryByText('LI4')).toBeNull();
+  expect(screen.queryByText('合谷')).toBeNull();
+});
+
+it('renders the pause control as a full-width thumb-zone button at least 56pt tall', async () => {
+  await render(<GuideScreen />);
+  const button = screen.getByRole('button', { name: '일시정지' });
+  const flatStyle = StyleSheet.flatten(button.props.style);
+  expect(flatStyle.minHeight).toBeGreaterThanOrEqual(56);
+});
+
+it('closes immediately when nothing has happened yet', async () => {
+  await render(<GuideScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: '닫기' }));
+  expect(router.back).toHaveBeenCalledTimes(1);
+  expect(screen.queryByText('루틴을 그만할까요?')).toBeNull();
+});
+
+it('asks for confirmation before closing once progress has been made, pausing the timer meanwhile', async () => {
+  await render(<GuideScreen />);
+  await act(async () => {
+    jest.advanceTimersByTime(1000);
+  });
+  await fireEvent.press(screen.getByRole('button', { name: '닫기' }));
+  expect(screen.getByText('루틴을 그만할까요?')).toBeTruthy();
+  expect(router.back).not.toHaveBeenCalled();
+
+  await act(async () => {
+    jest.advanceTimersByTime(10_000);
+  });
+  expect(screen.getByText('1 / 9회')).toBeTruthy();
+
+  await fireEvent.press(screen.getByRole('button', { name: '그만하기' }));
+  expect(router.back).toHaveBeenCalledTimes(1);
+});
+
+it('resumes the timer when 계속하기 dismisses the close confirmation', async () => {
+  await render(<GuideScreen />);
+  await act(async () => {
+    jest.advanceTimersByTime(1000);
+  });
+  await fireEvent.press(screen.getByRole('button', { name: '닫기' }));
+  await fireEvent.press(screen.getByRole('button', { name: '계속하기' }));
+  expect(screen.queryByText('루틴을 그만할까요?')).toBeNull();
+
+  await act(async () => {
+    jest.advanceTimersByTime(7000);
+  });
+  expect(screen.getByText('2 / 9회')).toBeTruthy();
+  expect(router.back).not.toHaveBeenCalled();
+});
+
+it('fires only the success haptic on a segment change, without the extra press haptic', async () => {
+  await render(<GuideScreen />);
+  await act(async () => {
+    jest.advanceTimersByTime(59_000);
+  });
+  jest.clearAllMocks();
+
+  await act(async () => {
+    jest.advanceTimersByTime(1000);
+  });
+  expect(screen.getByText('오른쪽')).toBeTruthy();
+  expect(Haptics.notificationAsync).toHaveBeenCalledWith('success');
+  expect(Haptics.notificationAsync).toHaveBeenCalledTimes(1);
+  expect(Haptics.impactAsync).not.toHaveBeenCalled();
+});
+
+it('shows a saving indicator while the finished session is being recorded, then navigates on', async () => {
+  let resolveInsert: (() => void) | undefined;
+  mocked.insertSession.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveInsert = resolve;
+      }),
+  );
+  await render(<GuideScreen />);
+  await act(async () => {
+    jest.advanceTimersByTime(240_000);
+  });
+  expect(screen.getByText('기록하는 중…')).toBeTruthy();
+  expect(router.replace).not.toHaveBeenCalled();
+
+  await act(async () => {
+    resolveInsert?.();
+  });
+  expect(router.replace).toHaveBeenCalledWith({ pathname: '/done', params: { sessionId: expect.any(String) } });
+});
+
+it('disables 다시 저장 while a retry is in flight', async () => {
+  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+  mocked.insertSession.mockRejectedValueOnce(new Error('disk full'));
+  await render(<GuideScreen />);
+  await act(async () => {
+    jest.advanceTimersByTime(240_000);
+  });
+  expect(screen.getByText('기록을 저장하지 못했어요.')).toBeTruthy();
+
+  let resolveRetry: (() => void) | undefined;
+  mocked.insertSession.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveRetry = resolve;
+      }),
+  );
+  await fireEvent.press(screen.getByRole('button', { name: '다시 저장' }));
+  expect(screen.getByRole('button', { name: '다시 저장' }).props.accessibilityState.disabled).toBe(true);
+
+  await act(async () => {
+    resolveRetry?.();
+  });
+  expect(router.replace).toHaveBeenCalledWith({ pathname: '/done', params: { sessionId: expect.any(String) } });
+  expect(screen.queryByText('다시 저장')).toBeNull();
+
+  consoleError.mockRestore();
 });

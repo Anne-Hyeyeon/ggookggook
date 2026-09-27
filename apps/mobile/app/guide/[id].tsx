@@ -36,22 +36,40 @@ export default function GuideScreen() {
   );
   const totalSeconds = useMemo(() => segments.reduce((sum, segment) => sum + segment.seconds, 0), [segments]);
 
+  // The engine emits ['segment', 'press'] together on a segment change: the Success
+  // notification below already marks the change, so the immediately following press
+  // event skips its own Heavy impact instead of doubling up in the same tick.
+  const skipNextPressHaptic = useRef(false);
+
   const onEvent = useCallback(
     (event: 'press' | 'rest' | 'segment') => {
       if (event === 'press') AccessibilityInfo.announceForAccessibility('꾹 누르세요');
       else if (event === 'rest') AccessibilityInfo.announceForAccessibility('잠시 떼세요');
       if (!settings.rhythmHaptics) return;
-      if (event === 'press') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-      else if (event === 'rest') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      else void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (event === 'segment') {
+        skipNextPressHaptic.current = true;
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        return;
+      }
+      if (event === 'press') {
+        const skip = skipNextPressHaptic.current;
+        skipNextPressHaptic.current = false;
+        if (skip) return;
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        return;
+      }
+      skipNextPressHaptic.current = false;
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     },
     [settings.rhythmHaptics],
   );
 
   const [failedLog, setFailedLog] = useState<SessionLog | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const saveSession = useCallback(
     async (log: SessionLog) => {
+      setSaving(true);
       try {
         await insertSession(db, log);
         setFailedLog(null);
@@ -59,6 +77,8 @@ export default function GuideScreen() {
       } catch (error) {
         console.error('Failed to save the session', error);
         setFailedLog(log);
+      } finally {
+        setSaving(false);
       }
     },
     [db],
@@ -88,6 +108,30 @@ export default function GuideScreen() {
     onEvent,
     onFinish,
   });
+
+  const [confirmClose, setConfirmClose] = useState(false);
+  const pausedBeforeConfirm = useRef(false);
+
+  const handleClosePress = useCallback(() => {
+    const started = progress.index > 0 || progress.elapsed > 0;
+    if (!started) {
+      router.back();
+      return;
+    }
+    pausedBeforeConfirm.current = paused;
+    setPaused(true);
+    setConfirmClose(true);
+  }, [progress.index, progress.elapsed, paused, setPaused]);
+
+  const handleContinueRoutine = useCallback(() => {
+    setConfirmClose(false);
+    setPaused(pausedBeforeConfirm.current);
+  }, [setPaused]);
+
+  const handleQuit = useCallback(() => {
+    setConfirmClose(false);
+    router.back();
+  }, []);
 
   const { width, height } = useWindowDimensions();
   const plateSize = Math.min(width - 40, 320, Math.round(height * 0.34));
@@ -123,7 +167,7 @@ export default function GuideScreen() {
           <View style={styles.top}>
             <Txt style={styles.topName}>{symptom.name}</Txt>
             <Txt variant="caption">{`${segment.stepIndex + 1} / ${stepCount}`}</Txt>
-            <Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={() => router.back()} hitSlop={12}>
+            <Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={handleClosePress} hitSlop={12}>
               <Txt variant="sub">닫기</Txt>
             </Pressable>
           </View>
@@ -132,10 +176,10 @@ export default function GuideScreen() {
 
           <View style={styles.nameRow}>
             <Txt variant="point">{acupoint.name.ko}</Txt>
-            <Txt variant="caption">{acupoint.id}</Txt>
             {SIDE_LABEL[segment.side] !== '' && <Txt style={styles.side}>{SIDE_LABEL[segment.side]}</Txt>}
           </View>
           <Txt variant="sub">{firstSentence(acupoint.location)}</Txt>
+          <Txt variant="sub">{acupoint.technique}</Txt>
         </ScrollView>
 
         <View style={styles.timer}>
@@ -147,8 +191,10 @@ export default function GuideScreen() {
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="다시 저장"
+                  accessibilityState={{ disabled: saving }}
+                  disabled={saving}
                   onPress={() => void saveSession(failedLog)}
-                  style={styles.pause}
+                  style={[styles.pause, saving && styles.pauseDisabled]}
                 >
                   <Txt style={styles.pauseLabel}>다시 저장</Txt>
                 </Pressable>
@@ -162,6 +208,10 @@ export default function GuideScreen() {
                 </Pressable>
               </View>
             </View>
+          ) : saving ? (
+            <View style={styles.savingBox}>
+              <Txt variant="body">기록하는 중…</Txt>
+            </View>
           ) : (
             <>
               <View style={styles.timerRow}>
@@ -170,15 +220,15 @@ export default function GuideScreen() {
                   <Txt style={styles.action} accessibilityLiveRegion="polite">{rhythm.phase === 'press' ? '꾹 누르세요' : '잠시 떼세요'}</Txt>
                   <Txt variant="sub">{`${rhythm.pressNumber} / ${rhythm.pressCount}회`}</Txt>
                 </View>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={paused ? '계속' : '일시정지'}
-                  onPress={() => setPaused(!paused)}
-                  style={styles.pause}
-                >
-                  <Txt style={styles.pauseLabel}>{paused ? '계속' : '일시정지'}</Txt>
-                </Pressable>
               </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={paused ? '계속' : '일시정지'}
+                onPress={() => setPaused(!paused)}
+                style={styles.bigButton}
+              >
+                <Txt style={styles.bigButtonLabel}>{paused ? '계속' : '일시정지'}</Txt>
+              </Pressable>
               <View style={styles.track}>
                 <View style={[styles.fill, { width: `${Math.min(100, (doneSeconds / totalSeconds) * 100)}%` }]} />
               </View>
@@ -190,6 +240,27 @@ export default function GuideScreen() {
           )}
         </View>
       </View>
+
+      {confirmClose && (
+        <View style={styles.confirmOverlay}>
+          <View style={styles.confirmBox}>
+            <Txt variant="body" style={styles.confirmText}>루틴을 그만할까요?</Txt>
+            <View style={styles.confirmButtons}>
+              <Pressable accessibilityRole="button" accessibilityLabel="그만하기" onPress={handleQuit} style={styles.confirmButton}>
+                <Txt style={styles.confirmButtonLabel}>그만하기</Txt>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="계속하기"
+                onPress={handleContinueRoutine}
+                style={[styles.confirmButton, styles.confirmPrimary]}
+              >
+                <Txt style={[styles.confirmButtonLabel, styles.confirmPrimaryLabel]}>계속하기</Txt>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -207,6 +278,16 @@ const styles = StyleSheet.create({
   number: { minWidth: 40 },
   timerText: { flex: 1, gap: 2 },
   action: { fontFamily: fonts.bold, fontSize: 15, color: colors.ink },
+  bigButton: {
+    minHeight: 56,
+    borderWidth: 1.5,
+    borderColor: colors.ink,
+    borderRadius: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: space(3),
+  },
+  bigButtonLabel: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
   pause: {
     borderWidth: 1.5,
     borderColor: colors.ink,
@@ -217,9 +298,43 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pauseLabel: { fontFamily: fonts.semibold, fontSize: 12.5, color: colors.ink },
+  pauseDisabled: { opacity: 0.6 },
   track: { height: 2, backgroundColor: colors.rule },
   fill: { height: 2, backgroundColor: colors.accent },
   nextRow: { flexDirection: 'row', justifyContent: 'space-between' },
   errorBox: { gap: space(3), paddingTop: space(2) },
   errorButtons: { flexDirection: 'row', gap: space(3) },
+  savingBox: { paddingTop: space(2) },
+  confirmOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: space(5),
+  },
+  confirmBox: {
+    width: '100%',
+    backgroundColor: colors.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.rule,
+    borderRadius: 2,
+    padding: space(5),
+    gap: space(4),
+  },
+  confirmText: { textAlign: 'center' },
+  confirmButtons: { gap: space(3) },
+  confirmButton: {
+    minHeight: 52,
+    borderWidth: 1.5,
+    borderColor: colors.ink,
+    borderRadius: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmButtonLabel: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
+  confirmPrimary: { backgroundColor: colors.ink },
+  confirmPrimaryLabel: { color: colors.bg },
 });
