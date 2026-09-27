@@ -47,6 +47,14 @@ in about 24s at that speed instead of 240s). This env var is only honored in dev
 EXPO_PUBLIC_GUIDE_SPEED=10 maestro test e2e/core-flow.yaml
 ```
 
+## Web preview harness (visual QA)
+
+`npm run screens -w @ggookggook/mobile` exports a dev-mode web build, serves it locally, and
+drives it with Playwright to save PNGs (390×844, deviceScaleFactor 2) to
+`.superpowers/screens/` — a way to review screens without a simulator. Dev-only; see
+`apps/mobile/scripts/screenshots.mjs`. It also uses `EXPO_PUBLIC_GUIDE_SPEED` to make the guide
+routine finish in seconds.
+
 ## Rules
 
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.

@@ -24,6 +24,7 @@
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
+    "react-native-web": "^0.21.2",
     "react-native-worklets": "0.10.1",
     "zustand": "^5.0.15"
   },
@@ -39,10 +40,13 @@
     "android": "expo run:android",
     "test": "jest",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "sync-content": "npm run build -w @ggookggook/content && tsx scripts/sync-content.mts"
+    "sync-content": "npm run build -w @ggookggook/content && tsx scripts/sync-content.mts",
+    "screens": "node scripts/screenshots.mjs"
   },
   "jest": {
     "preset": "jest-expo",
-    "moduleNameMapper": { "^@/(.*)$": "<rootDir>/src/$1" }
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    }
   }
 }
