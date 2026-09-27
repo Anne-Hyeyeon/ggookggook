@@ -6,7 +6,10 @@ import { act } from 'react-test-renderer';
 import SettingsScreen from '../app/settings';
 import { useSettings } from '@/state/settings';
 
-jest.mock('@/db/DbProvider', () => ({ useDb: () => ({}) }));
+jest.mock('@/db/DbProvider', () => {
+  const db = {};
+  return { useDb: () => db };
+});
 jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
 jest.mock('expo-constants', () => ({ expoConfig: { version: '0.1.0' } }));
 jest.mock('@ggookggook/store', () => ({ loadSettings: jest.fn(), saveSettings: jest.fn() }));
@@ -32,7 +35,7 @@ it('goes back', async () => {
 
 it('toggles rhythm haptics', async () => {
   await render(<SettingsScreen />);
-  // Native must keep its own thumb rendering; activeThumbColor is a web-only fix (see settings.tsx).
+  // Native must keep its own thumb rendering; activeThumbColor is a web-only fix (see Toggle.tsx).
   expect(screen.getByRole('switch', { name: '리듬 진동' }).props.activeThumbColor).toBeUndefined();
   await fireEvent(screen.getByRole('switch', { name: '리듬 진동' }), 'valueChange', false);
   expect(update).toHaveBeenCalledWith({}, { rhythmHaptics: false });
@@ -108,15 +111,17 @@ it('disables the rest seconds decrease button at the lower bound', async () => {
   expect(screen.getByRole('button', { name: '쉬는 시간 줄이기' }).props.accessibilityState.disabled).toBe(true);
 });
 
-it('expands the disclaimer notices inline', async () => {
+it('expands the disclaimer notices inline and reports its expanded state', async () => {
   await render(<SettingsScreen />);
   expect(screen.queryByText('통증이 심하거나 오래가면 병원 진료를 받으세요.')).toBeNull();
+  expect(screen.getByRole('button', { name: '안내 다시 보기' }).props.accessibilityState.expanded).toBe(false);
 
   await fireEvent.press(screen.getByRole('button', { name: '안내 다시 보기' }));
   expect(screen.getByText('꾹꾹은 지압 방법을 안내하는 앱이에요. 진단이나 치료를 대신하지 않아요.')).toBeTruthy();
   expect(screen.getByText('통증이 심하거나 오래가면 병원 진료를 받으세요.')).toBeTruthy();
   expect(screen.getByText('지병이 있으면 전문가와 먼저 상의하세요.')).toBeTruthy();
   expect(screen.getByText('상처나 염증, 부기가 있는 곳은 누르지 마세요.')).toBeTruthy();
+  expect(screen.getByRole('button', { name: '안내 다시 보기' }).props.accessibilityState.expanded).toBe(true);
 });
 
 it('shows the app version and content version', async () => {

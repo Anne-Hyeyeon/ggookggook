@@ -55,7 +55,15 @@ function startServer() {
   const server = createServer(async (req, res) => {
     try {
       const url = new URL(req.url, 'http://localhost');
-      let filePath = path.join(EXPORT_DIR, decodeURIComponent(url.pathname));
+      const requested = path.normalize(decodeURIComponent(url.pathname));
+      let filePath = path.resolve(EXPORT_DIR, `.${requested}`);
+      // The requested path could contain `..` segments; reject anything that resolves
+      // outside EXPORT_DIR instead of serving files from elsewhere on disk.
+      if (filePath !== EXPORT_DIR && !filePath.startsWith(EXPORT_DIR + path.sep)) {
+        res.writeHead(400);
+        res.end('Bad request');
+        return;
+      }
       try {
         const s = await stat(filePath);
         if (s.isDirectory()) filePath = path.join(filePath, 'index.html');
@@ -78,7 +86,9 @@ function startServer() {
     }
   });
   return new Promise((resolve) => {
-    server.listen(PORT, () => resolve(server));
+    // Bound to loopback only: this dev-only harness has no reason to accept connections
+    // from other machines on the network.
+    server.listen(PORT, '127.0.0.1', () => resolve(server));
   });
 }
 
@@ -93,7 +103,7 @@ async function shoot(page, name) {
 }
 
 async function runFlow(page) {
-  await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'load' });
+  await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'load' });
 
   // 1. Welcome, step 1 (intro)
   await page.getByRole('button', { name: '다음' }).waitFor();
@@ -133,19 +143,19 @@ async function runFlow(page) {
 
   // 8. Done, after the routine finishes. Feedback is given here (rather than after the
   // shot) so 08-done.png also shows the post-feedback acknowledgement and the selected
-  // option, and so Today's "나아졌어요 N번" line below has something to show.
+  // option, and so Today's "나아졌어요를 N번 남겼어요" line below has something to show.
   await page.waitForURL('**/done**', { timeout: 60_000 });
   await page.getByRole('button', { name: '나아졌어요' }).click();
   await page.getByText('기록해 둘게요.').waitFor();
   await shoot(page, '08-done.png');
 
   // 9. Today again, showing the just-finished session as the recent row (with its
-  // "다시 하기" affordance) and the resulting "나아졌어요 1번" line.
+  // "다시 하기" affordance) and the resulting "나아졌어요를 1번 남겼어요" line.
   // The Today screen stayed mounted under the stack the whole time, so its search
   // field still holds "두통" from step 5 and hides the recent row until cleared.
   await page.getByRole('button', { name: '처음으로' }).click();
   await search.fill('');
-  await page.getByText('나아졌어요 1번').waitFor();
+  await page.getByText('나아졌어요를 1번 남겼어요').waitFor();
   await shoot(page, '09-today-after.png');
 
   // 10. Settings, opened from the Today header

@@ -25,6 +25,7 @@ export default function DoneScreen() {
   const settings = useSettings((state) => state.settings);
   const [session, setSession] = useState<SessionLog | null>(null);
   const [feedback, setFeedback] = useState<SessionFeedback | null>(null);
+  const [feedbackStatus, setFeedbackStatus] = useState<'idle' | 'saved' | 'error'>('idle');
 
   useEffect(() => {
     let cancelled = false;
@@ -56,9 +57,13 @@ export default function DoneScreen() {
 
   const choose = (value: SessionFeedback) => {
     setFeedback(value);
-    setSessionFeedback(db, sessionId, value).catch((error) => {
-      console.error('Failed to save the feedback', error);
-    });
+    setFeedbackStatus('idle');
+    setSessionFeedback(db, sessionId, value)
+      .then(() => setFeedbackStatus('saved'))
+      .catch((error) => {
+        console.error('Failed to save the feedback', error);
+        setFeedbackStatus('error');
+      });
   };
 
   return (
@@ -97,9 +102,14 @@ export default function DoneScreen() {
             );
           })}
         </View>
-        {feedback !== null && (
+        {feedbackStatus === 'saved' && (
           <Txt variant="sub" style={styles.center}>
             기록해 둘게요.
+          </Txt>
+        )}
+        {feedbackStatus === 'error' && (
+          <Txt variant="sub" style={styles.error}>
+            저장하지 못했어요. 다시 눌러 주세요.
           </Txt>
         )}
       </ScrollView>
@@ -117,6 +127,7 @@ const styles = StyleSheet.create({
   body: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: space(6), gap: space(2) },
   cat: { width: 200, height: 200, marginBottom: space(2) },
   center: { textAlign: 'center' },
+  error: { color: colors.accent, textAlign: 'center' },
   question: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink, marginTop: space(6) },
   options: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space(2), marginTop: space(2) },
   option: { borderWidth: 1, borderColor: colors.ink, borderRadius: 2, paddingHorizontal: space(3), paddingVertical: space(2.5) },

@@ -7,7 +7,10 @@ import { AccessibilityInfo, BackHandler, Platform, StyleSheet } from 'react-nati
 import GuideScreen from '../app/guide/[id]';
 import { useSettings } from '@/state/settings';
 
-jest.mock('@/db/DbProvider', () => ({ useDb: () => ({}) }));
+jest.mock('@/db/DbProvider', () => {
+  const db = {};
+  return { useDb: () => db };
+});
 jest.mock('@ggookggook/store', () => ({ insertSession: jest.fn().mockResolvedValue(undefined) }));
 jest.mock('expo-keep-awake', () => ({ useKeepAwake: jest.fn() }));
 jest.mock('expo-haptics', () => ({
@@ -171,6 +174,25 @@ it('closes immediately when nothing has happened yet', async () => {
   expect(screen.queryByText('루틴을 그만할까요?')).toBeNull();
 });
 
+it('marks the close confirmation as a modal and hides the routine underneath it from screen readers', async () => {
+  await render(<GuideScreen />);
+  await act(async () => {
+    jest.advanceTimersByTime(1000);
+  });
+  await fireEvent.press(screen.getByRole('button', { name: '닫기' }));
+  expect(screen.getByText('루틴을 그만할까요?')).toBeTruthy();
+  expect(screen.getByTestId('confirm-overlay').props.accessibilityViewIsModal).toBe(true);
+  // includeHiddenElements: this view is the one marked importantForAccessibility="no-hide-descendants",
+  // so RNTL's default hidden-element filtering (working as intended) would otherwise skip it.
+  expect(screen.getByTestId('guide-body', { includeHiddenElements: true }).props.importantForAccessibility).toBe(
+    'no-hide-descendants',
+  );
+
+  await fireEvent.press(screen.getByRole('button', { name: '계속하기' }));
+  expect(screen.queryByText('루틴을 그만할까요?')).toBeNull();
+  expect(screen.getByTestId('guide-body').props.importantForAccessibility).toBe('auto');
+});
+
 it('asks for confirmation before closing once progress has been made, pausing the timer meanwhile', async () => {
   await render(<GuideScreen />);
   await act(async () => {
@@ -183,7 +205,9 @@ it('asks for confirmation before closing once progress has been made, pausing th
   await act(async () => {
     jest.advanceTimersByTime(10_000);
   });
-  expect(screen.getByText('1 / 9회')).toBeTruthy();
+  // The routine underneath is importantForAccessibility="no-hide-descendants" while the
+  // confirmation is open, so this query must opt back in to see it.
+  expect(screen.getByText('1 / 9회', { includeHiddenElements: true })).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('button', { name: '그만하기' }));
   expect(router.back).toHaveBeenCalledTimes(1);

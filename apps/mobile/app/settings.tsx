@@ -2,7 +2,7 @@ import { PRESS_SECONDS_MAX, PRESS_SECONDS_MIN, REST_SECONDS_MAX, REST_SECONDS_MI
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
@@ -11,13 +11,8 @@ import { useSettings } from '@/state/settings';
 import { colors, fonts, space } from '@/theme';
 import { BackLink } from '@/ui/BackLink';
 import { Rule } from '@/ui/Rule';
+import { Toggle } from '@/ui/Toggle';
 import { Txt } from '@/ui/Txt';
-
-// react-native-web's Switch ignores `thumbColor` for the on-state thumb; `activeThumbColor` is
-// its web-only fix. It isn't part of RN's SwitchProps type, so it's spread in through a
-// platform-guarded object instead of a direct JSX prop, to avoid a TS error on native builds.
-const webActiveThumbColorProps: { activeThumbColor?: string } =
-  Platform.OS === 'web' ? { activeThumbColor: colors.card } : {};
 
 export default function SettingsScreen() {
   const db = useDb();
@@ -69,11 +64,13 @@ export default function SettingsScreen() {
 
         <View>
           <Rule />
-          <SwitchRow
-            label="리듬 진동"
-            value={settings.rhythmHaptics}
-            onValueChange={(value) => apply({ rhythmHaptics: value })}
-          />
+          <View style={styles.row}>
+            <Toggle
+              label="리듬 진동"
+              value={settings.rhythmHaptics}
+              onValueChange={(value) => apply({ rhythmHaptics: value })}
+            />
+          </View>
           <Rule />
           <StepperRow
             label="누르는 시간"
@@ -93,14 +90,21 @@ export default function SettingsScreen() {
             onIncrement={() => stepRestSeconds(1)}
           />
           <Rule />
-          <SwitchRow
-            label="임신 중이에요"
-            sub="켜면 임신 중 피해야 할 혈자리를 빼고 안내해요."
-            value={settings.pregnancyMode}
-            onValueChange={(value) => apply({ pregnancyMode: value })}
-          />
+          <View style={styles.row}>
+            <Toggle
+              label="임신 중이에요"
+              sub="켜면 임신 중 피해야 할 혈자리를 빼고 안내해요."
+              value={settings.pregnancyMode}
+              onValueChange={(value) => apply({ pregnancyMode: value })}
+            />
+          </View>
           <Rule />
-          <Pressable accessibilityRole="button" onPress={() => setNoticesOpen((open) => !open)} style={styles.row}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded: noticesOpen }}
+            onPress={() => setNoticesOpen((open) => !open)}
+            style={styles.row}
+          >
             <Txt variant="body">안내 다시 보기</Txt>
           </Pressable>
           {noticesOpen && (
@@ -121,33 +125,6 @@ export default function SettingsScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-interface SwitchRowProps {
-  label: string;
-  sub?: string;
-  value: boolean;
-  onValueChange: (value: boolean) => void;
-}
-
-function SwitchRow({ label, sub, value, onValueChange }: SwitchRowProps) {
-  return (
-    <View style={styles.row}>
-      <View style={styles.rowText}>
-        <Txt variant="body">{label}</Txt>
-        {sub && <Txt variant="sub">{sub}</Txt>}
-      </View>
-      <Switch
-        accessibilityRole="switch"
-        accessibilityLabel={label}
-        value={value}
-        onValueChange={onValueChange}
-        trackColor={{ true: colors.accent, false: colors.rule }}
-        thumbColor={colors.card}
-        {...webActiveThumbColorProps}
-      />
-    </View>
   );
 }
 
@@ -200,13 +177,12 @@ const styles = StyleSheet.create({
   body: { padding: space(5), gap: space(4), paddingBottom: space(10) },
   error: { color: colors.accent },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: space(4), gap: space(3) },
-  rowText: { flex: 1, gap: space(1) },
   notices: { gap: space(3), paddingBottom: space(3) },
   notice: { paddingLeft: space(1) },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: space(3) },
   stepButton: {
-    width: 32,
-    height: 32,
+    width: space(8),
+    height: space(8),
     borderRadius: 4,
     borderWidth: 1,
     borderColor: colors.ink,

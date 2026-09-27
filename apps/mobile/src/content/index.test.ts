@@ -14,18 +14,39 @@ const bundle: ContentBundle = {
       cautions: ['pregnancy'],
       whoLocation: 'dorsum',
     },
+    {
+      id: 'SI3',
+      name: { ko: '후계', hanja: '後谿', en: 'Hugye' },
+      sides: 'sequential',
+      location: '손등 바깥쪽입니다.',
+      technique: '누르세요.',
+      defaultSeconds: 60,
+      cautions: [],
+      whoLocation: 'dorsum',
+    },
   ],
   symptoms: [{ id: 'headache', name: '두통', aliases: [], steps: [{ acupointId: 'LI4', seconds: 60 }], seeDoctor: '병원에 가세요.' }],
   plates: [
     { id: 'no-image', name: '그림 없음', subject: 's', depicts: 'left', acupointIds: ['LI4'], pins: [{ acupointId: 'LI4', x: 0.1, y: 0.1 }] },
-    { id: 'hand-dorsal', name: '손등', subject: 's', depicts: 'left', acupointIds: ['LI4'], pins: [{ acupointId: 'LI4', x: 0.61, y: 0.59 }] },
+    { id: 'wrist-dup', name: '중복', subject: 's', depicts: 'left', acupointIds: ['LI4'], pins: [{ acupointId: 'LI4', x: 0.2, y: 0.2 }] },
+    {
+      id: 'hand-dorsal',
+      name: '손등',
+      subject: 's',
+      depicts: 'left',
+      acupointIds: ['LI4', 'SI3'],
+      pins: [
+        { acupointId: 'LI4', x: 0.61, y: 0.59 },
+        { acupointId: 'SI3', x: 0.7, y: 0.5 },
+      ],
+    },
   ],
   maps: [
     {
       id: 'body-front',
       name: '앞면',
       subject: 's',
-      regions: [{ id: 'hand', name: '손', x: 0.5, y: 0.5, plateIds: ['no-image', 'hand-dorsal'] }],
+      regions: [{ id: 'hand', name: '손', x: 0.5, y: 0.5, plateIds: ['no-image', 'wrist-dup', 'hand-dorsal'] }],
     },
   ],
 };
@@ -65,11 +86,16 @@ describe('buildIndex', () => {
     expect(index.symptomsFor('ST36')).toEqual([]);
   });
 
-  it('groups a region into its linked plates with acupoints de-duplicated across them', () => {
+  it('groups a region into its linked plates, de-duplicating acupoints and dropping a plate left with none', () => {
     expect(index.acupointsForRegion('body-front', 'hand')).toEqual([
+      { plate: bundle.plates[2], acupoints: [bundle.acupoints[1]] },
       { plate: bundle.plates[0], acupoints: [bundle.acupoints[0]] },
-      { plate: bundle.plates[1], acupoints: [] },
     ]);
+  });
+
+  it('orders an image-bearing plate before one with no drawing yet', () => {
+    const order = index.acupointsForRegion('body-front', 'hand').map((group) => group.plate.id);
+    expect(order).toEqual(['hand-dorsal', 'no-image']);
   });
 
   it('returns an empty list for an unknown map or region', () => {

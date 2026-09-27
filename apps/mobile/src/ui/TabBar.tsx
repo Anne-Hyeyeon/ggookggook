@@ -2,7 +2,7 @@ import type { Tabs } from 'expo-router';
 import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, fonts } from '@/theme';
+import { colors, fonts, space } from '@/theme';
 import { Txt } from './Txt';
 
 type TabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
@@ -35,7 +35,7 @@ export function TabBar({ state, descriptors, navigation }: TabBarProps) {
 
 const styles = StyleSheet.create({
   bar: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.rule, backgroundColor: colors.bg },
-  item: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 48, paddingTop: 12, paddingBottom: 4 },
+  item: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: space(12), paddingTop: space(3), paddingBottom: space(1) },
   label: { fontFamily: fonts.regular, fontSize: 12, color: colors.faint },
   focused: { fontFamily: fonts.bold, color: colors.ink },
 });

@@ -4,3 +4,5 @@ export const DISCLAIMER_NOTICES = [
   '지병이 있으면 전문가와 먼저 상의하세요.',
   '상처나 염증, 부기가 있는 곳은 누르지 마세요.',
 ] as const;
+
+export const ROUTINE_DISCLAIMER = '지압은 불편함을 덜어줄 수 있지만 진료를 대신하지 않아요.';

@@ -194,7 +194,7 @@ export default function GuideScreen() {
 
   return (
     <SafeAreaView style={styles.screen}>
-      <View style={styles.body}>
+      <View testID="guide-body" style={styles.body} importantForAccessibility={confirmClose ? 'no-hide-descendants' : 'auto'}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.top}>
             <Txt style={styles.topName}>{symptom.name}</Txt>
@@ -281,7 +281,7 @@ export default function GuideScreen() {
       </View>
 
       {confirmClose && (
-        <View style={styles.confirmOverlay}>
+        <View testID="confirm-overlay" style={styles.confirmOverlay} accessibilityViewIsModal>
           <View style={styles.confirmBox}>
             <Txt variant="body" style={styles.confirmText}>루틴을 그만할까요?</Txt>
             <View style={styles.confirmButtons}>
@@ -314,11 +314,11 @@ const styles = StyleSheet.create({
   side: { fontFamily: fonts.semibold, fontSize: 13, color: colors.accent },
   timer: { gap: space(3), paddingHorizontal: space(5), paddingBottom: space(5) },
   timerRow: { flexDirection: 'row', alignItems: 'center', gap: space(4), paddingTop: space(2) },
-  number: { minWidth: 40 },
-  timerText: { flex: 1, gap: 2 },
+  number: { minWidth: space(10) },
+  timerText: { flex: 1, gap: space(0.5) },
   action: { fontFamily: fonts.bold, fontSize: 15, color: colors.ink },
   bigButton: {
-    minHeight: 56,
+    minHeight: space(14),
     borderWidth: 1.5,
     borderColor: colors.ink,
     borderRadius: 2,
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
     borderColor: colors.ink,
     borderRadius: 2,
     paddingHorizontal: space(3),
-    minHeight: 48,
+    minHeight: space(12),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -353,6 +353,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: space(5),
+    backgroundColor: colors.scrim,
   },
   confirmBox: {
     width: '100%',
@@ -366,7 +367,7 @@ const styles = StyleSheet.create({
   confirmText: { textAlign: 'center' },
   confirmButtons: { gap: space(3) },
   confirmButton: {
-    minHeight: 52,
+    minHeight: space(13),
     borderWidth: 1.5,
     borderColor: colors.ink,
     borderRadius: 2,

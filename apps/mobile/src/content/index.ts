@@ -70,7 +70,7 @@ export function buildIndex(bundle: ContentBundle, images: Record<string, number>
       const region = maps.get(mapId)?.regions.find((candidate) => candidate.id === regionId);
       if (!region) return [];
       const seen = new Set<string>();
-      return region.plateIds.flatMap((plateId) => {
+      const groups = region.plateIds.flatMap((plateId) => {
         const plate = plates.get(plateId);
         if (!plate) return [];
         const groupAcupoints = plate.acupointIds.flatMap((acupointId) => {
@@ -80,8 +80,11 @@ export function buildIndex(bundle: ContentBundle, images: Record<string, number>
           seen.add(acupointId);
           return [acupoint];
         });
-        return [{ plate, acupoints: groupAcupoints }];
+        return groupAcupoints.length === 0 ? [] : [{ plate, acupoints: groupAcupoints }];
       });
+      // A plate with its own drawing is the more useful stop for a region that links several
+      // plates; Array#sort is stable, so ties keep the region's own plateIds order.
+      return [...groups].sort((a, b) => Number(image(b.plate.id) !== null) - Number(image(a.plate.id) !== null));
     },
   };
 }

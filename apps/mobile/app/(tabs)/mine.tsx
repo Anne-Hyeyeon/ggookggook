@@ -14,9 +14,8 @@ import { Txt } from '@/ui/Txt';
 
 const HISTORY_LIMIT = 60;
 
-// A stable reference so a rejected refetch (e.g. every failed retry while unfocused, with
-// an unstable `useDb()` value) sets state to the same object every time: React bails out
-// of the re-render via Object.is instead of looping forever on a fresh [] each time.
+// A stable reference so a repeated failed refetch sets state to the same array every time,
+// letting React bail out via Object.is instead of looping on a fresh [] each time.
 const NO_SESSIONS: SessionLog[] = [];
 
 const FEEDBACK_LABEL: Record<SessionFeedback, string> = {
@@ -158,7 +157,7 @@ const styles = StyleSheet.create({
   title: { marginTop: space(1) },
   sectionLabel: { paddingTop: space(1) },
   dayHeader: { paddingTop: space(4), paddingBottom: space(1) },
-  row: { flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingVertical: space(3), gap: space(3) },
+  row: { flexDirection: 'row', alignItems: 'center', minHeight: space(12), paddingVertical: space(3), gap: space(3) },
   rowText: { flex: 1, gap: 3 },
   rowName: { fontFamily: fonts.semibold, fontSize: 15.5, color: colors.ink },
   feedbackBetter: { color: colors.accent },

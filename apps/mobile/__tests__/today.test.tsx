@@ -6,7 +6,10 @@ import { act } from 'react-test-renderer';
 import TodayScreen from '../app/(tabs)/index';
 import { useSettings } from '@/state/settings';
 
-jest.mock('@/db/DbProvider', () => ({ useDb: () => ({}) }));
+jest.mock('@/db/DbProvider', () => {
+  const db = {};
+  return { useDb: () => db };
+});
 jest.mock('@ggookggook/store', () => ({
   latestCompletedSession: jest.fn(),
   countSessionsByFeedback: jest.fn(),
@@ -107,7 +110,7 @@ it('shows the better-feedback count only when it is at least one', async () => {
   });
   mocked.countSessionsByFeedback.mockResolvedValue(3);
   await render(<TodayScreen />);
-  expect(await screen.findByText('나아졌어요 3번')).toBeTruthy();
+  expect(await screen.findByText('나아졌어요를 3번 남겼어요')).toBeTruthy();
 });
 
 it('hides the better-feedback line when there is no positive feedback yet', async () => {

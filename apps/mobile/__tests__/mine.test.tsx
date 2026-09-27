@@ -5,7 +5,10 @@ import { router } from 'expo-router';
 import { formatDateLine } from '@/format';
 import MineScreen from '../app/(tabs)/mine';
 
-jest.mock('@/db/DbProvider', () => ({ useDb: () => ({}) }));
+jest.mock('@/db/DbProvider', () => {
+  const db = {};
+  return { useDb: () => db };
+});
 jest.mock('@ggookggook/store', () => ({ listCompletedSessions: jest.fn() }));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn() },

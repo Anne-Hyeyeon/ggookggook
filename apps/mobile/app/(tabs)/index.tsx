@@ -13,9 +13,8 @@ import { colors, fonts, space } from '@/theme';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
 
-// A stable reference so a repeated fallback (e.g. every failed retry while unfocused) sets
-// state to the same object every time: React bails out of the re-render via Object.is
-// instead of looping forever on a fresh {} each time.
+// A stable reference so a repeated failed refetch sets state to the same object every time,
+// letting React bail out via Object.is instead of looping on a fresh {} each time.
 const NO_USAGE: Record<string, number> = {};
 
 export default function TodayScreen() {
@@ -109,11 +108,11 @@ export default function TodayScreen() {
                   <Txt variant="sub" style={styles.recentLabel}>
                     {`최근 · ${recentSymptom.name} · ${formatRelativeDay(recent.completedAt ?? recent.startedAt, new Date())}`}
                   </Txt>
-                  <Txt style={styles.recentAction}>다시 하기</Txt>
+                  <Txt maxFontSizeMultiplier={1.4} style={styles.recentAction}>다시 하기</Txt>
                 </Pressable>
                 {betterCount >= 1 && (
                   <Txt variant="caption" maxFontSizeMultiplier={1.4} style={styles.betterLine}>
-                    {`나아졌어요 ${betterCount}번`}
+                    {`나아졌어요를 ${betterCount}번 남겼어요`}
                   </Txt>
                 )}
                 <Rule />
@@ -164,7 +163,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: space(3),
-    minHeight: 48,
+    minHeight: space(12),
     paddingVertical: space(3),
   },
   recentLabel: { flex: 1 },

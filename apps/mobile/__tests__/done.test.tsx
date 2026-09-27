@@ -5,7 +5,10 @@ import { router } from 'expo-router';
 import DoneScreen from '../app/done';
 import { useSettings } from '@/state/settings';
 
-jest.mock('@/db/DbProvider', () => ({ useDb: () => ({}) }));
+jest.mock('@/db/DbProvider', () => {
+  const db = {};
+  return { useDb: () => db };
+});
 jest.mock('@ggookggook/store', () => ({ getSession: jest.fn(), setSessionFeedback: jest.fn().mockResolvedValue(undefined) }));
 jest.mock('expo-router', () => ({ router: { replace: jest.fn(), dismissTo: jest.fn() }, useLocalSearchParams: () => ({ sessionId: 's1' }) }));
 
@@ -35,7 +38,7 @@ it('shows the result and records feedback', async () => {
   await fireEvent.press(screen.getByRole('button', { name: '나아졌어요' }));
   expect(mocked.setSessionFeedback).toHaveBeenCalledWith({}, 's1', 'better');
   expect(screen.getByRole('button', { name: '나아졌어요' }).props.accessibilityState).toMatchObject({ selected: true });
-  expect(screen.getByText('기록해 둘게요.')).toBeTruthy();
+  expect(await screen.findByText('기록해 둘게요.')).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('button', { name: '처음으로' }));
   expect(router.dismissTo).toHaveBeenCalledWith('/');
@@ -118,6 +121,8 @@ it('keeps the selection and logs an error when setSessionFeedback rejects', asyn
 
   expect(screen.getByRole('button', { name: '나아졌어요' }).props.accessibilityState).toMatchObject({ selected: true });
   expect(errorSpy).toHaveBeenCalledWith('Failed to save the feedback', expect.any(Error));
+  expect(await screen.findByText('저장하지 못했어요. 다시 눌러 주세요.')).toBeTruthy();
+  expect(screen.queryByText('기록해 둘게요.')).toBeNull();
 
   errorSpy.mockRestore();
 });

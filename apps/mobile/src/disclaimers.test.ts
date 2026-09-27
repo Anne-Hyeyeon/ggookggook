@@ -1,4 +1,4 @@
-import { DISCLAIMER_NOTICES } from './disclaimers';
+import { DISCLAIMER_NOTICES, ROUTINE_DISCLAIMER } from './disclaimers';
 
 it('has the four safety notices shown before onboarding is accepted', () => {
   expect(DISCLAIMER_NOTICES).toHaveLength(4);
@@ -8,4 +8,8 @@ it('has the four safety notices shown before onboarding is accepted', () => {
     '지병이 있으면 전문가와 먼저 상의하세요.',
     '상처나 염증, 부기가 있는 곳은 누르지 마세요.',
   ]);
+});
+
+it('has the routine disclaimer shown on symptom and acupoint screens', () => {
+  expect(ROUTINE_DISCLAIMER).toBe('지압은 불편함을 덜어줄 수 있지만 진료를 대신하지 않아요.');
 });

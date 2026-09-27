@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useCallback, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
@@ -10,13 +10,8 @@ import { useSettings } from '@/state/settings';
 import { colors, space } from '@/theme';
 import { Button } from '@/ui/Button';
 import { Rule } from '@/ui/Rule';
+import { Toggle } from '@/ui/Toggle';
 import { Txt } from '@/ui/Txt';
-
-// react-native-web's Switch ignores `thumbColor` for the on-state thumb; `activeThumbColor` is
-// its web-only fix. It isn't part of RN's SwitchProps type, so it's spread in through a
-// platform-guarded object instead of a direct JSX prop, to avoid a TS error on native builds.
-const webActiveThumbColorProps: { activeThumbColor?: string } =
-  Platform.OS === 'web' ? { activeThumbColor: colors.card } : {};
 
 export default function WelcomeScreen() {
   const db = useDb();
@@ -80,21 +75,12 @@ export default function WelcomeScreen() {
           ))}
           <Rule />
         </View>
-        <View style={styles.toggle}>
-          <View style={styles.toggleText}>
-            <Txt variant="body">임신 중이에요</Txt>
-            <Txt variant="sub">켜면 임신 중 피해야 할 혈자리를 빼고 안내해요.</Txt>
-          </View>
-          <Switch
-            accessibilityRole="switch"
-            accessibilityLabel="임신 중이에요"
-            value={settings.pregnancyMode}
-            onValueChange={handlePregnancyChange}
-            trackColor={{ true: colors.accent, false: colors.rule }}
-            thumbColor={colors.card}
-            {...webActiveThumbColorProps}
-          />
-        </View>
+        <Toggle
+          label="임신 중이에요"
+          sub="켜면 임신 중 피해야 할 혈자리를 빼고 안내해요."
+          value={settings.pregnancyMode}
+          onValueChange={handlePregnancyChange}
+        />
       </ScrollView>
       <View style={styles.footer}>
         {saveError && (
@@ -118,8 +104,6 @@ const styles = StyleSheet.create({
   list: { gap: 0 },
   notice: { gap: space(3), paddingTop: 0 },
   noticeText: { paddingVertical: space(3) },
-  toggle: { flexDirection: 'row', alignItems: 'center', gap: space(4) },
-  toggleText: { flex: 1, gap: space(1) },
   footer: { padding: space(5), gap: space(2) },
   error: { color: colors.accent, textAlign: 'center' },
 });

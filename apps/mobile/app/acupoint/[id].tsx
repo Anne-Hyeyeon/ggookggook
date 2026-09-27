@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
+import { ROUTINE_DISCLAIMER } from '@/disclaimers';
 import { routineSummary, sideLabel, visibleSteps } from '@/routine';
 import { useSettings } from '@/state/settings';
 import { colors, fonts, space } from '@/theme';
@@ -89,7 +90,7 @@ export default function AcupointScreen() {
           </View>
         )}
 
-        <Txt variant="caption">지압은 불편함을 덜어줄 수 있지만 진료를 대신하지 않아요.</Txt>
+        <Txt variant="caption">{ROUTINE_DISCLAIMER}</Txt>
       </ScrollView>
     </SafeAreaView>
   );
@@ -99,11 +100,11 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   body: { padding: space(5), gap: space(5), paddingBottom: space(8) },
   head: { gap: space(1.5) },
-  nameRow: { flexDirection: 'row', alignItems: 'baseline', gap: space(1.5) },
+  nameRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: space(1.5) },
   pointName: { fontSize: 27 },
   sectionTitle: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink, marginTop: space(2), marginBottom: space(1) },
   caution: { color: colors.accent },
-  symptomRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44, paddingVertical: space(2.5) },
+  symptomRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: space(11), paddingVertical: space(2.5) },
   symptomName: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
   symptomMinutes: { color: colors.accent },
 });

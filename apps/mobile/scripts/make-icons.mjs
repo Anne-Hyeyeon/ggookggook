@@ -80,18 +80,19 @@ async function eraseHairRegion(cutoutBuffer) {
     .toBuffer();
 }
 
-// The person's shoulder line runs the full width of the crop and would otherwise
-// hit the bottom edge at full strength, reading as a hard cut. Both paws sit well
-// above this band (bottom ~120px), so fading only that band tapers the shoulder
-// line to nothing before the edge without touching the cat itself.
-async function fadeBottomEdge(cutoutBuffer, marginPx) {
+// The person's shoulder line runs the full width and height of the crop and would otherwise
+// hit the bottom or right edge at full strength, reading as a hard cut (fix round 2: the same
+// line was clipped square on the right, under the cat's resting paw, in the icon and adaptive
+// icon). Fading only a margin along the given edge tapers the line to nothing before the edge
+// without touching the cat itself.
+async function fadeEdge(cutoutBuffer, marginPx, edge) {
   const { data, info } = await sharp(cutoutBuffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const { width, height, channels } = info;
   for (let y = 0; y < height; y += 1) {
-    const distFromBottom = height - 1 - y;
-    if (distFromBottom >= marginPx) continue;
-    const factor = distFromBottom / marginPx;
     for (let x = 0; x < width; x += 1) {
+      const distFromEdge = edge === 'bottom' ? height - 1 - y : width - 1 - x;
+      if (distFromEdge >= marginPx) continue;
+      const factor = distFromEdge / marginPx;
       const idx = (y * width + x) * channels + 3;
       data[idx] = Math.round(data[idx] * factor);
     }
@@ -167,6 +168,10 @@ const ICON_DILATE_RADIUS = 3;
 // Applied last, after any dilation, so it isn't undone by dilation pulling
 // full-strength alpha back in from just outside the fade band.
 const BOTTOM_FADE_PX = 110;
+// Narrower than the bottom fade: the right edge only needs to catch the shoulder/paw line,
+// not a whole band of hair (icon and adaptive icon only; verified against zoomed 1024px
+// crops of the right edge with icon-180/icon-60 previews for the fix report).
+const RIGHT_FADE_PX = 60;
 
 async function fitOnCanvas(cutoutBuffer, canvasSize, contentSize) {
   const meta = await sharp(cutoutBuffer).metadata();
@@ -228,7 +233,8 @@ async function makeSeal(sizePx) {
 
 async function buildIcon() {
   const dilated = await dilateStrokes(await baseCatCutout(), ICON_DILATE_RADIUS);
-  const cutout = await fadeBottomEdge(dilated, BOTTOM_FADE_PX);
+  const bottomFaded = await fadeEdge(dilated, BOTTOM_FADE_PX, 'bottom');
+  const cutout = await fadeEdge(bottomFaded, RIGHT_FADE_PX, 'right');
   const { resized, left, top } = await fitOnCanvas(cutout, 1024, 880);
 
   const composites = [{ input: resized, left, top }];
@@ -256,7 +262,8 @@ async function buildIcon() {
 
 async function buildAdaptiveIcon() {
   const dilated = await dilateStrokes(await baseCatCutout(), ICON_DILATE_RADIUS);
-  const cutout = await fadeBottomEdge(dilated, BOTTOM_FADE_PX);
+  const bottomFaded = await fadeEdge(dilated, BOTTOM_FADE_PX, 'bottom');
+  const cutout = await fadeEdge(bottomFaded, RIGHT_FADE_PX, 'right');
   // 66% safe zone: Android may mask the adaptive icon to a circle/squircle, so
   // content must stay inside the centered 66%-of-1024 box.
   const { resized, left, top } = await fitOnCanvas(cutout, 1024, Math.round(1024 * 0.66));
@@ -289,8 +296,8 @@ async function buildAdaptiveIcon() {
 const SPLASH_MARGIN_FRACTION = 0.08;
 
 async function buildSplashIcon() {
-  // Undilated — the splash keeps the original thin ink line weight.
-  const cutout = await fadeBottomEdge(await baseCatCutout(), BOTTOM_FADE_PX);
+  // Undilated: the splash keeps the original thin ink line weight.
+  const cutout = await fadeEdge(await baseCatCutout(), BOTTOM_FADE_PX, 'bottom');
   const trimmed = await sharp(cutout).trim({ threshold: 10 }).toBuffer();
   const meta = await sharp(trimmed).metadata();
   const canvasWidth = 600;

@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
+import { ROUTINE_DISCLAIMER } from '@/disclaimers';
 import { routineSummary, sideLabel, topic, visibleSteps } from '@/routine';
 import { useSettings } from '@/state/settings';
 import { colors, fonts, space } from '@/theme';
@@ -84,7 +85,7 @@ export default function SymptomScreen() {
           <Txt variant="sub">{symptom.seeDoctor}</Txt>
         </View>
 
-        <Txt variant="caption">지압은 불편함을 덜어줄 수 있지만 진료를 대신하지 않아요.</Txt>
+        <Txt variant="caption">{ROUTINE_DISCLAIMER}</Txt>
       </ScrollView>
       <View style={styles.footer}>
         <Button label="시작" onPress={() => router.push(`/guide/${symptom.id}`)} disabled={steps.length === 0} />
@@ -99,11 +100,11 @@ const styles = StyleSheet.create({
   head: { gap: space(1.5) },
   summary: { fontFamily: fonts.semibold, fontSize: 13, color: colors.accent, marginTop: space(1) },
   step: { flexDirection: 'row', gap: space(3), paddingVertical: space(3.5) },
-  stepNo: { width: 20, paddingTop: 10 },
+  stepNo: { width: space(5), paddingTop: space(2.5) },
   stepText: { flex: 1, gap: space(1) },
   stepName: { flexDirection: 'row', alignItems: 'baseline', gap: space(1.5) },
   pointName: { fontSize: 21, lineHeight: 28 },
-  seconds: { textAlign: 'right', paddingTop: 8 },
+  seconds: { textAlign: 'right', paddingTop: space(2) },
   caution: { color: colors.accent },
   doctor: { gap: space(2) },
   doctorTitle: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink, marginTop: space(2) },

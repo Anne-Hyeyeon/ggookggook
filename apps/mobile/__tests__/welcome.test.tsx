@@ -4,7 +4,10 @@ import WelcomeScreen from '../app/welcome';
 import { useOnboarding } from '@/state/onboarding';
 import { useSettings } from '@/state/settings';
 
-jest.mock('@/db/DbProvider', () => ({ useDb: () => ({}) }));
+jest.mock('@/db/DbProvider', () => {
+  const db = {};
+  return { useDb: () => db };
+});
 
 const update = jest.fn().mockResolvedValue(undefined);
 const accept = jest.fn().mockResolvedValue(undefined);
@@ -22,7 +25,7 @@ it('walks through the intro, pregnancy toggle, and disclaimer', async () => {
   await fireEvent.press(screen.getByRole('button', { name: '다음' }));
 
   expect(screen.getByText('시작하기 전에 확인해 주세요')).toBeTruthy();
-  // Native must keep its own thumb rendering; activeThumbColor is a web-only fix (see welcome.tsx).
+  // Native must keep its own thumb rendering; activeThumbColor is a web-only fix (see Toggle.tsx).
   expect(screen.getByRole('switch').props.activeThumbColor).toBeUndefined();
   await fireEvent(screen.getByRole('switch'), 'valueChange', true);
   expect(update).toHaveBeenCalledWith({}, { pregnancyMode: true });

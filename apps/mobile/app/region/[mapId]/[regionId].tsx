@@ -49,6 +49,7 @@ export default function RegionScreen() {
                     <Rule />
                     <Pressable
                       accessibilityRole="button"
+                      accessibilityLabel={`${acupoint.name.ko}, ${firstSentence(acupoint.location)}`}
                       onPress={() => router.push(`/acupoint/${acupoint.id}`)}
                       style={styles.row}
                     >
@@ -76,6 +77,6 @@ const styles = StyleSheet.create({
   plateBlock: { gap: space(2) },
   plateCaption: { fontFamily: fonts.semibold, color: colors.sub },
   row: { gap: space(1), paddingVertical: space(3.5) },
-  rowHead: { flexDirection: 'row', alignItems: 'baseline', gap: space(1.5) },
+  rowHead: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: space(1.5) },
   pointName: { fontSize: 21, lineHeight: 28 },
 });

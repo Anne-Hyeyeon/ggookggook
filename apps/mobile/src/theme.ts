@@ -9,6 +9,7 @@ export const colors = {
   accent: '#C23B2A',
   accentSoft: 'rgba(194, 59, 42, 0.16)',
   line: '#3A3732',
+  scrim: 'rgba(35, 33, 30, 0.4)',
 } as const;
 
 export const fonts = {

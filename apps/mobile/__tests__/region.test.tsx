@@ -25,6 +25,11 @@ it('lists the acupoints of every plate linked to 손 and navigates to one', asyn
   expect(router.push).toHaveBeenCalledWith('/acupoint/LI4');
 });
 
+it('gives each acupoint row an accessible name of its Korean name and the first sentence of its location', async () => {
+  await render(<RegionScreen />);
+  expect(screen.getByRole('button', { name: /^합곡, / })).toBeTruthy();
+});
+
 it('navigates back', async () => {
   await render(<RegionScreen />);
   await fireEvent.press(screen.getByRole('button', { name: '뒤로' }));

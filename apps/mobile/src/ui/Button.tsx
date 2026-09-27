@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet } from 'react-native';
-import { colors, fonts } from '@/theme';
+import { colors, fonts, space } from '@/theme';
 import { Txt } from './Txt';
 
 interface ButtonProps {
@@ -25,7 +25,7 @@ export function Button({ label, onPress, kind = 'primary', disabled = false }: B
 }
 
 const styles = StyleSheet.create({
-  base: { height: 52, borderRadius: 2, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 },
+  base: { height: space(13), borderRadius: 2, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space(5) },
   primary: { backgroundColor: colors.ink },
   secondary: { borderWidth: 1, borderColor: colors.ink },
   dim: { opacity: 0.6 },
