@@ -38,7 +38,8 @@
     "ios": "expo run:ios",
     "android": "expo run:android",
     "test": "jest",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "sync-content": "npm run build -w @ggookggook/content && tsx scripts/sync-content.mts"
   },
   "jest": {
     "preset": "jest-expo",
