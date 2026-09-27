@@ -8,9 +8,9 @@ const symptoms: Symptom[] = [
   { id: 'headache', name: '두통', aliases: [], steps: [{ acupointId: 'LI4', seconds: 60 }], seeDoctor: '…' },
 ];
 const acupoints = new Map<string, Pick<Acupoint, 'name'>>([
-  ['HT7', { name: { ko: '신문', hanja: '神門', en: 'Shenmen' } }],
-  ['BL2', { name: { ko: '찬죽', hanja: '攢竹', en: 'Cuanzhu' } }],
-  ['LI4', { name: { ko: '합곡', hanja: '合谷', en: 'Hegu' } }],
+  ['HT7', { name: { ko: '신문', hanja: '神門', en: 'Sinmun' } }],
+  ['BL2', { name: { ko: '찬죽', hanja: '攢竹', en: 'Chanjuk' } }],
+  ['LI4', { name: { ko: '합곡', hanja: '合谷', en: 'Hapgok' } }],
 ]);
 
 describe('searchSymptoms', () => {

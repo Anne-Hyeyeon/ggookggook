@@ -3,7 +3,7 @@ import { acupointSchema, contentBundleSchema, pinSchema, plateSchema, symptomSch
 
 const hegu = {
   id: 'LI4',
-  name: { ko: '합곡', hanja: '合谷', en: 'Hegu' },
+  name: { ko: '합곡', hanja: '合谷', en: 'Hapgok' },
   sides: 'sequential',
   location: '손등에서 엄지와 검지 뼈 사이입니다.',
   technique: '반대쪽 엄지로 꾹 누르세요.',

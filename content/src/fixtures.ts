@@ -6,7 +6,7 @@ export function validContent(): ContentBundle {
     acupoints: [
       {
         id: 'LI4',
-        name: { ko: '합곡', hanja: '合谷', en: 'Hegu' },
+        name: { ko: '합곡', hanja: '合谷', en: 'Hapgok' },
         sides: 'sequential',
         location: '손등에서 엄지와 검지 뼈 사이입니다.',
         technique: '반대쪽 엄지로 꾹 누르세요.',
@@ -16,7 +16,7 @@ export function validContent(): ContentBundle {
       },
       {
         id: 'PC6',
-        name: { ko: '내관', hanja: '內關', en: 'Neiguan' },
+        name: { ko: '내관', hanja: '內關', en: 'Naegwan' },
         sides: 'sequential',
         location: '손목 안쪽 주름에서 손가락 세 개 너비만큼 올라온 곳입니다.',
         technique: '반대쪽 엄지로 지그시 누르세요.',

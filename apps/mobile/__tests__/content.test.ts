@@ -6,7 +6,7 @@ const bundle: ContentBundle = {
   acupoints: [
     {
       id: 'LI4',
-      name: { ko: '합곡', hanja: '合谷', en: 'Hegu' },
+      name: { ko: '합곡', hanja: '合谷', en: 'Hapgok' },
       sides: 'sequential',
       location: '손등입니다.',
       technique: '누르세요.',
