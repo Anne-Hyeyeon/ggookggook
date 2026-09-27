@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "꾹꾹",
+    "slug": "ggookggook",
+    "scheme": "ggookggook",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F8F8F7",
+    "icon": "./assets/icon.png",
+    "splash": { "image": "./assets/splash-icon.png", "resizeMode": "contain", "backgroundColor": "#F8F8F7" },
+    "ios": { "bundleIdentifier": "kr.ggookggook.app", "supportsTablet": false },
+    "android": {
+      "package": "kr.ggookggook.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png",
+        "backgroundColor": "#F8F8F7"
+      }
+    },
+    "plugins": ["expo-router", "expo-status-bar", "expo-font", "expo-sqlite", "expo-image"],
+    "experiments": { "typedRoutes": true }
+  }
+}

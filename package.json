@@ -4,7 +4,8 @@
   "type": "module",
   "workspaces": [
     "packages/*",
-    "content"
+    "content",
+    "apps/*"
   ],
   "scripts": {
     "test": "npm test --workspaces --if-present",
@@ -15,5 +16,9 @@
     "tsx": "^4.23.15",
     "typescript": "~6.0.3",
     "vitest": "^5.0.2"
+  },
+  "overrides": {
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
   }
 }
