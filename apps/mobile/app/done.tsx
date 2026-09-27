@@ -29,7 +29,8 @@ export default function DoneScreen() {
       .then((loaded) => {
         if (cancelled) return;
         setSession(loaded);
-        setFeedback(loaded?.feedback ?? null);
+        // A feedback choice the user already made while this was loading must win.
+        setFeedback((current) => current ?? loaded?.feedback ?? null);
       })
       .catch((error) => {
         console.error('Failed to load the session', error);
