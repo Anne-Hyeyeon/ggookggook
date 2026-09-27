@@ -20,7 +20,14 @@ const bundle: ContentBundle = {
     { id: 'no-image', name: '그림 없음', subject: 's', depicts: 'left', acupointIds: ['LI4'], pins: [{ acupointId: 'LI4', x: 0.1, y: 0.1 }] },
     { id: 'hand-dorsal', name: '손등', subject: 's', depicts: 'left', acupointIds: ['LI4'], pins: [{ acupointId: 'LI4', x: 0.61, y: 0.59 }] },
   ],
-  maps: [],
+  maps: [
+    {
+      id: 'body-front',
+      name: '앞면',
+      subject: 's',
+      regions: [{ id: 'hand', name: '손', x: 0.5, y: 0.5, plateIds: ['no-image', 'hand-dorsal'] }],
+    },
+  ],
 };
 
 describe('buildIndex', () => {
@@ -42,6 +49,33 @@ describe('buildIndex', () => {
   it('returns null for an acupoint on no plate', () => {
     expect(index.plateFor('ST36')).toBeNull();
   });
+
+  it('looks up a body map and an unknown one', () => {
+    expect(index.map('body-front')?.name).toBe('앞면');
+    expect(index.map('body-back')).toBeUndefined();
+  });
+
+  it('looks up a plate and an unknown one', () => {
+    expect(index.plate('hand-dorsal')?.name).toBe('손등');
+    expect(index.plate('nope')).toBeUndefined();
+  });
+
+  it('finds symptoms that use an acupoint, in content order', () => {
+    expect(index.symptomsFor('LI4').map((symptom) => symptom.id)).toEqual(['headache']);
+    expect(index.symptomsFor('ST36')).toEqual([]);
+  });
+
+  it('groups a region into its linked plates with acupoints de-duplicated across them', () => {
+    expect(index.acupointsForRegion('body-front', 'hand')).toEqual([
+      { plate: bundle.plates[0], acupoints: [bundle.acupoints[0]] },
+      { plate: bundle.plates[1], acupoints: [] },
+    ]);
+  });
+
+  it('returns an empty list for an unknown map or region', () => {
+    expect(index.acupointsForRegion('body-back', 'hand')).toEqual([]);
+    expect(index.acupointsForRegion('body-front', 'nope')).toEqual([]);
+  });
 });
 
 describe('bundled content', () => {
@@ -49,5 +83,15 @@ describe('bundled content', () => {
     expect(content.symptoms).toHaveLength(16);
     expect(content.acupoints.size).toBe(37);
     expect(content.image('cat-shoulder')).not.toBeNull();
+  });
+
+  it('groups the hand region across its two plates', () => {
+    const groups = content.acupointsForRegion('body-front', 'hand');
+    const names = groups.flatMap((group) => group.acupoints.map((acupoint) => acupoint.name.ko));
+    expect(names).toEqual(expect.arrayContaining(['합곡', '후계', '내관']));
+  });
+
+  it('finds the routines that use 합곡', () => {
+    expect(content.symptomsFor('LI4').map((symptom) => symptom.name)).toContain('두통');
   });
 });
