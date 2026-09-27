@@ -82,6 +82,7 @@ export default function WelcomeScreen() {
             value={settings.pregnancyMode}
             onValueChange={handlePregnancyChange}
             trackColor={{ true: colors.accent, false: colors.rule }}
+            thumbColor={colors.card}
           />
         </View>
       </ScrollView>

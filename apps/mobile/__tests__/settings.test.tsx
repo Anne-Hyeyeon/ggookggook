@@ -1,17 +1,26 @@
 import { DEFAULT_SETTINGS } from '@ggookggook/shared';
+import * as store from '@ggookggook/store';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
+import { act } from 'react-test-renderer';
 import SettingsScreen from '../app/settings';
 import { useSettings } from '@/state/settings';
 
 jest.mock('@/db/DbProvider', () => ({ useDb: () => ({}) }));
 jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
 jest.mock('expo-constants', () => ({ expoConfig: { version: '0.1.0' } }));
+jest.mock('@ggookggook/store', () => ({ loadSettings: jest.fn(), saveSettings: jest.fn() }));
+
+const mocked = store as jest.Mocked<typeof store>;
+// Captured before any test replaces it with a mock, so the race-condition test below can
+// restore the real update implementation instead of the stubbed one the other tests use.
+const realUpdate = useSettings.getState().update;
 
 const update = jest.fn().mockResolvedValue(undefined);
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mocked.saveSettings.mockResolvedValue(undefined);
   useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS }, update });
 });
 
@@ -43,6 +52,23 @@ it('steps the press seconds by one within 3 to 10', async () => {
 
   await fireEvent.press(screen.getByRole('button', { name: '누르는 시간 줄이기' }));
   expect(update).toHaveBeenCalledWith({}, { pressSeconds: 4 });
+});
+
+it('does not lose an update when the increase button is pressed twice before either settles', async () => {
+  useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS }, update: realUpdate });
+  await render(<SettingsScreen />);
+
+  // Fires the underlying press handler directly, twice, inside one act() scope: this is what "no
+  // await between presses" means in practice (two separate fireEvent.press calls each open their
+  // own act scope, and firing the second before the first settles trips React's "overlapping act
+  // calls" error instead of exercising the race this test is for).
+  const button = screen.getByRole('button', { name: '누르는 시간 늘리기' });
+  act(() => {
+    button.props.onClick();
+    button.props.onClick();
+  });
+
+  expect(useSettings.getState().settings.pressSeconds).toBe(7);
 });
 
 it('disables the press seconds increase button at the upper bound', async () => {

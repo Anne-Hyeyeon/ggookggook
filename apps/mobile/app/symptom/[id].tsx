@@ -21,7 +21,7 @@ export default function SymptomScreen() {
     return (
       <SafeAreaView style={styles.screen}>
         <View style={styles.body}>
-          <BackLink />
+          <BackLink onPress={() => router.back()} />
           <Txt variant="body">찾을 수 없는 증상이에요.</Txt>
         </View>
       </SafeAreaView>
@@ -43,7 +43,7 @@ export default function SymptomScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.body}>
-        <BackLink />
+        <BackLink onPress={() => router.back()} />
         <View style={styles.head}>
           <Txt variant="title">{symptom.name}</Txt>
           {symptom.aliases.length > 0 && <Txt variant="sub">{symptom.aliases.join(' · ')}</Txt>}

@@ -50,7 +50,7 @@ export default function TodayScreen() {
           <View style={styles.header}>
             <View style={styles.topRow}>
               <Txt variant="caption">{formatDateLine(new Date())}</Txt>
-              <Pressable accessibilityRole="button" onPress={() => router.push('/settings')} hitSlop={8}>
+              <Pressable accessibilityRole="button" onPress={() => router.push('/settings')} hitSlop={14}>
                 <Txt variant="sub">설정</Txt>
               </Pressable>
             </View>
@@ -94,7 +94,7 @@ function SymptomRow({ symptom, settings }: { symptom: Symptom; settings: Setting
         <Txt style={styles.rowName}>{symptom.name}</Txt>
         <Txt variant="pointSmall">{names}</Txt>
       </View>
-      <Txt style={styles.minutes}>{`${minutes}분`}</Txt>
+      <Txt style={styles.minutes} testID={`minutes-${symptom.id}`}>{`${minutes}분`}</Txt>
     </Pressable>
   );
 }

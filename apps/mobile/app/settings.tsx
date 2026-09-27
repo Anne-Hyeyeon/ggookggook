@@ -1,5 +1,6 @@
 import { PRESS_SECONDS_MAX, PRESS_SECONDS_MIN, REST_SECONDS_MAX, REST_SECONDS_MIN } from '@ggookggook/shared';
 import Constants from 'expo-constants';
+import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -29,10 +30,30 @@ export default function SettingsScreen() {
     [db, update],
   );
 
+  // Reads the live store instead of the render-time `settings` prop: two taps fired before a
+  // re-render lands must each build on the other's result, not both on the same stale value.
+  const stepPressSeconds = useCallback(
+    (direction: 1 | -1) => {
+      const current = useSettings.getState().settings.pressSeconds;
+      const next = Math.min(PRESS_SECONDS_MAX, Math.max(PRESS_SECONDS_MIN, current + direction));
+      apply({ pressSeconds: next });
+    },
+    [apply],
+  );
+
+  const stepRestSeconds = useCallback(
+    (direction: 1 | -1) => {
+      const current = useSettings.getState().settings.restSeconds;
+      const next = Math.min(REST_SECONDS_MAX, Math.max(REST_SECONDS_MIN, current + direction));
+      apply({ restSeconds: next });
+    },
+    [apply],
+  );
+
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.body}>
-        <BackLink />
+        <BackLink onPress={() => router.back()} />
         <Txt variant="title">설정</Txt>
         {saveError && (
           <Txt variant="sub" style={styles.error}>
@@ -53,7 +74,8 @@ export default function SettingsScreen() {
             value={settings.pressSeconds}
             min={PRESS_SECONDS_MIN}
             max={PRESS_SECONDS_MAX}
-            onChange={(value) => apply({ pressSeconds: value })}
+            onDecrement={() => stepPressSeconds(-1)}
+            onIncrement={() => stepPressSeconds(1)}
           />
           <Rule />
           <StepperRow
@@ -61,7 +83,8 @@ export default function SettingsScreen() {
             value={settings.restSeconds}
             min={REST_SECONDS_MIN}
             max={REST_SECONDS_MAX}
-            onChange={(value) => apply({ restSeconds: value })}
+            onDecrement={() => stepRestSeconds(-1)}
+            onIncrement={() => stepRestSeconds(1)}
           />
           <Rule />
           <SwitchRow
@@ -115,6 +138,7 @@ function SwitchRow({ label, sub, value, onValueChange }: SwitchRowProps) {
         value={value}
         onValueChange={onValueChange}
         trackColor={{ true: colors.accent, false: colors.rule }}
+        thumbColor={colors.card}
       />
     </View>
   );
@@ -125,10 +149,11 @@ interface StepperRowProps {
   value: number;
   min: number;
   max: number;
-  onChange: (value: number) => void;
+  onDecrement: () => void;
+  onIncrement: () => void;
 }
 
-function StepperRow({ label, value, min, max, onChange }: StepperRowProps) {
+function StepperRow({ label, value, min, max, onDecrement, onIncrement }: StepperRowProps) {
   const atMin = value <= min;
   const atMax = value >= max;
   return (
@@ -141,7 +166,7 @@ function StepperRow({ label, value, min, max, onChange }: StepperRowProps) {
           accessibilityState={{ disabled: atMin }}
           disabled={atMin}
           hitSlop={8}
-          onPress={() => onChange(Math.max(min, value - 1))}
+          onPress={onDecrement}
           style={({ pressed }) => [styles.stepButton, (pressed || atMin) && styles.stepButtonDim]}
         >
           <Txt style={styles.stepSymbol}>−</Txt>
@@ -153,7 +178,7 @@ function StepperRow({ label, value, min, max, onChange }: StepperRowProps) {
           accessibilityState={{ disabled: atMax }}
           disabled={atMax}
           hitSlop={8}
-          onPress={() => onChange(Math.min(max, value + 1))}
+          onPress={onIncrement}
           style={({ pressed }) => [styles.stepButton, (pressed || atMax) && styles.stepButtonDim]}
         >
           <Txt style={styles.stepSymbol}>+</Txt>

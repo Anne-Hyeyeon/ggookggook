@@ -2,6 +2,7 @@ import { DEFAULT_SETTINGS } from '@ggookggook/shared';
 import * as store from '@ggookggook/store';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
+import { act } from 'react-test-renderer';
 import TodayScreen from '../app/(tabs)/index';
 import { useSettings } from '@/state/settings';
 
@@ -35,6 +36,17 @@ it('opens settings from the header button', async () => {
   await render(<TodayScreen />);
   await fireEvent.press(screen.getByRole('button', { name: '설정' }));
   expect(router.push).toHaveBeenCalledWith('/settings');
+});
+
+it('updates the displayed minutes for 두통 when pregnancy mode changes', async () => {
+  await render(<TodayScreen />);
+  expect(screen.getByTestId('minutes-headache')).toHaveTextContent('4분');
+
+  act(() => {
+    useSettings.setState({ settings: { ...DEFAULT_SETTINGS, pregnancyMode: true } });
+  });
+
+  expect(screen.getByTestId('minutes-headache')).toHaveTextContent('2분');
 });
 
 it('filters by alias and by acupoint name, and shows an empty state', async () => {
