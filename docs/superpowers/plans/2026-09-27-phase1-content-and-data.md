@@ -18,6 +18,7 @@
 - Install the latest versions with `npm install` (no pinned versions in this plan). Before using zod or sharp APIs beyond those shown here, read the installed package's docs in `node_modules/<pkg>/`.
 - Content copy is Korean only. Location sentences end in `~입니다`. Technique sentences end in `~하세요`.
 - Efficacy wording: never write "치료", "완치", "효과가 있습니다". Symptom routines never promise results.
+- Symptom names are the short original names (불면, 수족냉증, 식체). Everyday phrases (잠이 안 올 때) go in `aliases` for search.
 - Every routine has 1 to 3 steps. Step seconds are multiples of 10 between 10 and 600.
 - Acupoint codes follow WHO 2008 (kidney is `KI`, not `KD`; Yintang is `GV29`).
 - Illustration line color `#3A3732`, accent `#C23B2A`, app background `#F8F8F7`.
@@ -45,7 +46,7 @@ content/
   package.json, tsconfig.json
   data/meta.json                 { "version": 1 }
   data/acupoints.json            37 reviewed acupoints
-  data/symptoms.json             15 symptom routines
+  data/symptoms.json             16 symptom routines
   data/plates.json               15 close-up plates
   data/maps.json                 body-front, body-back
   images/raw/                    ChatGPT originals (already has 3 files)
@@ -200,7 +201,7 @@ describe('acupointSchema', () => {
 
 describe('symptomSchema', () => {
   const step = { acupointId: 'LI4', seconds: 60 };
-  const symptom = { id: 'food_stagnation', name: '체했을 때', steps: [step], seeDoctor: '가슴 통증이 함께 오면 119에 연락하세요.' };
+  const symptom = { id: 'food_stagnation', name: '식체', aliases: ['체했을 때'], steps: [step], seeDoctor: '가슴 통증이 함께 오면 119에 연락하세요.' };
 
   it('accepts 1 to 3 steps', () => {
     expect(symptomSchema.safeParse(symptom).success).toBe(true);
@@ -279,6 +280,7 @@ export const routineStepSchema = z.object({
 export const symptomSchema = z.object({
   id: slug,
   name: z.string().min(1),
+  aliases: z.array(z.string().min(1)),
   steps: z.array(routineStepSchema).min(1).max(3),
   seeDoctor: z.string().min(1),
 });
@@ -661,7 +663,8 @@ export function validContent(): ContentBundle {
     symptoms: [
       {
         id: 'food_stagnation',
-        name: '체했을 때',
+        name: '식체',
+        aliases: ['체했을 때'],
         steps: [
           { acupointId: 'LI4', seconds: 60 },
           { acupointId: 'PC6', seconds: 60 },
@@ -1054,6 +1057,9 @@ Corrections against the draft that the Korean text must reflect:
   {
     "id": "headache",
     "name": "두통",
+    "aliases": [
+      "머리 아플 때"
+    ],
     "steps": [
       { "acupointId": "LI4", "seconds": 60 },
       { "acupointId": "EX-HN5", "seconds": 60 },
@@ -1063,7 +1069,11 @@ Corrections against the draft that the Korean text must reflect:
   },
   {
     "id": "insomnia",
-    "name": "잠이 안 올 때",
+    "name": "불면",
+    "aliases": [
+      "잠이 안 올 때",
+      "잠 못 잘 때"
+    ],
     "steps": [
       { "acupointId": "HT7", "seconds": 60 },
       { "acupointId": "GV29", "seconds": 60 },
@@ -1074,6 +1084,10 @@ Corrections against the draft that the Korean text must reflect:
   {
     "id": "stress",
     "name": "스트레스",
+    "aliases": [
+      "긴장될 때",
+      "불안할 때"
+    ],
     "steps": [
       { "acupointId": "PC6", "seconds": 60 },
       { "acupointId": "GV29", "seconds": 60 }
@@ -1083,6 +1097,10 @@ Corrections against the draft that the Korean text must reflect:
   {
     "id": "indigestion",
     "name": "소화불량",
+    "aliases": [
+      "소화가 안 될 때",
+      "더부룩할 때"
+    ],
     "steps": [
       { "acupointId": "PC6", "seconds": 60 },
       { "acupointId": "ST36", "seconds": 60 },
@@ -1092,7 +1110,11 @@ Corrections against the draft that the Korean text must reflect:
   },
   {
     "id": "shoulder_pain",
-    "name": "어깨 결림",
+    "name": "어깨 통증",
+    "aliases": [
+      "어깨 결림",
+      "어깨가 뭉쳤을 때"
+    ],
     "steps": [
       { "acupointId": "GB21", "seconds": 60 },
       { "acupointId": "SI3", "seconds": 60 }
@@ -1102,6 +1124,9 @@ Corrections against the draft that the Korean text must reflect:
   {
     "id": "back_pain",
     "name": "허리 통증",
+    "aliases": [
+      "허리 아플 때"
+    ],
     "steps": [
       { "acupointId": "BL23", "seconds": 60 },
       { "acupointId": "BL40", "seconds": 60 }
@@ -1111,6 +1136,10 @@ Corrections against the draft that the Korean text must reflect:
   {
     "id": "eye_fatigue",
     "name": "눈 피로",
+    "aliases": [
+      "눈이 뻑뻑할 때",
+      "눈이 침침할 때"
+    ],
     "steps": [
       { "acupointId": "BL2", "seconds": 60 },
       { "acupointId": "EX-HN5", "seconds": 60 },
@@ -1121,6 +1150,10 @@ Corrections against the draft that the Korean text must reflect:
   {
     "id": "nausea",
     "name": "메스꺼움",
+    "aliases": [
+      "속이 울렁거릴 때",
+      "멀미"
+    ],
     "steps": [
       { "acupointId": "PC6", "seconds": 60 },
       { "acupointId": "ST36", "seconds": 60 }
@@ -1129,7 +1162,11 @@ Corrections against the draft that the Korean text must reflect:
   },
   {
     "id": "neck_pain",
-    "name": "목 결림",
+    "name": "목 통증",
+    "aliases": [
+      "목 결림",
+      "목이 뻐근할 때"
+    ],
     "steps": [
       { "acupointId": "GB20", "seconds": 60 },
       { "acupointId": "GB21", "seconds": 60 },
@@ -1140,6 +1177,9 @@ Corrections against the draft that the Korean text must reflect:
   {
     "id": "menstrual_pain",
     "name": "생리통",
+    "aliases": [
+      "생리할 때 배 아플 때"
+    ],
     "steps": [
       { "acupointId": "SP6", "seconds": 60 },
       { "acupointId": "LR3", "seconds": 60 },
@@ -1149,7 +1189,10 @@ Corrections against the draft that the Korean text must reflect:
   },
   {
     "id": "cold_extremities",
-    "name": "손발이 찰 때",
+    "name": "수족냉증",
+    "aliases": [
+      "손발이 찰 때"
+    ],
     "steps": [
       { "acupointId": "KI1", "seconds": 60 },
       { "acupointId": "ST36", "seconds": 60 }
@@ -1158,7 +1201,11 @@ Corrections against the draft that the Korean text must reflect:
   },
   {
     "id": "concentration",
-    "name": "집중이 안 될 때",
+    "name": "집중력",
+    "aliases": [
+      "집중이 안 될 때",
+      "머리가 멍할 때"
+    ],
     "steps": [
       { "acupointId": "GV20", "seconds": 60 },
       { "acupointId": "GV29", "seconds": 60 }
@@ -1166,8 +1213,25 @@ Corrections against the draft that the Korean text must reflect:
     "seeDoctor": "기억력이 떨어지거나 멍한 상태가 계속되면 병원 진료를 받으세요."
   },
   {
+    "id": "urgent_bowel",
+    "name": "급똥참기",
+    "aliases": [
+      "화장실이 급할 때",
+      "배가 급할 때"
+    ],
+    "steps": [
+      { "acupointId": "LI4", "seconds": 60 },
+      { "acupointId": "ST36", "seconds": 60 }
+    ],
+    "seeDoctor": "설사가 이틀 넘게 이어지거나 변에 피가 섞이면, 또는 열과 심한 복통이 함께 오면 병원 진료를 받으세요."
+  },
+  {
     "id": "food_stagnation",
-    "name": "체했을 때",
+    "name": "식체",
+    "aliases": [
+      "체했을 때",
+      "얹혔을 때"
+    ],
     "steps": [
       { "acupointId": "LI4", "seconds": 60 },
       { "acupointId": "PC6", "seconds": 60 }
@@ -1177,6 +1241,9 @@ Corrections against the draft that the Korean text must reflect:
   {
     "id": "constipation",
     "name": "변비",
+    "aliases": [
+      "변이 안 나올 때"
+    ],
     "steps": [
       { "acupointId": "ST25", "seconds": 60 },
       { "acupointId": "LI4", "seconds": 60 },
@@ -1186,7 +1253,11 @@ Corrections against the draft that the Korean text must reflect:
   },
   {
     "id": "facial_swelling",
-    "name": "얼굴 부기",
+    "name": "얼굴 부종",
+    "aliases": [
+      "얼굴 부기",
+      "얼굴이 부었을 때"
+    ],
     "steps": [
       { "acupointId": "LI20", "seconds": 60 },
       { "acupointId": "ST36", "seconds": 60 }
@@ -1196,7 +1267,7 @@ Corrections against the draft that the Korean text must reflect:
 ]
 ```
 
-The draft's `urgent_bowel` (급똥참기) is intentionally dropped: no standard source supports it, and its draft routine pressed on the lower abdomen, which works against the goal.
+`urgent_bowel` (급똥참기) has no standard-source basis. Its draft routine pressed the lower abdomen, which works against holding it in, so it now uses LI4 and ST36: points on the large intestine and stomach meridians that can be pressed discreetly while seated or standing. Keep its copy free of any promise.
 
 - [ ] **Step 4: Write plates.json**
 
@@ -2207,7 +2278,7 @@ Add to `content/package.json` scripts:
 - [ ] **Step 6: Build the real content**
 
 Run: `npm run build -w @ggookggook/content && ls -R content/dist`
-Expected: `Built content v1: 37 acupoints, 15 symptoms, 3 images`, and the listing shows `manifest.json`, `v1/bundle.json`, and three `.webp` files under `v1/images`.
+Expected: `Built content v1: 37 acupoints, 16 symptoms, 3 images`, and the listing shows `manifest.json`, `v1/bundle.json`, and three `.webp` files under `v1/images`.
 
 Run: `git status --short content/dist`
 Expected: no output (dist is gitignored).
