@@ -16,3 +16,4 @@ Expo, React Native, and AWS CDK APIs change often. Check the installed package d
 - `npm run images -w @ggookggook/content [-- <id>]`: normalize `content/images/raw/*` into `content/images/out/<id>.webp`
 - `npm run prompt -w @ggookggook/content [-- <id>]`: print the ChatGPT prompt for a plate or map (see `docs/illustration-style-guide.md`)
 - `npm run pin -w @ggookggook/content`: coordinate pinning tool at http://127.0.0.1:4321
+- `npm run build -w @ggookggook/content`: write the versioned bundle to `content/dist/` (phase 3 uploads it)

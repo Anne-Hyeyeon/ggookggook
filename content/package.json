@@ -9,7 +9,8 @@
     "validate": "tsx src/cli/validate.ts",
     "images": "tsx src/cli/images.ts",
     "prompt": "tsx src/cli/prompt.ts",
-    "pin": "tsx tools/pin/server.ts"
+    "pin": "tsx tools/pin/server.ts",
+    "build": "tsx src/cli/build.ts"
   },
   "dependencies": {
     "@ggookggook/shared": "*",
