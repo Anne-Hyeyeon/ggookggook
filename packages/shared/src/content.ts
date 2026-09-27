@@ -10,6 +10,8 @@ const unit = z.number().min(0).max(1);
 
 export const sidesSchema = z.enum(['single', 'sequential', 'together']);
 export const cautionSchema = z.enum(['pregnancy']);
+/** The body's own left and right, not the viewer's. */
+export const sideSchema = z.enum(['left', 'right']);
 
 export const acupointSchema = z.object({
   id: acupointId,
@@ -35,12 +37,14 @@ export const symptomSchema = z.object({
   seeDoctor: z.string().min(1),
 });
 
-export const pinSchema = z.object({ acupointId, x: unit, y: unit });
+export const pinSchema = z.object({ acupointId, x: unit, y: unit, side: sideSchema.optional() });
 
 export const plateSchema = z.object({
   id: slug,
   name: z.string().min(1),
   subject: z.string().min(1),
+  /** Which side of the body the drawing shows. */
+  depicts: z.enum(['left', 'right', 'both']),
   acupointIds: z.array(acupointId).min(1),
   pins: z.array(pinSchema),
 });
@@ -79,6 +83,7 @@ export const manifestSchema = z.object({
 
 export type Sides = z.infer<typeof sidesSchema>;
 export type Caution = z.infer<typeof cautionSchema>;
+export type Side = z.infer<typeof sideSchema>;
 export type Acupoint = z.infer<typeof acupointSchema>;
 export type RoutineStep = z.infer<typeof routineStepSchema>;
 export type Symptom = z.infer<typeof symptomSchema>;

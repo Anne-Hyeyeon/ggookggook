@@ -39,8 +39,8 @@ export function validContent(): ContentBundle {
       },
     ],
     plates: [
-      { id: 'hand-dorsal', name: '손등', subject: 'the back of a hand', acupointIds: ['LI4'], pins: [{ acupointId: 'LI4', x: 0.6, y: 0.56 }] },
-      { id: 'wrist-inner', name: '손목 안쪽', subject: 'the inner wrist', acupointIds: ['PC6'], pins: [{ acupointId: 'PC6', x: 0.5, y: 0.4 }] },
+      { id: 'hand-dorsal', name: '손등', subject: 'the back of a hand', depicts: 'left', acupointIds: ['LI4'], pins: [{ acupointId: 'LI4', x: 0.6, y: 0.56 }] },
+      { id: 'wrist-inner', name: '손목 안쪽', subject: 'the inner wrist', depicts: 'left', acupointIds: ['PC6'], pins: [{ acupointId: 'PC6', x: 0.5, y: 0.4 }] },
     ],
     maps: [
       {

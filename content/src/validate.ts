@@ -58,14 +58,34 @@ function checkReferences(content: ContentBundle, { release, imageIds }: Validate
       if (!acupoints.has(id)) error(`Plate ${plate.id} lists unknown acupoint ${id}`);
       onPlate.add(id);
     }
+    const needsSides = (id: string) => plate.depicts === 'both' && (acupoints.get(id)?.sides ?? 'single') !== 'single';
     const pinned = new Set<string>();
     for (const pin of plate.pins) {
-      if (!plate.acupointIds.includes(pin.acupointId)) error(`Plate ${plate.id} has a pin for ${pin.acupointId}, which it does not list`);
-      if (pinned.has(pin.acupointId)) error(`Plate ${plate.id} pins ${pin.acupointId} twice`);
-      pinned.add(pin.acupointId);
+      const { acupointId: id, side } = pin;
+      if (!plate.acupointIds.includes(id)) {
+        error(`Plate ${plate.id} has a pin for ${id}, which it does not list`);
+        continue;
+      }
+      if (needsSides(id) && !side) {
+        error(`Plate ${plate.id} has a pin with no side for ${id}`);
+        continue;
+      }
+      if (!needsSides(id) && side) {
+        error(`Plate ${plate.id} has an unexpected ${side} pin for ${id}`);
+        continue;
+      }
+      const key = side ? `${id} ${side}` : id;
+      if (pinned.has(key)) error(`Plate ${plate.id} pins ${key} twice`);
+      pinned.add(key);
     }
     for (const id of plate.acupointIds) {
-      if (!pinned.has(id)) gap(`Plate ${plate.id} has no pin for ${id}`);
+      if (!needsSides(id)) {
+        if (!pinned.has(id)) gap(`Plate ${plate.id} has no pin for ${id}`);
+        continue;
+      }
+      for (const side of ['left', 'right'] as const) {
+        if (!pinned.has(`${id} ${side}`)) gap(`Plate ${plate.id} has no ${side} pin for ${id}`);
+      }
     }
     if (imageIds && !imageIds.has(plate.id)) gap(`Plate ${plate.id} has no image`);
   }

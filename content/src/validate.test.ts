@@ -73,4 +73,65 @@ describe('validateContent', () => {
     content.symptoms[0]!.steps = [{ acupointId: 'LI4', seconds: 60 }];
     expect(warnings(validateContent(content, { release: false }))).toContain('Symptom food_stagnation has no steps left in pregnancy mode');
   });
+
+  it('reports a plate that pins the same acupoint twice', () => {
+    const content = validContent();
+    content.plates[0]!.pins.push({ acupointId: 'LI4', x: 0.5, y: 0.5 });
+    expect(errors(validateContent(content, { release: false }))).toContain('Plate hand-dorsal pins LI4 twice');
+  });
 });
+
+describe('validateContent pins on plates that depict both sides', () => {
+  const bothSides = () => {
+    const content = validContent();
+    content.plates[0]!.depicts = 'both';
+    content.plates[0]!.pins = [
+      { acupointId: 'LI4', x: 0.3, y: 0.5, side: 'left' },
+      { acupointId: 'LI4', x: 0.7, y: 0.5, side: 'right' },
+    ];
+    return content;
+  };
+
+  it('passes a bilateral acupoint pinned on both sides', () => {
+    expect(validateContent(bothSides(), { release: true, imageIds: allImages })).toEqual([]);
+  });
+
+  it('treats a missing side as a gap until release', () => {
+    const content = bothSides();
+    content.plates[0]!.pins = content.plates[0]!.pins.filter((pin) => pin.side === 'left');
+    expect(warnings(validateContent(content, { release: false }))).toEqual(['Plate hand-dorsal has no right pin for LI4']);
+    expect(errors(validateContent(content, { release: true, imageIds: allImages }))).toEqual(['Plate hand-dorsal has no right pin for LI4']);
+  });
+
+  it('reports a bilateral pin with no side', () => {
+    const content = bothSides();
+    content.plates[0]!.pins[1] = { acupointId: 'LI4', x: 0.7, y: 0.5 };
+    const issues = validateContent(content, { release: false });
+    expect(errors(issues)).toEqual(['Plate hand-dorsal has a pin with no side for LI4']);
+    expect(warnings(issues)).toEqual(['Plate hand-dorsal has no right pin for LI4']);
+  });
+
+  it('reports the same side pinned twice', () => {
+    const content = bothSides();
+    content.plates[0]!.pins.push({ acupointId: 'LI4', x: 0.72, y: 0.5, side: 'right' });
+    expect(errors(validateContent(content, { release: false }))).toEqual(['Plate hand-dorsal pins LI4 right twice']);
+  });
+
+  it('wants one pin with no side for a single acupoint', () => {
+    const content = bothSides();
+    content.acupoints[0]!.sides = 'single';
+    const issues = validateContent(content, { release: false });
+    expect(errors(issues)).toEqual(['Plate hand-dorsal has an unexpected left pin for LI4', 'Plate hand-dorsal has an unexpected right pin for LI4']);
+    expect(warnings(issues)).toContain('Plate hand-dorsal has no pin for LI4');
+
+    content.plates[0]!.pins = [{ acupointId: 'LI4', x: 0.5, y: 0.5 }];
+    expect(validateContent(content, { release: true, imageIds: allImages })).toEqual([]);
+  });
+
+  it('wants one pin with no side on a plate that depicts one side', () => {
+    const content = validContent();
+    content.plates[0]!.pins[0] = { acupointId: 'LI4', x: 0.6, y: 0.56, side: 'left' };
+    expect(errors(validateContent(content, { release: false }))).toContain('Plate hand-dorsal has an unexpected left pin for LI4');
+  });
+});
+

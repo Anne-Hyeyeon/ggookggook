@@ -49,17 +49,22 @@ function items() {
   const [kind, id] = $('picker').value.split(':');
   if (kind === 'map') {
     const map = data.maps.find((m) => m.id === id);
-    return { kind, id, entries: map.regions.map((r) => ({ key: r.id, title: r.name, detail: r.plateIds.join(', '), x: r.x, y: r.y })) };
+    return { kind, id, entries: map.regions.map((r) => ({ key: r.id, title: r.name, short: r.name, detail: r.plateIds.join(', '), x: r.x, y: r.y })) };
   }
   const plate = data.plates.find((p) => p.id === id);
-  return {
-    kind, id,
-    entries: plate.acupointIds.map((aid) => {
-      const a = data.acupoints.find((x) => x.id === aid);
-      const pin = plate.pins.find((p) => p.acupointId === aid);
-      return { key: aid, title: `${a.name.ko} ${aid}`, detail: `${a.location}\n${a.whoLocation}`, x: pin?.x ?? null, y: pin?.y ?? null };
-    }),
-  };
+  const entries = [];
+  for (const aid of plate.acupointIds) {
+    const a = data.acupoints.find((x) => x.id === aid);
+    const detail = `${a.location}\n${a.whoLocation}`;
+    const sides = plate.depicts === 'both' && a.sides !== 'single'
+      ? [{ side: 'left', label: ' 왼쪽' }, { side: 'right', label: ' 오른쪽' }]
+      : [{ side: undefined, label: '' }];
+    for (const { side, label } of sides) {
+      const pin = plate.pins.find((p) => p.acupointId === aid && p.side === side);
+      entries.push({ key: side ? `${aid}:${side}` : aid, acupointId: aid, side, title: `${a.name.ko}${label} ${aid}`, short: `${a.name.ko}${label}`, detail, x: pin?.x ?? null, y: pin?.y ?? null });
+    }
+  }
+  return { kind, id, entries };
 }
 
 function render() {
@@ -80,7 +85,7 @@ function render() {
     dot.className = `dot ${e.key === selected ? 'on' : ''}`;
     dot.style.left = `${e.x * 100}%`; dot.style.top = `${e.y * 100}%`;
     const label = document.createElement('div');
-    label.className = 'label'; label.textContent = e.title.split(' ')[0];
+    label.className = 'label'; label.textContent = e.short;
     label.style.left = dot.style.left; label.style.top = dot.style.top;
     $('stage').append(dot, label);
   }
@@ -89,14 +94,16 @@ function render() {
 $('picker').onchange = () => { selected = undefined; render(); };
 $('img').onclick = async (event) => {
   if (!selected) return;
+  const entry = target.entries.find((e) => e.key === selected);
   const rect = $('img').getBoundingClientRect();
   const x = (event.clientX - rect.left) / rect.width;
   const y = (event.clientY - rect.top) / rect.height;
   const path = target.kind === 'map'
     ? `/api/maps/${target.id}/regions/${selected}`
-    : `/api/plates/${target.id}/pins/${encodeURIComponent(selected)}`;
-  const res = await fetch(path, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ x, y }) });
-  $('msg').textContent = res.ok ? `${selected} 저장 (${x.toFixed(3)}, ${y.toFixed(3)})` : await res.text();
+    : `/api/plates/${target.id}/pins/${encodeURIComponent(entry.acupointId)}`;
+  const body = entry.side ? { x, y, side: entry.side } : { x, y };
+  const res = await fetch(path, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  $('msg').textContent = res.ok ? `${entry.title} 저장 (${x.toFixed(3)}, ${y.toFixed(3)})` : await res.text();
   await load();
 };
 

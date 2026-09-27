@@ -18,6 +18,42 @@ describe('setPin', () => {
     expect(next[0]!.pins.map((pin) => pin.acupointId)).toEqual(['LI4', 'SI3']);
   });
 
+  it('keeps a pin per side and replaces only the same side', () => {
+    const plates = validContent().plates;
+    plates[0]!.depicts = 'both';
+    plates[0]!.pins = [];
+    let next = setPin(plates, 'hand-dorsal', 'LI4', 0.7, 0.5, 'right');
+    next = setPin(next, 'hand-dorsal', 'LI4', 0.3, 0.5, 'left');
+    next = setPin(next, 'hand-dorsal', 'LI4', 0.72, 0.5, 'right');
+    expect(next[0]!.pins).toEqual([
+      { acupointId: 'LI4', x: 0.3, y: 0.5, side: 'left' },
+      { acupointId: 'LI4', x: 0.72, y: 0.5, side: 'right' },
+    ]);
+  });
+
+  it('orders pins by acupointIds, then left before right', () => {
+    const plates = validContent().plates;
+    plates[0]!.depicts = 'both';
+    plates[0]!.acupointIds = ['LI4', 'SI3'];
+    plates[0]!.pins = [];
+    let next = setPin(plates, 'hand-dorsal', 'SI3', 0.1, 0.5, 'right');
+    next = setPin(next, 'hand-dorsal', 'LI4', 0.2, 0.5, 'right');
+    next = setPin(next, 'hand-dorsal', 'SI3', 0.3, 0.5, 'left');
+    next = setPin(next, 'hand-dorsal', 'LI4', 0.4, 0.5);
+    next = setPin(next, 'hand-dorsal', 'LI4', 0.5, 0.5, 'left');
+    expect(next[0]!.pins.map((pin) => `${pin.acupointId}:${pin.side ?? '-'}`)).toEqual(['LI4:-', 'LI4:left', 'LI4:right', 'SI3:left', 'SI3:right']);
+  });
+
+  it('does not replace a sided pin when setting the unsided one', () => {
+    const plates = validContent().plates;
+    plates[0]!.pins = [{ acupointId: 'LI4', x: 0.3, y: 0.5, side: 'left' }];
+    const next = setPin(plates, 'hand-dorsal', 'LI4', 0.6, 0.5);
+    expect(next[0]!.pins).toEqual([
+      { acupointId: 'LI4', x: 0.6, y: 0.5 },
+      { acupointId: 'LI4', x: 0.3, y: 0.5, side: 'left' },
+    ]);
+  });
+
   it('rejects unknown plates, unlisted acupoints, and out-of-range values', () => {
     const plates = validContent().plates;
     expect(() => setPin(plates, 'nope', 'LI4', 0.5, 0.5)).toThrow('Unknown plate');

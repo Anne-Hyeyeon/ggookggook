@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { acupointSchema, contentBundleSchema, symptomSchema } from './content';
+import { acupointSchema, contentBundleSchema, pinSchema, plateSchema, symptomSchema } from './content';
 
 const hegu = {
   id: 'LI4',
@@ -53,7 +53,7 @@ describe('contentBundleSchema', () => {
       version: 1,
       acupoints: [hegu],
       symptoms: [],
-      plates: [{ id: 'hand-dorsal', name: '손등', subject: 'a hand', acupointIds: ['LI4'], pins: [{ acupointId: 'LI4', x: 1.2, y: 0.5 }] }],
+      plates: [{ id: 'hand-dorsal', name: '손등', subject: 'a hand', depicts: 'left', acupointIds: ['LI4'], pins: [{ acupointId: 'LI4', x: 1.2, y: 0.5 }] }],
       maps: [],
     };
     expect(contentBundleSchema.safeParse(bundle).success).toBe(false);
@@ -64,9 +64,22 @@ describe('contentBundleSchema', () => {
       version: 1,
       acupoints: [hegu],
       symptoms: [],
-      plates: [{ id: 'hand-dorsal', name: '손등', subject: 'a hand', acupointIds: ['LI4'], pins: [] }],
+      plates: [{ id: 'hand-dorsal', name: '손등', subject: 'a hand', depicts: 'left', acupointIds: ['LI4'], pins: [] }],
       maps: [{ id: 'body-front', name: '앞면', subject: 'a body', regions: [{ id: 'hand', name: '손', x: null, y: null, plateIds: ['hand-dorsal'] }] }],
     };
     expect(contentBundleSchema.safeParse(bundle).success).toBe(true);
+  });
+
+  it('requires plates to say which side they depict', () => {
+    const plate = { id: 'hand-dorsal', name: '손등', subject: 'a hand', acupointIds: ['LI4'], pins: [] };
+    expect(plateSchema.safeParse(plate).success).toBe(false);
+    expect(plateSchema.safeParse({ ...plate, depicts: 'both' }).success).toBe(true);
+    expect(plateSchema.safeParse({ ...plate, depicts: 'front' }).success).toBe(false);
+  });
+
+  it('accepts an optional body side on pins', () => {
+    expect(pinSchema.safeParse({ acupointId: 'LI4', x: 0.5, y: 0.5 }).success).toBe(true);
+    expect(pinSchema.safeParse({ acupointId: 'LI4', x: 0.5, y: 0.5, side: 'left' }).success).toBe(true);
+    expect(pinSchema.safeParse({ acupointId: 'LI4', x: 0.5, y: 0.5, side: 'both' }).success).toBe(false);
   });
 });

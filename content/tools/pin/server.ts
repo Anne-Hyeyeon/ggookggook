@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import path from 'node:path';
-import type { BodyMap, Plate } from '@ggookggook/shared';
+import { sideSchema, type BodyMap, type Plate, type Side } from '@ggookggook/shared';
 import { DATA_DIR, OUT_IMAGE_DIR, readJson } from '../../src/paths';
 import { setPin, setRegionPosition } from '../../src/pins';
 
@@ -9,12 +9,13 @@ const PORT = 4321;
 const dataFile = (name: string) => path.join(DATA_DIR, name);
 const writeJson = (name: string, value: unknown) => writeFile(dataFile(name), `${JSON.stringify(value, null, 2)}\n`);
 
-async function readBody(req: IncomingMessage): Promise<{ x: number; y: number }> {
+async function readBody(req: IncomingMessage): Promise<{ x: number; y: number; side?: Side }> {
   const chunks: Buffer[] = [];
   for await (const chunk of req) chunks.push(chunk as Buffer);
-  const body = JSON.parse(Buffer.concat(chunks).toString('utf8')) as { x?: unknown; y?: unknown };
-  if (typeof body.x !== 'number' || typeof body.y !== 'number') throw new Error('Body must be { x: number, y: number }');
-  return { x: body.x, y: body.y };
+  const body = JSON.parse(Buffer.concat(chunks).toString('utf8')) as { x?: unknown; y?: unknown; side?: unknown };
+  if (typeof body.x !== 'number' || typeof body.y !== 'number') throw new Error('Body must be { x: number, y: number, side?: "left" | "right" }');
+  if (body.side === undefined) return { x: body.x, y: body.y };
+  return { x: body.x, y: body.y, side: sideSchema.parse(body.side) };
 }
 
 function send(res: ServerResponse, status: number, type: string, body: string | Buffer): void {
@@ -39,9 +40,9 @@ createServer(async (req, res) => {
     } else if (req.method === 'GET' && parts[0] === 'images' && parts.length === 2) {
       send(res, 200, 'image/webp', await readFile(path.join(OUT_IMAGE_DIR, path.basename(parts[1]!))));
     } else if (req.method === 'PUT' && parts[0] === 'api' && parts[1] === 'plates' && parts[3] === 'pins' && parts.length === 5) {
-      const { x, y } = await readBody(req);
+      const { x, y, side } = await readBody(req);
       const plates = (await readJson(dataFile('plates.json'))) as Plate[];
-      await writeJson('plates.json', setPin(plates, parts[2]!, parts[4]!, x, y));
+      await writeJson('plates.json', setPin(plates, parts[2]!, parts[4]!, x, y, side));
       send(res, 200, 'application/json', '{"ok":true}');
     } else if (req.method === 'PUT' && parts[0] === 'api' && parts[1] === 'maps' && parts[3] === 'regions' && parts.length === 5) {
       const { x, y } = await readBody(req);
