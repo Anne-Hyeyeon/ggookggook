@@ -7,3 +7,8 @@ Acupressure guide app being rebuilt as an Expo (React Native) app with an AWS CD
 - First-pass illustrations: `content/images/raw/`
 
 Expo, React Native, and AWS CDK APIs change often. Check the installed package docs before writing code, and heed deprecation notices.
+
+## Commands
+
+- `npm test`: run every workspace's tests
+- `npm run typecheck`: typecheck every workspace
