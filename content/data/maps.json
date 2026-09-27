@@ -25,7 +25,7 @@
       {
         "id": "shoulder",
         "name": "어깨",
-        "x": 0.36,
+        "x": 0.64,
         "y": 0.25,
         "plateIds": [
           "arm-outer",
@@ -44,7 +44,7 @@
       {
         "id": "arm",
         "name": "팔",
-        "x": 0.33,
+        "x": 0.675,
         "y": 0.39,
         "plateIds": [
           "arm-outer"
@@ -53,7 +53,7 @@
       {
         "id": "wrist",
         "name": "손목",
-        "x": 0.27,
+        "x": 0.732,
         "y": 0.483,
         "plateIds": [
           "wrist-inner"
@@ -62,11 +62,11 @@
       {
         "id": "hand",
         "name": "손",
-        "x": 0.24,
-        "y": 0.525,
+        "x": 0.768,
+        "y": 0.535,
         "plateIds": [
-          "hand-dorsal",
-          "wrist-inner"
+          "wrist-inner",
+          "hand-dorsal"
         ]
       },
       {
