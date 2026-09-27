@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DbProvider, useDb } from '@/db/DbProvider';
+import { useOnboarding } from '@/state/onboarding';
 import { useSettings } from '@/state/settings';
 import { colors } from '@/theme';
 
@@ -32,15 +33,18 @@ export default function RootLayout() {
 
 function Routes() {
   const db = useDb();
-  const loaded = useSettings((state) => state.loaded);
-  const accepted = useSettings((state) => state.disclaimerAcceptedAt !== null);
-  const load = useSettings((state) => state.load);
+  const settingsLoaded = useSettings((state) => state.loaded);
+  const loadSettings = useSettings((state) => state.load);
+  const onboardingLoaded = useOnboarding((state) => state.loaded);
+  const accepted = useOnboarding((state) => state.disclaimerAcceptedAt !== null);
+  const loadOnboarding = useOnboarding((state) => state.load);
 
   useEffect(() => {
-    void load(db);
-  }, [db, load]);
+    void loadSettings(db);
+    void loadOnboarding(db);
+  }, [db, loadSettings, loadOnboarding]);
 
-  if (!loaded) return null;
+  if (!settingsLoaded || !onboardingLoaded) return null;
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
       <Stack.Protected guard={accepted}>

@@ -1,6 +1,7 @@
 import { DEFAULT_SETTINGS } from '@ggookggook/shared';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import WelcomeScreen from '../app/welcome';
+import { useOnboarding } from '@/state/onboarding';
 import { useSettings } from '@/state/settings';
 
 jest.mock('@/db/DbProvider', () => ({ useDb: () => ({}) }));
@@ -10,7 +11,8 @@ const accept = jest.fn().mockResolvedValue(undefined);
 
 beforeEach(() => {
   jest.clearAllMocks();
-  useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS }, disclaimerAcceptedAt: null, update, accept });
+  useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS }, update });
+  useOnboarding.setState({ loaded: true, disclaimerAcceptedAt: null, accept });
 });
 
 it('walks through the intro, pregnancy toggle, and disclaimer', async () => {

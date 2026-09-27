@@ -19,7 +19,7 @@ const mocked = store as jest.Mocked<typeof store>;
 
 beforeEach(() => {
   jest.clearAllMocks();
-  useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS }, disclaimerAcceptedAt: 'x' });
+  useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS } });
   mocked.latestCompletedSession.mockResolvedValue(null);
 });
 

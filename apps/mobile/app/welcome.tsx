@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
+import { useOnboarding } from '@/state/onboarding';
 import { useSettings } from '@/state/settings';
 import { colors, space } from '@/theme';
 import { Button } from '@/ui/Button';
@@ -19,7 +20,8 @@ const NOTICES = [
 
 export default function WelcomeScreen() {
   const db = useDb();
-  const { settings, update, accept } = useSettings();
+  const { settings, update } = useSettings();
+  const accept = useOnboarding((state) => state.accept);
   const [step, setStep] = useState<0 | 1>(0);
   const [saveError, setSaveError] = useState(false);
   const cat = content.image('cat-shoulder');

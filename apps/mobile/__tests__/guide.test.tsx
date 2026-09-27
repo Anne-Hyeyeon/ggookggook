@@ -28,7 +28,7 @@ beforeEach(() => {
   jest.useFakeTimers();
   jest.clearAllMocks();
   mockParams = { id: 'food_stagnation' };
-  useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS }, disclaimerAcceptedAt: 'x' });
+  useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS } });
 });
 afterEach(() => jest.useRealTimers());
 

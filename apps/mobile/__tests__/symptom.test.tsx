@@ -13,7 +13,7 @@ jest.mock('expo-router', () => ({
 beforeEach(() => {
   jest.clearAllMocks();
   mockParams = { id: 'headache' };
-  useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS }, disclaimerAcceptedAt: 'x' });
+  useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS } });
 });
 
 it('shows the routine, the pregnancy caution, and when to see a doctor', async () => {
