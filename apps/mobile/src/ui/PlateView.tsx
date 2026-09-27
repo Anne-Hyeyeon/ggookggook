@@ -37,7 +37,7 @@ function PlateViewComponent({ view, side, size }: PlateViewProps) {
         <View
           key={`${pin.acupointId}-${pin.side ?? 'one'}`}
           testID="pin"
-          style={[styles.pin, { left: pin.x * size - 8, top: pin.y * size - 8 }]}
+          style={[styles.pin, { left: pin.x * size - PIN_SIZE / 2, top: pin.y * size - PIN_SIZE / 2 }]}
         />
       ))}
     </View>
@@ -46,14 +46,16 @@ function PlateViewComponent({ view, side, size }: PlateViewProps) {
 
 export const PlateView = memo(PlateViewComponent);
 
+const PIN_SIZE = 16;
+
 const styles = StyleSheet.create({
   frame: { backgroundColor: colors.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.rule, alignSelf: 'center' },
   placeholder: { alignItems: 'center', justifyContent: 'center', padding: space(4) },
   pin: {
     position: 'absolute',
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    width: PIN_SIZE,
+    height: PIN_SIZE,
+    borderRadius: PIN_SIZE / 2,
     backgroundColor: colors.accent,
     borderWidth: 5,
     borderColor: colors.accentSoft,
