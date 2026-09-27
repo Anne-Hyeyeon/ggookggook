@@ -1,17 +1,170 @@
 [
-  { "id": "head-top", "name": "정수리", "subject": "the top of a Korean adult's head seen from directly above, short neat hair drawn as a simple outline, the tip of the nose and both ears just visible at the edges", "acupointIds": ["GV20"], "pins": [] },
-  { "id": "face-front", "name": "얼굴", "subject": "the face of a Korean adult seen from the front, eyes gently closed, eyebrows, nose, and mouth drawn with minimal lines, hair pulled back so the forehead and both temples are visible", "acupointIds": ["GV29", "BL2", "ST2", "LI20", "EX-HN5"], "pins": [] },
-  { "id": "neck-back", "name": "뒷목과 어깨", "subject": "the back of a Korean adult's head, neck, and both shoulders seen from behind, short hair drawn as a simple outline, a plain seamless bodysuit on the shoulders", "acupointIds": ["GB20", "GV14", "GB21"], "pins": [] },
-  { "id": "upper-back", "name": "등 위쪽", "subject": "the upper back of a Korean adult seen from behind, from the neck to below the shoulder blades, arms relaxed at the sides, a plain seamless bodysuit, faint outlines of the spine and shoulder blades", "acupointIds": ["BL13", "SI11"], "pins": [] },
-  { "id": "lower-back", "name": "허리와 엉덩이", "subject": "the lower back and buttocks of a Korean adult seen from behind, from the bottom of the ribs to the top of the thighs, a plain seamless bodysuit, a faint outline of the spine", "acupointIds": ["BL23", "GV4", "GB30"], "pins": [] },
-  { "id": "torso-front", "name": "가슴과 배", "subject": "the front of a Korean adult's torso from the collarbones to the hips, a plain seamless bodysuit, the navel shown as a small simple mark, a faint center line of the breastbone", "acupointIds": ["CV17", "CV12", "CV6", "CV4", "ST25"], "pins": [] },
-  { "id": "arm-outer", "name": "팔 바깥쪽", "subject": "the outer side of a Korean adult's left arm seen from the side, from the shoulder to the back of the hand, elbow slightly bent, a plain seamless sleeve ending at the wrist", "acupointIds": ["LI15", "LI11", "TE5"], "pins": [] },
-  { "id": "wrist-inner", "name": "손목 안쪽", "subject": "the palm side of a Korean adult's left forearm and hand, palm facing up, from mid-forearm to the fingertips, two faint wrist creases", "acupointIds": ["PC6", "HT7", "LU7"], "pins": [] },
-  { "id": "hand-dorsal", "name": "손등", "subject": "the back of a relaxed left hand of a Korean adult, viewed straight from above, wrist at the bottom center, fingers slightly apart", "acupointIds": ["LI4", "SI3"], "pins": [] },
-  { "id": "leg-front", "name": "무릎 아래 앞쪽", "subject": "the front of a Korean adult's right lower leg seen slightly from the outer side, from above the knee to the ankle, the kneecap and shin drawn with minimal lines, a plain seamless legging", "acupointIds": ["ST36", "GB34"], "pins": [] },
-  { "id": "leg-back", "name": "오금과 종아리", "subject": "the back of a Korean adult's right leg from mid-thigh to the ankle, the crease behind the knee and the calf muscle drawn with minimal lines, a plain seamless legging", "acupointIds": ["BL40", "BL57"], "pins": [] },
-  { "id": "leg-inner", "name": "종아리 안쪽과 발 안쪽", "subject": "the inner side of a Korean adult's right lower leg and foot seen from the inside, from mid-calf to the big toe, the inner ankle bone visible, a plain seamless legging ending above the ankle", "acupointIds": ["SP6", "KI3", "SP4"], "pins": [] },
-  { "id": "ankle-outer", "name": "발목 바깥쪽", "subject": "the outer side of a Korean adult's right ankle and foot seen from the outside, from the lower calf to the little toe, the outer ankle bone and the Achilles tendon visible", "acupointIds": ["BL60"], "pins": [] },
-  { "id": "foot-dorsal", "name": "발등", "subject": "the top of a Korean adult's right foot viewed from above, toes at the top, ankle at the bottom", "acupointIds": ["LR3"], "pins": [] },
-  { "id": "foot-sole", "name": "발바닥", "subject": "the sole of a Korean adult's right foot viewed straight on, toes at the top, heel at the bottom, toes slightly curled", "acupointIds": ["KI1"], "pins": [] }
+  {
+    "id": "head-top",
+    "name": "정수리",
+    "subject": "the top of a Korean adult's head seen from directly above, short neat hair drawn as a simple outline, the tip of the nose and both ears just visible at the edges",
+    "acupointIds": [
+      "GV20"
+    ],
+    "pins": []
+  },
+  {
+    "id": "face-front",
+    "name": "얼굴",
+    "subject": "the face of a Korean adult seen from the front, eyes gently closed, eyebrows, nose, and mouth drawn with minimal lines, hair pulled back so the forehead and both temples are visible",
+    "acupointIds": [
+      "GV29",
+      "BL2",
+      "ST2",
+      "LI20",
+      "EX-HN5"
+    ],
+    "pins": []
+  },
+  {
+    "id": "neck-back",
+    "name": "뒷목과 어깨",
+    "subject": "the back of a Korean adult's head, neck, and both shoulders seen from behind, short hair drawn as a simple outline, a plain seamless bodysuit on the shoulders",
+    "acupointIds": [
+      "GB20",
+      "GV14",
+      "GB21"
+    ],
+    "pins": []
+  },
+  {
+    "id": "upper-back",
+    "name": "등 위쪽",
+    "subject": "the upper back of a Korean adult seen from behind, from the neck to below the shoulder blades, arms relaxed at the sides, a plain seamless bodysuit, faint outlines of the spine and shoulder blades",
+    "acupointIds": [
+      "BL13",
+      "SI11"
+    ],
+    "pins": []
+  },
+  {
+    "id": "lower-back",
+    "name": "허리와 엉덩이",
+    "subject": "the lower back and buttocks of a Korean adult seen from behind, from the bottom of the ribs to the top of the thighs, a plain seamless bodysuit, a faint outline of the spine",
+    "acupointIds": [
+      "BL23",
+      "GV4",
+      "GB30"
+    ],
+    "pins": []
+  },
+  {
+    "id": "torso-front",
+    "name": "가슴과 배",
+    "subject": "the front of a Korean adult's torso from the collarbones to the hips, a plain seamless bodysuit, the navel shown as a small simple mark, a faint center line of the breastbone",
+    "acupointIds": [
+      "CV17",
+      "CV12",
+      "CV6",
+      "CV4",
+      "ST25"
+    ],
+    "pins": []
+  },
+  {
+    "id": "arm-outer",
+    "name": "팔 바깥쪽",
+    "subject": "the outer side of a Korean adult's left arm seen from the side, from the shoulder to the back of the hand, elbow slightly bent, a plain seamless sleeve ending at the wrist",
+    "acupointIds": [
+      "LI15",
+      "LI11",
+      "TE5"
+    ],
+    "pins": []
+  },
+  {
+    "id": "wrist-inner",
+    "name": "손목 안쪽",
+    "subject": "the palm side of a Korean adult's left forearm and hand, palm facing up, from mid-forearm to the fingertips, two faint wrist creases",
+    "acupointIds": [
+      "PC6",
+      "HT7",
+      "LU7"
+    ],
+    "pins": []
+  },
+  {
+    "id": "hand-dorsal",
+    "name": "손등",
+    "subject": "the back of a relaxed left hand of a Korean adult, viewed straight from above, wrist at the bottom center, fingers slightly apart",
+    "acupointIds": [
+      "LI4",
+      "SI3"
+    ],
+    "pins": [
+      {
+        "acupointId": "LI4",
+        "x": 0.61,
+        "y": 0.59
+      },
+      {
+        "acupointId": "SI3",
+        "x": 0.31,
+        "y": 0.51
+      }
+    ]
+  },
+  {
+    "id": "leg-front",
+    "name": "무릎 아래 앞쪽",
+    "subject": "the front of a Korean adult's right lower leg seen slightly from the outer side, from above the knee to the ankle, the kneecap and shin drawn with minimal lines, a plain seamless legging",
+    "acupointIds": [
+      "ST36",
+      "GB34"
+    ],
+    "pins": []
+  },
+  {
+    "id": "leg-back",
+    "name": "오금과 종아리",
+    "subject": "the back of a Korean adult's right leg from mid-thigh to the ankle, the crease behind the knee and the calf muscle drawn with minimal lines, a plain seamless legging",
+    "acupointIds": [
+      "BL40",
+      "BL57"
+    ],
+    "pins": []
+  },
+  {
+    "id": "leg-inner",
+    "name": "종아리 안쪽과 발 안쪽",
+    "subject": "the inner side of a Korean adult's right lower leg and foot seen from the inside, from mid-calf to the big toe, the inner ankle bone visible, a plain seamless legging ending above the ankle",
+    "acupointIds": [
+      "SP6",
+      "KI3",
+      "SP4"
+    ],
+    "pins": []
+  },
+  {
+    "id": "ankle-outer",
+    "name": "발목 바깥쪽",
+    "subject": "the outer side of a Korean adult's right ankle and foot seen from the outside, from the lower calf to the little toe, the outer ankle bone and the Achilles tendon visible",
+    "acupointIds": [
+      "BL60"
+    ],
+    "pins": []
+  },
+  {
+    "id": "foot-dorsal",
+    "name": "발등",
+    "subject": "the top of a Korean adult's right foot viewed from above, toes at the top, ankle at the bottom",
+    "acupointIds": [
+      "LR3"
+    ],
+    "pins": []
+  },
+  {
+    "id": "foot-sole",
+    "name": "발바닥",
+    "subject": "the sole of a Korean adult's right foot viewed straight on, toes at the top, heel at the bottom, toes slightly curled",
+    "acupointIds": [
+      "KI1"
+    ],
+    "pins": []
+  }
 ]

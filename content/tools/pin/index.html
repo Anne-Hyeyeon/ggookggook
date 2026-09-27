@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>꾹꾹 좌표 찍기</title>
+<style>
+  body { margin: 0; font-family: -apple-system, sans-serif; background: #F8F8F7; color: #23211E; display: flex; height: 100vh; }
+  aside { width: 360px; overflow: auto; padding: 16px; border-right: 1px solid #E2E2DF; box-sizing: border-box; }
+  main { flex: 1; display: flex; align-items: center; justify-content: center; overflow: auto; }
+  select { width: 100%; font-size: 14px; padding: 6px; margin-bottom: 12px; }
+  .item { padding: 8px; border-bottom: 1px solid #E2E2DF; cursor: pointer; font-size: 13px; }
+  .item.on { background: #23211E; color: #F8F8F7; }
+  .item b { font-size: 14px; }
+  .item small { display: block; margin-top: 4px; opacity: .75; line-height: 1.4; }
+  .item .done { color: #C23B2A; font-weight: 700; }
+  .item.on .done { color: #F8F8F7; }
+  #stage { position: relative; background: #fff; box-shadow: 0 0 0 1px #E2E2DF; }
+  #stage img { display: block; max-height: 90vh; max-width: 70vw; cursor: crosshair; }
+  .dot { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: #C23B2A; pointer-events: none; }
+  .dot.on { box-shadow: 0 0 0 5px rgba(194, 59, 42, .25); }
+  .label { position: absolute; font-size: 11px; color: #C23B2A; font-weight: 700; transform: translate(8px, -6px); pointer-events: none; }
+  #msg { font-size: 12px; color: #6A665E; margin-top: 12px; min-height: 1em; }
+</style>
+</head>
+<body>
+<aside>
+  <select id="picker"></select>
+  <div id="list"></div>
+  <div id="msg">왼쪽에서 항목을 고르고 그림을 클릭하세요.</div>
+</aside>
+<main><div id="stage"><img id="img" alt=""></div></main>
+<script>
+let data, target, selected;
+const $ = (id) => document.getElementById(id);
+
+async function load() {
+  data = await (await fetch('/api/data')).json();
+  const options = [
+    ...data.maps.map((m) => ({ kind: 'map', id: m.id, name: `지도 · ${m.name}` })),
+    ...data.plates.map((p) => ({ kind: 'plate', id: p.id, name: `부위 · ${p.name}` })),
+  ];
+  if (!$('picker').options.length) {
+    $('picker').innerHTML = options.map((o) => `<option value="${o.kind}:${o.id}">${o.name} (${o.id})</option>`).join('');
+  }
+  render();
+}
+
+function items() {
+  const [kind, id] = $('picker').value.split(':');
+  if (kind === 'map') {
+    const map = data.maps.find((m) => m.id === id);
+    return { kind, id, entries: map.regions.map((r) => ({ key: r.id, title: r.name, detail: r.plateIds.join(', '), x: r.x, y: r.y })) };
+  }
+  const plate = data.plates.find((p) => p.id === id);
+  return {
+    kind, id,
+    entries: plate.acupointIds.map((aid) => {
+      const a = data.acupoints.find((x) => x.id === aid);
+      const pin = plate.pins.find((p) => p.acupointId === aid);
+      return { key: aid, title: `${a.name.ko} ${aid}`, detail: `${a.location}\n${a.whoLocation}`, x: pin?.x ?? null, y: pin?.y ?? null };
+    }),
+  };
+}
+
+function render() {
+  target = items();
+  if (!target.entries.some((e) => e.key === selected)) selected = target.entries[0]?.key;
+  $('img').src = `/images/${target.id}.webp?t=${Date.now()}`;
+  $('img').onerror = () => { $('msg').textContent = `이미지가 없습니다: content/images/out/${target.id}.webp`; };
+  $('list').innerHTML = target.entries.map((e) => `
+    <div class="item ${e.key === selected ? 'on' : ''}" data-key="${e.key}">
+      <b>${e.title}</b> ${e.x === null ? '' : '<span class="done">●</span>'}
+      <small>${e.detail.replace(/\n/g, '<br>')}</small>
+    </div>`).join('');
+  document.querySelectorAll('.item').forEach((el) => el.onclick = () => { selected = el.dataset.key; render(); });
+  document.querySelectorAll('.dot, .label').forEach((el) => el.remove());
+  for (const e of target.entries) {
+    if (e.x === null) continue;
+    const dot = document.createElement('div');
+    dot.className = `dot ${e.key === selected ? 'on' : ''}`;
+    dot.style.left = `${e.x * 100}%`; dot.style.top = `${e.y * 100}%`;
+    const label = document.createElement('div');
+    label.className = 'label'; label.textContent = e.title.split(' ')[0];
+    label.style.left = dot.style.left; label.style.top = dot.style.top;
+    $('stage').append(dot, label);
+  }
+}
+
+$('picker').onchange = () => { selected = undefined; render(); };
+$('img').onclick = async (event) => {
+  if (!selected) return;
+  const rect = $('img').getBoundingClientRect();
+  const x = (event.clientX - rect.left) / rect.width;
+  const y = (event.clientY - rect.top) / rect.height;
+  const path = target.kind === 'map'
+    ? `/api/maps/${target.id}/regions/${selected}`
+    : `/api/plates/${target.id}/pins/${encodeURIComponent(selected)}`;
+  const res = await fetch(path, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ x, y }) });
+  $('msg').textContent = res.ok ? `${selected} 저장 (${x.toFixed(3)}, ${y.toFixed(3)})` : await res.text();
+  await load();
+};
+
+load();
+</script>
+</body>
+</html>

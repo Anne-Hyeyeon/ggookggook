@@ -8,7 +8,8 @@
     "typecheck": "tsc -p tsconfig.json",
     "validate": "tsx src/cli/validate.ts",
     "images": "tsx src/cli/images.ts",
-    "prompt": "tsx src/cli/prompt.ts"
+    "prompt": "tsx src/cli/prompt.ts",
+    "pin": "tsx tools/pin/server.ts"
   },
   "dependencies": {
     "@ggookggook/shared": "*",

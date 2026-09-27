@@ -4,16 +4,99 @@
     "name": "앞면",
     "subject": "a full-body front view of a standing Korean adult in anatomical position: facing forward, arms slightly away from the body, palms facing forward, feet slightly apart; gender-neutral, slim and soft build, no muscle definition lines, a calm neutral face with minimal features, short black hair drawn as a simple outline; wearing a plain, seamless, skin-tight bodysuit that ends at the wrists and ankles with a simple neckline, so the hands, feet, face, and neck are uncovered",
     "regions": [
-      { "id": "head", "name": "머리", "x": null, "y": null, "plateIds": ["head-top"] },
-      { "id": "face", "name": "얼굴", "x": null, "y": null, "plateIds": ["face-front"] },
-      { "id": "shoulder", "name": "어깨", "x": null, "y": null, "plateIds": ["arm-outer", "neck-back"] },
-      { "id": "torso", "name": "가슴과 배", "x": null, "y": null, "plateIds": ["torso-front"] },
-      { "id": "arm", "name": "팔", "x": null, "y": null, "plateIds": ["arm-outer"] },
-      { "id": "wrist", "name": "손목", "x": null, "y": null, "plateIds": ["wrist-inner"] },
-      { "id": "hand", "name": "손", "x": null, "y": null, "plateIds": ["hand-dorsal", "wrist-inner"] },
-      { "id": "knee", "name": "무릎 아래", "x": null, "y": null, "plateIds": ["leg-front"] },
-      { "id": "ankle", "name": "발목 안쪽", "x": null, "y": null, "plateIds": ["leg-inner"] },
-      { "id": "foot", "name": "발", "x": null, "y": null, "plateIds": ["foot-dorsal", "foot-sole"] }
+      {
+        "id": "head",
+        "name": "머리",
+        "x": 0.5,
+        "y": 0.075,
+        "plateIds": [
+          "head-top"
+        ]
+      },
+      {
+        "id": "face",
+        "name": "얼굴",
+        "x": 0.5,
+        "y": 0.118,
+        "plateIds": [
+          "face-front"
+        ]
+      },
+      {
+        "id": "shoulder",
+        "name": "어깨",
+        "x": 0.36,
+        "y": 0.25,
+        "plateIds": [
+          "arm-outer",
+          "neck-back"
+        ]
+      },
+      {
+        "id": "torso",
+        "name": "가슴과 배",
+        "x": 0.5,
+        "y": 0.36,
+        "plateIds": [
+          "torso-front"
+        ]
+      },
+      {
+        "id": "arm",
+        "name": "팔",
+        "x": 0.33,
+        "y": 0.39,
+        "plateIds": [
+          "arm-outer"
+        ]
+      },
+      {
+        "id": "wrist",
+        "name": "손목",
+        "x": 0.27,
+        "y": 0.483,
+        "plateIds": [
+          "wrist-inner"
+        ]
+      },
+      {
+        "id": "hand",
+        "name": "손",
+        "x": 0.24,
+        "y": 0.525,
+        "plateIds": [
+          "hand-dorsal",
+          "wrist-inner"
+        ]
+      },
+      {
+        "id": "knee",
+        "name": "무릎 아래",
+        "x": 0.41,
+        "y": 0.73,
+        "plateIds": [
+          "leg-front"
+        ]
+      },
+      {
+        "id": "ankle",
+        "name": "발목 안쪽",
+        "x": 0.415,
+        "y": 0.875,
+        "plateIds": [
+          "leg-inner"
+        ]
+      },
+      {
+        "id": "foot",
+        "name": "발",
+        "x": 0.39,
+        "y": 0.902,
+        "plateIds": [
+          "foot-dorsal",
+          "foot-sole"
+        ]
+      }
     ]
   },
   {
@@ -21,13 +104,69 @@
     "name": "뒷면",
     "subject": "a full-body back view of a standing Korean adult: facing away, arms slightly away from the body, palms facing backward, feet slightly apart; gender-neutral, slim and soft build, no muscle definition lines, short black hair drawn as a simple outline; wearing a plain, seamless, skin-tight bodysuit that ends at the wrists and ankles with a simple neckline, so the hands, feet, and neck are uncovered, with a faint line for the spine",
     "regions": [
-      { "id": "head", "name": "머리", "x": null, "y": null, "plateIds": ["head-top"] },
-      { "id": "neck", "name": "뒷목과 어깨", "x": null, "y": null, "plateIds": ["neck-back"] },
-      { "id": "upper-back", "name": "등", "x": null, "y": null, "plateIds": ["upper-back"] },
-      { "id": "lower-back", "name": "허리와 엉덩이", "x": null, "y": null, "plateIds": ["lower-back"] },
-      { "id": "leg", "name": "오금과 종아리", "x": null, "y": null, "plateIds": ["leg-back"] },
-      { "id": "ankle", "name": "발목 바깥쪽", "x": null, "y": null, "plateIds": ["ankle-outer"] },
-      { "id": "sole", "name": "발바닥", "x": null, "y": null, "plateIds": ["foot-sole"] }
+      {
+        "id": "head",
+        "name": "머리",
+        "x": null,
+        "y": null,
+        "plateIds": [
+          "head-top"
+        ]
+      },
+      {
+        "id": "neck",
+        "name": "뒷목과 어깨",
+        "x": null,
+        "y": null,
+        "plateIds": [
+          "neck-back"
+        ]
+      },
+      {
+        "id": "upper-back",
+        "name": "등",
+        "x": null,
+        "y": null,
+        "plateIds": [
+          "upper-back"
+        ]
+      },
+      {
+        "id": "lower-back",
+        "name": "허리와 엉덩이",
+        "x": null,
+        "y": null,
+        "plateIds": [
+          "lower-back"
+        ]
+      },
+      {
+        "id": "leg",
+        "name": "오금과 종아리",
+        "x": null,
+        "y": null,
+        "plateIds": [
+          "leg-back"
+        ]
+      },
+      {
+        "id": "ankle",
+        "name": "발목 바깥쪽",
+        "x": null,
+        "y": null,
+        "plateIds": [
+          "ankle-outer"
+        ]
+      },
+      {
+        "id": "sole",
+        "name": "발바닥",
+        "x": null,
+        "y": null,
+        "plateIds": [
+          "foot-sole"
+        ]
+      }
     ]
   }
 ]
