@@ -30,7 +30,7 @@
 </aside>
 <main><div id="stage"><img id="img" alt=""></div></main>
 <script>
-let data, target, selected;
+let data, target, selected, saving = false;
 const $ = (id) => document.getElementById(id);
 
 async function load() {
@@ -93,18 +93,23 @@ function render() {
 
 $('picker').onchange = () => { selected = undefined; render(); };
 $('img').onclick = async (event) => {
-  if (!selected) return;
-  const entry = target.entries.find((e) => e.key === selected);
-  const rect = $('img').getBoundingClientRect();
-  const x = (event.clientX - rect.left) / rect.width;
-  const y = (event.clientY - rect.top) / rect.height;
-  const path = target.kind === 'map'
-    ? `/api/maps/${target.id}/regions/${selected}`
-    : `/api/plates/${target.id}/pins/${encodeURIComponent(entry.acupointId)}`;
-  const body = entry.side ? { x, y, side: entry.side } : { x, y };
-  const res = await fetch(path, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
-  $('msg').textContent = res.ok ? `${entry.title} 저장 (${x.toFixed(3)}, ${y.toFixed(3)})` : await res.text();
-  await load();
+  if (!selected || saving) return;
+  saving = true;
+  try {
+    const entry = target.entries.find((e) => e.key === selected);
+    const rect = $('img').getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width;
+    const y = (event.clientY - rect.top) / rect.height;
+    const path = target.kind === 'map'
+      ? `/api/maps/${target.id}/regions/${selected}`
+      : `/api/plates/${target.id}/pins/${encodeURIComponent(entry.acupointId)}`;
+    const body = entry.side ? { x, y, side: entry.side } : { x, y };
+    const res = await fetch(path, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    $('msg').textContent = res.ok ? `${entry.title} 저장 (${x.toFixed(3)}, ${y.toFixed(3)})` : await res.text();
+    await load();
+  } finally {
+    saving = false;
+  }
 };
 
 load();

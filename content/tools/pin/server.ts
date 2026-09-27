@@ -4,8 +4,8 @@ import path from 'node:path';
 import { sideSchema, type BodyMap, type Plate, type Side } from '@ggookggook/shared';
 import { DATA_DIR, OUT_IMAGE_DIR, readJson } from '../../src/paths';
 import { setPin, setRegionPosition } from '../../src/pins';
+import { isAllowedHost, PORT } from './host';
 
-const PORT = 4321;
 const dataFile = (name: string) => path.join(DATA_DIR, name);
 const writeJson = (name: string, value: unknown) => writeFile(dataFile(name), `${JSON.stringify(value, null, 2)}\n`);
 
@@ -15,7 +15,9 @@ async function readBody(req: IncomingMessage): Promise<{ x: number; y: number; s
   const body = JSON.parse(Buffer.concat(chunks).toString('utf8')) as { x?: unknown; y?: unknown; side?: unknown };
   if (typeof body.x !== 'number' || typeof body.y !== 'number') throw new Error('Body must be { x: number, y: number, side?: "left" | "right" }');
   if (body.side === undefined) return { x: body.x, y: body.y };
-  return { x: body.x, y: body.y, side: sideSchema.parse(body.side) };
+  const side = sideSchema.safeParse(body.side);
+  if (!side.success) throw new Error('side must be "left" or "right"');
+  return { x: body.x, y: body.y, side: side.data };
 }
 
 function send(res: ServerResponse, status: number, type: string, body: string | Buffer): void {
@@ -24,6 +26,10 @@ function send(res: ServerResponse, status: number, type: string, body: string | 
 }
 
 createServer(async (req, res) => {
+  if (!isAllowedHost(req.headers.host)) {
+    send(res, 403, 'text/plain', 'Forbidden host');
+    return;
+  }
   try {
     const url = new URL(req.url ?? '/', `http://127.0.0.1:${PORT}`);
     const parts = url.pathname.split('/').filter(Boolean);
