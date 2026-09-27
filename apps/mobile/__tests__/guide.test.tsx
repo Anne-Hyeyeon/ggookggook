@@ -3,7 +3,7 @@ import * as store from '@ggookggook/store';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { AccessibilityInfo, StyleSheet } from 'react-native';
+import { AccessibilityInfo, BackHandler, StyleSheet } from 'react-native';
 import GuideScreen from '../app/guide/[id]';
 import { useSettings } from '@/state/settings';
 
@@ -20,13 +20,27 @@ let mockParams: { id: string } = { id: 'food_stagnation' };
 jest.mock('expo-router', () => ({
   router: { replace: jest.fn(), back: jest.fn(), dismissTo: jest.fn() },
   useLocalSearchParams: () => mockParams,
+  useFocusEffect: (effect: () => void | (() => void)) => {
+    const { useEffect } = jest.requireActual('react');
+    useEffect(effect, [effect]);
+  },
 }));
+
+async function pressHardwareBack() {
+  const call = (BackHandler.addEventListener as jest.Mock).mock.calls.findLast(([name]) => name === 'hardwareBackPress');
+  let handled: boolean | undefined;
+  await act(async () => {
+    handled = call?.[1]();
+  });
+  return handled;
+}
 
 const mocked = store as jest.Mocked<typeof store>;
 
 beforeEach(() => {
   jest.useFakeTimers();
   jest.clearAllMocks();
+  jest.spyOn(BackHandler, 'addEventListener');
   mockParams = { id: 'food_stagnation' };
   useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS } });
 });
@@ -252,6 +266,105 @@ it('disables 다시 저장 while a retry is in flight', async () => {
   });
   expect(router.replace).toHaveBeenCalledWith({ pathname: '/done', params: { sessionId: expect.any(String) } });
   expect(screen.queryByText('다시 저장')).toBeNull();
+
+  consoleError.mockRestore();
+});
+
+it('routes Android hardware back through the same close confirmation once the routine has started', async () => {
+  await render(<GuideScreen />);
+  await act(async () => {
+    jest.advanceTimersByTime(1000);
+  });
+
+  const handled = await pressHardwareBack();
+  expect(handled).toBe(true);
+  expect(screen.getByText('루틴을 그만할까요?')).toBeTruthy();
+  expect(router.back).not.toHaveBeenCalled();
+
+  await pressHardwareBack();
+  expect(screen.queryByText('루틴을 그만할까요?')).toBeNull();
+  expect(router.back).not.toHaveBeenCalled();
+});
+
+it('hardware back closes immediately when nothing has happened yet, same as 닫기', async () => {
+  await render(<GuideScreen />);
+  await pressHardwareBack();
+  expect(router.back).toHaveBeenCalledTimes(1);
+  expect(screen.queryByText('루틴을 그만할까요?')).toBeNull();
+});
+
+it('keeps 닫기 and hardware back inert while the finished session is still saving', async () => {
+  let resolveInsert: (() => void) | undefined;
+  mocked.insertSession.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveInsert = resolve;
+      }),
+  );
+  await render(<GuideScreen />);
+  await act(async () => {
+    jest.advanceTimersByTime(240_000);
+  });
+  expect(screen.getByText('기록하는 중…')).toBeTruthy();
+
+  expect(screen.getByRole('button', { name: '닫기' }).props.accessibilityState.disabled).toBe(true);
+  await fireEvent.press(screen.getByRole('button', { name: '닫기' }));
+  expect(router.back).not.toHaveBeenCalled();
+  expect(screen.queryByText('루틴을 그만할까요?')).toBeNull();
+
+  await pressHardwareBack();
+  expect(router.back).not.toHaveBeenCalled();
+  expect(screen.queryByText('루틴을 그만할까요?')).toBeNull();
+
+  await act(async () => {
+    resolveInsert?.();
+  });
+  expect(router.replace).toHaveBeenCalledWith({ pathname: '/done', params: { sessionId: expect.any(String) } });
+});
+
+it('does not navigate to /done if the screen unmounts before the save resolves', async () => {
+  let resolveInsert: (() => void) | undefined;
+  mocked.insertSession.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveInsert = resolve;
+      }),
+  );
+  const view = await render(<GuideScreen />);
+  await act(async () => {
+    jest.advanceTimersByTime(240_000);
+  });
+  await view.unmount();
+
+  await act(async () => {
+    resolveInsert?.();
+  });
+  expect(router.replace).not.toHaveBeenCalled();
+});
+
+it('does not navigate to /done if the screen unmounts before a retried save resolves', async () => {
+  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+  mocked.insertSession.mockRejectedValueOnce(new Error('disk full'));
+  const view = await render(<GuideScreen />);
+  await act(async () => {
+    jest.advanceTimersByTime(240_000);
+  });
+  expect(screen.getByText('기록을 저장하지 못했어요.')).toBeTruthy();
+
+  let resolveRetry: (() => void) | undefined;
+  mocked.insertSession.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveRetry = resolve;
+      }),
+  );
+  await fireEvent.press(screen.getByRole('button', { name: '다시 저장' }));
+  await view.unmount();
+
+  await act(async () => {
+    resolveRetry?.();
+  });
+  expect(router.replace).not.toHaveBeenCalled();
 
   consoleError.mockRestore();
 });

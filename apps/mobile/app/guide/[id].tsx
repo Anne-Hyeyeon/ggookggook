@@ -1,10 +1,10 @@
 import { buildGuideSegments, rhythmAt, type GuideSegment, type SessionLog } from '@ggookggook/shared';
 import { insertSession } from '@ggookggook/store';
-import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { AccessibilityInfo, BackHandler, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useKeepAwake } from 'expo-keep-awake';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { GUIDE_SPEED } from '@/config/env';
@@ -66,19 +66,29 @@ export default function GuideScreen() {
 
   const [failedLog, setFailedLog] = useState<SessionLog | null>(null);
   const [saving, setSaving] = useState(false);
+  // Guards a save that outlives the screen (the user left through some other path while
+  // insertSession was still pending): its resolution must not set state or navigate.
+  const isMounted = useRef(true);
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const saveSession = useCallback(
     async (log: SessionLog) => {
       setSaving(true);
       try {
         await insertSession(db, log);
+        if (!isMounted.current) return;
         setFailedLog(null);
         router.replace({ pathname: '/done', params: { sessionId: log.id } });
       } catch (error) {
+        if (!isMounted.current) return;
         console.error('Failed to save the session', error);
         setFailedLog(log);
       } finally {
-        setSaving(false);
+        if (isMounted.current) setSaving(false);
       }
     },
     [db],
@@ -113,6 +123,9 @@ export default function GuideScreen() {
   const pausedBeforeConfirm = useRef(false);
 
   const handleClosePress = useCallback(() => {
+    // A session save in flight must not be abandoned mid-write: 닫기 (and hardware back,
+    // which funnels through here too) does nothing until it settles.
+    if (saving) return;
     const started = progress.index > 0 || progress.elapsed > 0;
     if (!started) {
       router.back();
@@ -121,7 +134,7 @@ export default function GuideScreen() {
     pausedBeforeConfirm.current = paused;
     setPaused(true);
     setConfirmClose(true);
-  }, [progress.index, progress.elapsed, paused, setPaused]);
+  }, [saving, progress.index, progress.elapsed, paused, setPaused]);
 
   const handleContinueRoutine = useCallback(() => {
     setConfirmClose(false);
@@ -132,6 +145,23 @@ export default function GuideScreen() {
     setConfirmClose(false);
     router.back();
   }, []);
+
+  // Android hardware back must go through the same close logic as the 닫기 button, not bypass
+  // it: continue the confirmation if it's open, otherwise treat it exactly like a 닫기 press.
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (confirmClose) {
+          handleContinueRoutine();
+          return true;
+        }
+        handleClosePress();
+        return true;
+      };
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [confirmClose, handleClosePress, handleContinueRoutine]),
+  );
 
   const { width, height } = useWindowDimensions();
   const plateSize = Math.min(width - 40, 320, Math.round(height * 0.34));
@@ -167,8 +197,15 @@ export default function GuideScreen() {
           <View style={styles.top}>
             <Txt style={styles.topName}>{symptom.name}</Txt>
             <Txt variant="caption">{`${segment.stepIndex + 1} / ${stepCount}`}</Txt>
-            <Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={handleClosePress} hitSlop={12}>
-              <Txt variant="sub">닫기</Txt>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="닫기"
+              accessibilityState={{ disabled: saving }}
+              disabled={saving}
+              onPress={handleClosePress}
+              hitSlop={12}
+            >
+              <Txt variant="sub" style={saving && styles.pauseDisabled}>닫기</Txt>
             </Pressable>
           </View>
 
