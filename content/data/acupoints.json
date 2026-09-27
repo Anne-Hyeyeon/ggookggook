@@ -233,10 +233,10 @@
     "id": "CV12",
     "name": { "ko": "중완", "hanja": "中脘", "en": "Zhongwan" },
     "sides": "single",
-    "location": "배꼽과 갈비뼈 아래 가장자리가 가운데에서 만나는 곳(명치)의 한가운데입니다. 배 한가운데 선 위입니다.",
+    "location": "배꼽과 명치(갈비뼈 아래 가장자리가 가운데에서 만나는 곳)를 이은 선의 한가운데입니다. 배 한가운데 선 위입니다.",
     "technique": "검지부터 약지까지 세 손가락을 모아 배 안쪽을 향해 지그시 누르세요. 숨을 내쉬면서 편안할 만큼만 누르세요.",
     "defaultSeconds": 60,
-    "cautions": [],
+    "cautions": ["pregnancy"],
     "whoLocation": "In the upper abdomen, 4 B-cun superior to the centre of the umbilicus, on the anterior median line."
   },
   {
