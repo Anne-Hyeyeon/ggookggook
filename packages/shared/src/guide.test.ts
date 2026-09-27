@@ -48,6 +48,10 @@ describe('rhythmAt', () => {
     expect(rhythmAt(60, 60, 5, 2)).toEqual({ phase: 'press', secondsLeftInPhase: 0, pressNumber: 9, pressCount: 9 });
     expect(rhythmAt(90, 60, 5, 2).pressNumber).toBe(9);
   });
+
+  it('never reports negative time at an exact cycle boundary', () => {
+    expect(rhythmAt(70, 70, 5, 2)).toEqual({ phase: 'press', secondsLeftInPhase: 0, pressNumber: 10, pressCount: 10 });
+  });
 });
 
 describe('advanceGuide', () => {

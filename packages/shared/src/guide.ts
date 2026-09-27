@@ -46,9 +46,9 @@ export function rhythmAt(elapsedSeconds: number, segmentSeconds: number, pressSe
   const position = clamped - cycleIndex * cycle;
   const segmentLeft = segmentSeconds - clamped;
   if (position < pressSeconds || segmentLeft === 0) {
-    return { phase: 'press', secondsLeftInPhase: Math.min(pressSeconds - position, segmentLeft), pressNumber: cycleIndex + 1, pressCount };
+    return { phase: 'press', secondsLeftInPhase: Math.max(0, Math.min(pressSeconds - position, segmentLeft)), pressNumber: cycleIndex + 1, pressCount };
   }
-  return { phase: 'rest', secondsLeftInPhase: Math.min(cycle - position, segmentLeft), pressNumber: cycleIndex + 1, pressCount };
+  return { phase: 'rest', secondsLeftInPhase: Math.max(0, Math.min(cycle - position, segmentLeft)), pressNumber: cycleIndex + 1, pressCount };
 }
 
 export interface GuideProgress {
