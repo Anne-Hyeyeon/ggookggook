@@ -7,7 +7,8 @@
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json",
     "validate": "tsx src/cli/validate.ts",
-    "images": "tsx src/cli/images.ts"
+    "images": "tsx src/cli/images.ts",
+    "prompt": "tsx src/cli/prompt.ts"
   },
   "dependencies": {
     "@ggookggook/shared": "*",
