@@ -1,5 +1,23 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
+# 꾹꾹 (ggookggook)
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+Acupressure guide app being rebuilt as an Expo (React Native) app with an AWS CDK backend.
+
+- Design spec: `docs/superpowers/specs/2026-09-27-ggookggook-app-design.md`
+- Content data (WHO-reviewed): `content/data/`
+- First-pass illustrations: `content/images/raw/`
+
+Expo, React Native, and AWS CDK APIs change often. Check the installed package docs before writing code, and heed deprecation notices.
+
+## Commands
+
+- `npm test`: run every workspace's tests
+- `npm run typecheck`: typecheck every workspace
+- `npm run validate -w @ggookggook/content`: check content data (add `-- --release` before shipping)
+- `npm run images -w @ggookggook/content [-- <id>]`: normalize `content/images/raw/*` into `content/images/out/<id>.webp`
+- `npm run prompt -w @ggookggook/content [-- <id>]`: print the ChatGPT prompt for a plate or map (see `docs/illustration-style-guide.md`)
+- `npm run pin -w @ggookggook/content`: coordinate pinning tool at http://127.0.0.1:4321
+- `npm run build -w @ggookggook/content`: write the versioned bundle to `content/dist/` (phase 3 uploads it)
+
+## Toolchain
+
+- TypeScript is pinned below 7 because later tooling needs its JS API. The root devDependency is `typescript@~6.0.3`; TypeScript 7 ships only the native compiler, which breaks ts-node, typescript-eslint, and CDK tooling.

@@ -1,0 +1,19 @@
+{
+  "name": "@ggookggook/content",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json",
+    "validate": "tsx src/cli/validate.ts",
+    "images": "tsx src/cli/images.ts",
+    "prompt": "tsx src/cli/prompt.ts",
+    "pin": "tsx tools/pin/server.ts",
+    "build": "tsx src/cli/build.ts"
+  },
+  "dependencies": {
+    "@ggookggook/shared": "*",
+    "sharp": "^0.35.5"
+  }
+}
