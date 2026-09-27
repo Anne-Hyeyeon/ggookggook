@@ -22,9 +22,13 @@ export default function TodayScreen() {
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      latestCompletedSession(db).then((session) => {
-        if (active) setRecent(session);
-      });
+      latestCompletedSession(db)
+        .then((session) => {
+          if (active) setRecent(session);
+        })
+        .catch((error) => {
+          console.error('Failed to load the most recent session', error);
+        });
       return () => {
         active = false;
       };
@@ -57,7 +61,11 @@ export default function TodayScreen() {
               style={styles.search}
             />
             {recent && recentSymptom && query.trim() === '' && (
-              <Pressable onPress={() => router.push(`/symptom/${recentSymptom.id}`)} style={styles.recent}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push(`/symptom/${recentSymptom.id}`)}
+                style={styles.recent}
+              >
                 <Txt variant="sub">{`최근 · ${recentSymptom.name} · ${formatRelativeDay(recent.completedAt ?? recent.startedAt, new Date())}`}</Txt>
               </Pressable>
             )}
@@ -99,7 +107,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.ink,
     paddingVertical: space(2),
   },
-  recent: { paddingVertical: space(3) },
+  recent: { minHeight: 44, justifyContent: 'center', paddingVertical: space(3) },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: space(3.5), gap: space(3) },
   rowText: { flex: 1, gap: 3 },
   rowName: { fontFamily: fonts.semibold, fontSize: 15.5, color: colors.ink },

@@ -3,6 +3,7 @@ import * as store from '@ggookggook/store';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
+import { AccessibilityInfo } from 'react-native';
 import GuideScreen from '../app/guide/[id]';
 import { useSettings } from '@/state/settings';
 
@@ -17,7 +18,7 @@ jest.mock('expo-haptics', () => ({
 }));
 let mockParams: { id: string } = { id: 'food_stagnation' };
 jest.mock('expo-router', () => ({
-  router: { replace: jest.fn(), back: jest.fn() },
+  router: { replace: jest.fn(), back: jest.fn(), dismissTo: jest.fn() },
   useLocalSearchParams: () => mockParams,
 }));
 
@@ -70,6 +71,19 @@ it('pauses and resumes', async () => {
   expect(screen.getByText('2 / 9회')).toBeTruthy();
 });
 
+it('announces the press and rest phases for screen readers', async () => {
+  const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockImplementation(() => {});
+  await render(<GuideScreen />);
+  expect(announce).toHaveBeenCalledWith('꾹 누르세요');
+
+  await act(async () => {
+    jest.advanceTimersByTime(5000);
+  });
+  expect(announce).toHaveBeenCalledWith('잠시 떼세요');
+
+  announce.mockRestore();
+});
+
 it('skips haptics when rhythm haptics are off', async () => {
   useSettings.setState({ settings: { ...DEFAULT_SETTINGS, rhythmHaptics: false } });
   await render(<GuideScreen />);
@@ -94,6 +108,22 @@ it('shows a retry option when saving the session fails, and recovers on retry', 
   await fireEvent.press(screen.getByRole('button', { name: '다시 저장' }));
   await act(async () => {});
   expect(router.replace).toHaveBeenCalledWith({ pathname: '/done', params: { sessionId: expect.any(String) } });
+
+  consoleError.mockRestore();
+});
+
+it('lets you leave the failed-save state via 처음으로 without growing the stack', async () => {
+  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+  mocked.insertSession.mockRejectedValueOnce(new Error('disk full'));
+  await render(<GuideScreen />);
+
+  await act(async () => {
+    jest.advanceTimersByTime(240_000);
+  });
+  expect(screen.getByText('기록을 저장하지 못했어요.')).toBeTruthy();
+
+  await fireEvent.press(screen.getByRole('button', { name: '처음으로' }));
+  expect(router.dismissTo).toHaveBeenCalledWith('/');
 
   consoleError.mockRestore();
 });

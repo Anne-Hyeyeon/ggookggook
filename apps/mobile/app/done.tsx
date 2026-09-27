@@ -3,11 +3,13 @@ import { getSession, setSessionFeedback } from '@ggookggook/store';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
 import { formatDuration } from '@/format';
+import { visibleSteps } from '@/routine';
+import { useSettings } from '@/state/settings';
 import { colors, fonts, space } from '@/theme';
 import { Txt } from '@/ui/Txt';
 
@@ -20,6 +22,7 @@ const OPTIONS: { value: SessionFeedback; label: string }[] = [
 export default function DoneScreen() {
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
   const db = useDb();
+  const settings = useSettings((state) => state.settings);
   const [session, setSession] = useState<SessionLog | null>(null);
   const [feedback, setFeedback] = useState<SessionFeedback | null>(null);
 
@@ -44,7 +47,7 @@ export default function DoneScreen() {
 
   const symptom = session?.routine.kind === 'symptom' ? content.symptom(session.routine.symptomId) : undefined;
   const names = symptom
-    ? symptom.steps
+    ? visibleSteps(symptom, settings)
         .map((step) => content.acupoints.get(step.acupointId)?.name.ko ?? '')
         .filter(Boolean)
         .join(' · ')
@@ -60,7 +63,7 @@ export default function DoneScreen() {
 
   return (
     <SafeAreaView style={styles.screen}>
-      <View style={styles.body}>
+      <ScrollView contentContainerStyle={styles.body}>
         {cat !== null && <Image source={cat} style={styles.cat} contentFit="contain" accessibilityIgnoresInvertColors />}
         <Txt variant="heading" style={styles.center}>
           {symptom ? `${symptom.name} 루틴을 마쳤어요` : '루틴을 마쳤어요'}
@@ -94,8 +97,8 @@ export default function DoneScreen() {
             );
           })}
         </View>
-      </View>
-      <Pressable accessibilityRole="button" accessibilityLabel="처음으로" onPress={() => router.replace('/')} style={styles.home}>
+      </ScrollView>
+      <Pressable accessibilityRole="button" accessibilityLabel="처음으로" onPress={() => router.dismissTo('/')} style={styles.home}>
         <Txt variant="sub" style={styles.homeLabel}>
           처음으로
         </Txt>
@@ -106,11 +109,11 @@ export default function DoneScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  body: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space(6), gap: space(2) },
+  body: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: space(6), gap: space(2) },
   cat: { width: 200, height: 200, marginBottom: space(2) },
   center: { textAlign: 'center' },
   question: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink, marginTop: space(6) },
-  options: { flexDirection: 'row', gap: space(2), marginTop: space(2) },
+  options: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space(2), marginTop: space(2) },
   option: { borderWidth: 1, borderColor: colors.ink, borderRadius: 2, paddingHorizontal: space(3), paddingVertical: space(2.5) },
   optionSelected: { backgroundColor: colors.ink },
   optionLabel: { fontFamily: fonts.regular, fontSize: 13, color: colors.ink },

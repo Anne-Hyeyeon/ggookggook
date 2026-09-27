@@ -1,5 +1,6 @@
 import type { GuideSide } from '@ggookggook/shared';
 import { Image } from 'expo-image';
+import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { PlateView as PlateData } from '@/content';
 import { colors, space } from '@/theme';
@@ -11,17 +12,26 @@ interface PlateViewProps {
   size: number;
 }
 
-export function PlateView({ view, side, size }: PlateViewProps) {
+function PlateViewComponent({ view, side, size }: PlateViewProps) {
   if (!view || view.image === null) {
     return (
-      <View style={[styles.frame, styles.placeholder, { width: size, height: size }]}>
+      <View
+        accessible
+        accessibilityRole="image"
+        style={[styles.frame, styles.placeholder, { width: size, height: size }]}
+      >
         <Txt variant="caption">{view ? `${view.plate.name} 그림 준비 중` : '그림 준비 중'}</Txt>
       </View>
     );
   }
   const pins = view.pins.filter((pin) => pin.side === undefined || side === 'both' || side === 'center' || pin.side === side);
   return (
-    <View style={[styles.frame, { width: size, height: size }]} accessibilityLabel={`${view.plate.name} 그림`}>
+    <View
+      accessible
+      accessibilityRole="image"
+      style={[styles.frame, { width: size, height: size }]}
+      accessibilityLabel={`${view.plate.name} 그림`}
+    >
       <Image source={view.image} style={StyleSheet.absoluteFill} contentFit="contain" />
       {pins.map((pin) => (
         <View
@@ -33,6 +43,8 @@ export function PlateView({ view, side, size }: PlateViewProps) {
     </View>
   );
 }
+
+export const PlateView = memo(PlateViewComponent);
 
 const styles = StyleSheet.create({
   frame: { backgroundColor: colors.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.rule, alignSelf: 'center' },

@@ -2,7 +2,8 @@ export const colors = {
   bg: '#F8F8F7',
   ink: '#23211E',
   sub: '#6A665E',
-  faint: '#8A857C',
+  // Darkened from #8A857C (3.45:1) to meet 4.5:1 against colors.bg (#F8F8F7), keeping the warm-gray hue.
+  faint: '#767168',
   rule: '#E2E2DF',
   card: '#FFFFFF',
   accent: '#C23B2A',

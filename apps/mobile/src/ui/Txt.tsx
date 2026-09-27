@@ -14,6 +14,9 @@ const styles = StyleSheet.create({
   number: { fontFamily: fonts.bold, fontSize: 46, lineHeight: 52, letterSpacing: -1.2, color: colors.accent, fontVariant: ['tabular-nums'] },
 });
 
+const CLAMPED_VARIANTS = new Set<TxtVariant>(['number', 'point', 'title']);
+
 export function Txt({ variant = 'body', style, ...props }: TextProps & { variant?: TxtVariant }) {
-  return <Text {...props} style={[styles[variant], style]} />;
+  const maxFontSizeMultiplier = CLAMPED_VARIANTS.has(variant) ? 1.5 : undefined;
+  return <Text maxFontSizeMultiplier={maxFontSizeMultiplier} {...props} style={[styles[variant], style]} />;
 }

@@ -34,8 +34,8 @@ export function TabBar({ state, descriptors, navigation }: TabBarProps) {
 }
 
 const styles = StyleSheet.create({
-  bar: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.rule, backgroundColor: colors.bg, paddingTop: 12 },
-  item: { flex: 1, alignItems: 'center', paddingVertical: 4 },
+  bar: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.rule, backgroundColor: colors.bg },
+  item: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 48, paddingTop: 12, paddingBottom: 4 },
   label: { fontFamily: fonts.regular, fontSize: 12, color: colors.faint },
   focused: { fontFamily: fonts.bold, color: colors.ink },
 });

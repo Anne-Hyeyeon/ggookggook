@@ -1,16 +1,19 @@
+import { DEFAULT_SETTINGS } from '@ggookggook/shared';
 import * as store from '@ggookggook/store';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import DoneScreen from '../app/done';
+import { useSettings } from '@/state/settings';
 
 jest.mock('@/db/DbProvider', () => ({ useDb: () => ({}) }));
 jest.mock('@ggookggook/store', () => ({ getSession: jest.fn(), setSessionFeedback: jest.fn().mockResolvedValue(undefined) }));
-jest.mock('expo-router', () => ({ router: { replace: jest.fn() }, useLocalSearchParams: () => ({ sessionId: 's1' }) }));
+jest.mock('expo-router', () => ({ router: { replace: jest.fn(), dismissTo: jest.fn() }, useLocalSearchParams: () => ({ sessionId: 's1' }) }));
 
 const mocked = store as jest.Mocked<typeof store>;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS }, disclaimerAcceptedAt: 'x' });
   mocked.getSession.mockResolvedValue({
     id: 's1',
     routine: { kind: 'symptom', symptomId: 'food_stagnation' },
@@ -32,7 +35,17 @@ it('shows the result and records feedback', async () => {
   expect(screen.getByRole('button', { name: '나아졌어요' }).props.accessibilityState).toMatchObject({ selected: true });
 
   await fireEvent.press(screen.getByRole('button', { name: '처음으로' }));
-  expect(router.replace).toHaveBeenCalledWith('/');
+  expect(router.dismissTo).toHaveBeenCalledWith('/');
+});
+
+it('lists only the steps that survive pregnancy filtering', async () => {
+  useSettings.setState({ settings: { ...DEFAULT_SETTINGS, pregnancyMode: true } });
+
+  await render(<DoneScreen />);
+  expect(await screen.findByText('식체 루틴을 마쳤어요')).toBeTruthy();
+  expect(screen.getByText('내관')).toBeTruthy();
+  expect(screen.queryByText('합곡')).toBeNull();
+  expect(screen.queryByText('합곡 · 내관')).toBeNull();
 });
 
 it('renders the heading and home link when there is no session', async () => {
@@ -42,7 +55,7 @@ it('renders the heading and home link when there is no session', async () => {
   expect(await screen.findByText('루틴을 마쳤어요')).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('button', { name: '처음으로' }));
-  expect(router.replace).toHaveBeenCalledWith('/');
+  expect(router.dismissTo).toHaveBeenCalledWith('/');
 });
 
 it('does not crash when getSession rejects', async () => {
@@ -53,7 +66,7 @@ it('does not crash when getSession rejects', async () => {
   expect(await screen.findByText('루틴을 마쳤어요')).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('button', { name: '처음으로' }));
-  expect(router.replace).toHaveBeenCalledWith('/');
+  expect(router.dismissTo).toHaveBeenCalledWith('/');
 
   errorSpy.mockRestore();
 });

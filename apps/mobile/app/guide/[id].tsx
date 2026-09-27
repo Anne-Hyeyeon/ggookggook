@@ -1,12 +1,13 @@
 import { buildGuideSegments, rhythmAt, type GuideSegment, type SessionLog } from '@ggookggook/shared';
 import { insertSession } from '@ggookggook/store';
+import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useKeepAwake } from 'expo-keep-awake';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
+import { GUIDE_SPEED } from '@/config/env';
 import { useDb } from '@/db/DbProvider';
 import { useGuide } from '@/guide/useGuide';
 import { newId } from '@/id';
@@ -17,7 +18,6 @@ import { PlateView } from '@/ui/PlateView';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
 
-const SPEED = Math.max(1, Number(process.env.EXPO_PUBLIC_GUIDE_SPEED ?? '1') || 1);
 const SIDE_LABEL = { left: '왼쪽', right: '오른쪽', both: '양쪽 함께', center: '' } as const;
 
 export default function GuideScreen() {
@@ -38,6 +38,8 @@ export default function GuideScreen() {
 
   const onEvent = useCallback(
     (event: 'press' | 'rest' | 'segment') => {
+      if (event === 'press') AccessibilityInfo.announceForAccessibility('꾹 누르세요');
+      else if (event === 'rest') AccessibilityInfo.announceForAccessibility('잠시 떼세요');
       if (!settings.rhythmHaptics) return;
       if (event === 'press') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
       else if (event === 'rest') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -82,17 +84,18 @@ export default function GuideScreen() {
     segments,
     pressSeconds: settings.pressSeconds,
     restSeconds: settings.restSeconds,
-    tickMs: 1000 / SPEED,
+    tickMs: 1000 / GUIDE_SPEED,
     onEvent,
     onFinish,
   });
 
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const plateSize = Math.min(width - 40, 320, Math.round(height * 0.34));
   const segment = segments[progress.index];
   if (!symptom || !segment) {
     return (
       <SafeAreaView style={styles.screen}>
-        <View style={styles.body}>
+        <View style={[styles.body, styles.scrollContent]}>
           <Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={() => router.back()} hitSlop={12}>
             <Txt variant="sub">닫기</Txt>
           </Pressable>
@@ -116,22 +119,24 @@ export default function GuideScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.body}>
-        <View style={styles.top}>
-          <Txt style={styles.topName}>{symptom.name}</Txt>
-          <Txt variant="caption">{`${segment.stepIndex + 1} / ${stepCount}`}</Txt>
-          <Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={() => router.back()} hitSlop={12}>
-            <Txt variant="sub">닫기</Txt>
-          </Pressable>
-        </View>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.top}>
+            <Txt style={styles.topName}>{symptom.name}</Txt>
+            <Txt variant="caption">{`${segment.stepIndex + 1} / ${stepCount}`}</Txt>
+            <Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={() => router.back()} hitSlop={12}>
+              <Txt variant="sub">닫기</Txt>
+            </Pressable>
+          </View>
 
-        <PlateView view={content.plateFor(segment.acupointId)} side={segment.side} size={Math.min(width - space(10), 320)} />
+          <PlateView view={content.plateFor(segment.acupointId)} side={segment.side} size={plateSize} />
 
-        <View style={styles.nameRow}>
-          <Txt variant="point">{acupoint.name.ko}</Txt>
-          <Txt variant="caption">{acupoint.id}</Txt>
-          {SIDE_LABEL[segment.side] !== '' && <Txt style={styles.side}>{SIDE_LABEL[segment.side]}</Txt>}
-        </View>
-        <Txt variant="sub">{firstSentence(acupoint.location)}</Txt>
+          <View style={styles.nameRow}>
+            <Txt variant="point">{acupoint.name.ko}</Txt>
+            <Txt variant="caption">{acupoint.id}</Txt>
+            {SIDE_LABEL[segment.side] !== '' && <Txt style={styles.side}>{SIDE_LABEL[segment.side]}</Txt>}
+          </View>
+          <Txt variant="sub">{firstSentence(acupoint.location)}</Txt>
+        </ScrollView>
 
         <View style={styles.timer}>
           <Rule strong />
@@ -150,7 +155,7 @@ export default function GuideScreen() {
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="처음으로"
-                  onPress={() => router.replace('/')}
+                  onPress={() => router.dismissTo('/')}
                   style={styles.pause}
                 >
                   <Txt style={styles.pauseLabel}>처음으로</Txt>
@@ -160,9 +165,9 @@ export default function GuideScreen() {
           ) : (
             <>
               <View style={styles.timerRow}>
-                <Txt variant="number" style={styles.number}>{String(rhythm.secondsLeftInPhase)}</Txt>
+                <Txt variant="number" style={styles.number} accessibilityLiveRegion="polite">{String(rhythm.secondsLeftInPhase)}</Txt>
                 <View style={styles.timerText}>
-                  <Txt style={styles.action}>{rhythm.phase === 'press' ? '꾹 누르세요' : '잠시 떼세요'}</Txt>
+                  <Txt style={styles.action} accessibilityLiveRegion="polite">{rhythm.phase === 'press' ? '꾹 누르세요' : '잠시 떼세요'}</Txt>
                   <Txt variant="sub">{`${rhythm.pressNumber} / ${rhythm.pressCount}회`}</Txt>
                 </View>
                 <Pressable
@@ -191,17 +196,26 @@ export default function GuideScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  body: { flex: 1, padding: space(5), gap: space(3) },
+  body: { flex: 1 },
+  scrollContent: { padding: space(5), gap: space(3) },
   top: { flexDirection: 'row', alignItems: 'center', gap: space(3) },
   topName: { flex: 1, fontFamily: fonts.semibold, fontSize: 13, color: colors.ink },
   nameRow: { flexDirection: 'row', alignItems: 'baseline', gap: space(2), marginTop: space(2) },
   side: { fontFamily: fonts.semibold, fontSize: 13, color: colors.accent },
-  timer: { marginTop: 'auto', gap: space(3) },
+  timer: { gap: space(3), paddingHorizontal: space(5), paddingBottom: space(5) },
   timerRow: { flexDirection: 'row', alignItems: 'center', gap: space(4), paddingTop: space(2) },
   number: { minWidth: 40 },
   timerText: { flex: 1, gap: 2 },
   action: { fontFamily: fonts.bold, fontSize: 15, color: colors.ink },
-  pause: { borderWidth: 1.5, borderColor: colors.ink, borderRadius: 2, paddingHorizontal: space(3), paddingVertical: space(2) },
+  pause: {
+    borderWidth: 1.5,
+    borderColor: colors.ink,
+    borderRadius: 2,
+    paddingHorizontal: space(3),
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   pauseLabel: { fontFamily: fonts.semibold, fontSize: 12.5, color: colors.ink },
   track: { height: 2, backgroundColor: colors.rule },
   fill: { height: 2, backgroundColor: colors.accent },
