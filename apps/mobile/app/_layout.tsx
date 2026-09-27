@@ -41,6 +41,7 @@ function Routes() {
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
       <Stack.Protected guard={accepted}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="symptom/[id]" />
       </Stack.Protected>
       <Stack.Protected guard={!accepted}>
         <Stack.Screen name="welcome" />
