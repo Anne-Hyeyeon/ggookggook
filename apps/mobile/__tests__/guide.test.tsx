@@ -3,7 +3,7 @@ import * as store from '@ggookggook/store';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { AccessibilityInfo, BackHandler, StyleSheet } from 'react-native';
+import { AccessibilityInfo, BackHandler, Platform, StyleSheet } from 'react-native';
 import GuideScreen from '../app/guide/[id]';
 import { useSettings } from '@/state/settings';
 
@@ -284,6 +284,17 @@ it('routes Android hardware back through the same close confirmation once the ro
   await pressHardwareBack();
   expect(screen.queryByText('루틴을 그만할까요?')).toBeNull();
   expect(router.back).not.toHaveBeenCalled();
+});
+
+it('skips registering a hardware back handler on web, where BackHandler has no implementation', async () => {
+  const originalOS = Platform.OS;
+  Platform.OS = 'web';
+  try {
+    await render(<GuideScreen />);
+    expect(BackHandler.addEventListener).not.toHaveBeenCalled();
+  } finally {
+    Platform.OS = originalOS;
+  }
 });
 
 it('hardware back closes immediately when nothing has happened yet, same as 닫기', async () => {

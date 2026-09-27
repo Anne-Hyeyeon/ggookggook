@@ -135,12 +135,16 @@ async function runFlow(page) {
   await page.waitForURL('**/done**', { timeout: 60_000 });
   await shoot(page, '08-done.png');
 
-  // 9. Today again, showing the just-finished session as the recent row.
+  // 8b. Give feedback so Today's "나아졌어요 N번" line has something to show.
+  await page.getByRole('button', { name: '나아졌어요' }).click();
+
+  // 9. Today again, showing the just-finished session as the recent row (with its
+  // "다시 하기" affordance) and the resulting "나아졌어요 1번" line.
   // The Today screen stayed mounted under the stack the whole time, so its search
   // field still holds "두통" from step 5 and hides the recent row until cleared.
   await page.getByRole('button', { name: '처음으로' }).click();
   await search.fill('');
-  await page.getByText('최근', { exact: false }).waitFor();
+  await page.getByText('나아졌어요 1번').waitFor();
   await shoot(page, '09-today-after.png');
 
   // 10. Settings, opened from the Today header

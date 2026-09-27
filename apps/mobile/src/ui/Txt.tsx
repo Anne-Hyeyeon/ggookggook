@@ -1,4 +1,4 @@
-import { StyleSheet, Text, type TextProps } from 'react-native';
+import { Platform, StyleSheet, Text, type TextProps, type TextStyle } from 'react-native';
 import { colors, fonts } from '@/theme';
 
 export type TxtVariant = 'title' | 'heading' | 'body' | 'sub' | 'caption' | 'point' | 'pointSmall' | 'number';
@@ -16,7 +16,21 @@ const styles = StyleSheet.create({
 
 const CLAMPED_VARIANTS = new Set<TxtVariant>(['number', 'point', 'title']);
 
+// react-native-web has no CJK line-breaking rules of its own, so a long Korean word
+// (e.g. "적당합니다") can wrap mid-word ("적당합니/다"). `wordBreak` isn't part of native
+// TextStyle, only react-native-web's, so it's typed as a web-only extension and applied
+// only there; native gets the equivalent via `lineBreakStrategyIOS` below.
+type WebOnlyTextStyle = TextStyle & { wordBreak?: 'keep-all' };
+const keepAllStyle: WebOnlyTextStyle | undefined = Platform.OS === 'web' ? { wordBreak: 'keep-all' } : undefined;
+
 export function Txt({ variant = 'body', style, ...props }: TextProps & { variant?: TxtVariant }) {
   const maxFontSizeMultiplier = CLAMPED_VARIANTS.has(variant) ? 1.5 : undefined;
-  return <Text maxFontSizeMultiplier={maxFontSizeMultiplier} {...props} style={[styles[variant], style]} />;
+  return (
+    <Text
+      maxFontSizeMultiplier={maxFontSizeMultiplier}
+      lineBreakStrategyIOS="hangul-word"
+      {...props}
+      style={[styles[variant], keepAllStyle, style]}
+    />
+  );
 }

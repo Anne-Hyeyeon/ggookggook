@@ -43,3 +43,16 @@ export async function latestCompletedSession(db: SqlDatabase): Promise<SessionLo
   const row = await db.getFirstAsync<SessionRow>('SELECT * FROM sessions WHERE completed_at IS NOT NULL ORDER BY completed_at DESC LIMIT 1', []);
   return row ? toLog(row) : null;
 }
+
+export async function countSessionsByFeedback(db: SqlDatabase, feedback: SessionFeedback): Promise<number> {
+  const row = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM sessions WHERE feedback = ?', [feedback]);
+  return row?.count ?? 0;
+}
+
+export async function countSessionsBySymptom(db: SqlDatabase): Promise<Record<string, number>> {
+  const rows = await db.getAllAsync<{ routine_ref: string; count: number }>(
+    "SELECT routine_ref, COUNT(*) as count FROM sessions WHERE routine_kind = 'symptom' AND completed_at IS NOT NULL GROUP BY routine_ref",
+    [],
+  );
+  return Object.fromEntries(rows.map((row) => [row.routine_ref, row.count]));
+}

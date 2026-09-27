@@ -1,5 +1,5 @@
 import { searchSymptoms, type SessionLog, type Settings, type Symptom } from '@ggookggook/shared';
-import { latestCompletedSession } from '@ggookggook/store';
+import { countSessionsByFeedback, countSessionsBySymptom, latestCompletedSession } from '@ggookggook/store';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -13,11 +13,18 @@ import { colors, fonts, space } from '@/theme';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
 
+// A stable reference so a repeated fallback (e.g. every failed retry while unfocused) sets
+// state to the same object every time: React bails out of the re-render via Object.is
+// instead of looping forever on a fresh {} each time.
+const NO_USAGE: Record<string, number> = {};
+
 export default function TodayScreen() {
   const db = useDb();
   const settings = useSettings((state) => state.settings);
   const [query, setQuery] = useState('');
   const [recent, setRecent] = useState<SessionLog | null>(null);
+  const [betterCount, setBetterCount] = useState(0);
+  const [usageCounts, setUsageCounts] = useState<Record<string, number>>(NO_USAGE);
 
   useFocusEffect(
     useCallback(() => {
@@ -29,13 +36,38 @@ export default function TodayScreen() {
         .catch((error) => {
           console.error('Failed to load the most recent session', error);
         });
+      countSessionsByFeedback(db, 'better')
+        .then((count) => {
+          if (active) setBetterCount(count);
+        })
+        .catch((error) => {
+          console.error('Failed to load the better-feedback count', error);
+          if (active) setBetterCount(0);
+        });
+      countSessionsBySymptom(db)
+        .then((counts) => {
+          if (active) setUsageCounts(counts);
+        })
+        .catch((error) => {
+          console.error('Failed to load symptom usage counts', error);
+          if (active) setUsageCounts(NO_USAGE);
+        });
       return () => {
         active = false;
       };
     }, [db]),
   );
 
-  const results = useMemo(() => searchSymptoms(content.symptoms, content.acupoints, query), [query]);
+  // Ties keep content order because Array#sort is stable; with no history every count is
+  // 0, so the sort is a no-op and content order falls out for free.
+  const sortedSymptoms = useMemo(
+    () => [...content.symptoms].sort((a, b) => (usageCounts[b.id] ?? 0) - (usageCounts[a.id] ?? 0)),
+    [usageCounts],
+  );
+  const results = useMemo(
+    () => (query.trim() === '' ? sortedSymptoms : searchSymptoms(content.symptoms, content.acupoints, query)),
+    [query, sortedSymptoms],
+  );
   const recentSymptom = recent?.routine.kind === 'symptom' ? content.symptom(recent.routine.symptomId) : undefined;
 
   return (
@@ -66,13 +98,26 @@ export default function TodayScreen() {
               style={styles.search}
             />
             {recent && recentSymptom && query.trim() === '' && (
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => router.push(`/symptom/${recentSymptom.id}`)}
-                style={styles.recent}
-              >
-                <Txt variant="sub">{`최근 · ${recentSymptom.name} · ${formatRelativeDay(recent.completedAt ?? recent.startedAt, new Date())}`}</Txt>
-              </Pressable>
+              <View style={styles.recentBlock}>
+                <Rule />
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${recentSymptom.name} 다시 하기`}
+                  onPress={() => router.push(`/symptom/${recentSymptom.id}`)}
+                  style={styles.recent}
+                >
+                  <Txt variant="sub" style={styles.recentLabel}>
+                    {`최근 · ${recentSymptom.name} · ${formatRelativeDay(recent.completedAt ?? recent.startedAt, new Date())}`}
+                  </Txt>
+                  <Txt style={styles.recentAction}>다시 하기</Txt>
+                </Pressable>
+                {betterCount >= 1 && (
+                  <Txt variant="caption" maxFontSizeMultiplier={1.4} style={styles.betterLine}>
+                    {`나아졌어요 ${betterCount}번`}
+                  </Txt>
+                )}
+                <Rule />
+              </View>
             )}
           </View>
         }
@@ -91,10 +136,10 @@ function SymptomRow({ symptom, settings }: { symptom: Symptom; settings: Setting
   return (
     <Pressable accessibilityRole="button" onPress={() => router.push(`/symptom/${symptom.id}`)} style={styles.row}>
       <View style={styles.rowText}>
-        <Txt style={styles.rowName}>{symptom.name}</Txt>
+        <Txt maxFontSizeMultiplier={1.4} style={styles.rowName}>{symptom.name}</Txt>
         <Txt variant="pointSmall">{names}</Txt>
       </View>
-      <Txt style={styles.minutes} testID={`minutes-${symptom.id}`}>{`${minutes}분`}</Txt>
+      <Txt maxFontSizeMultiplier={1.4} style={styles.minutes} testID={`minutes-${symptom.id}`}>{`${minutes}분`}</Txt>
     </Pressable>
   );
 }
@@ -113,7 +158,18 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.ink,
     paddingVertical: space(2),
   },
-  recent: { minHeight: 44, justifyContent: 'center', paddingVertical: space(3) },
+  recentBlock: { gap: space(1.5) },
+  recent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space(3),
+    minHeight: 48,
+    paddingVertical: space(3),
+  },
+  recentLabel: { flex: 1 },
+  recentAction: { fontFamily: fonts.semibold, fontSize: 12.5, color: colors.accent },
+  betterLine: { paddingBottom: space(1) },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: space(3.5), gap: space(3) },
   rowText: { flex: 1, gap: 3 },
   rowName: { fontFamily: fonts.semibold, fontSize: 15.5, color: colors.ink },

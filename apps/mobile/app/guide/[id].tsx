@@ -1,6 +1,6 @@
 import { buildGuideSegments, rhythmAt, type GuideSegment, type SessionLog } from '@ggookggook/shared';
 import { insertSession } from '@ggookggook/store';
-import { AccessibilityInfo, BackHandler, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { AccessibilityInfo, BackHandler, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useKeepAwake } from 'expo-keep-awake';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -150,6 +150,8 @@ export default function GuideScreen() {
   // it: continue the confirmation if it's open, otherwise treat it exactly like a 닫기 press.
   useFocusEffect(
     useCallback(() => {
+      // BackHandler has no web implementation; registering there only logs a console error.
+      if (Platform.OS === 'web') return;
       const onBackPress = () => {
         if (confirmClose) {
           handleContinueRoutine();
