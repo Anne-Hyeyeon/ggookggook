@@ -10,7 +10,7 @@ const unit = z.number().min(0).max(1);
 
 export const sidesSchema = z.enum(['single', 'sequential', 'together']);
 export const cautionSchema = z.enum(['pregnancy']);
-/** The body's own left and right, not the viewer's. */
+// The body's own left and right, not the viewer's.
 export const sideSchema = z.enum(['left', 'right']);
 
 export const acupointSchema = z.object({
@@ -43,7 +43,7 @@ export const plateSchema = z.object({
   id: slug,
   name: z.string().min(1),
   subject: z.string().min(1),
-  /** Which side of the body the drawing shows. */
+  // Which side of the body the drawing shows.
   depicts: z.enum(['left', 'right', 'both']),
   acupointIds: z.array(acupointId).min(1),
   pins: z.array(pinSchema),

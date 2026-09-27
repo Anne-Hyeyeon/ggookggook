@@ -15,18 +15,17 @@ export function resolveSteps(steps: readonly RoutineStep[], lookup: AcupointLook
 }
 
 export function buildGuideSegments(steps: readonly RoutineStep[], lookup: AcupointLookup): GuideSegment[] {
-  const segments: GuideSegment[] = [];
-  steps.forEach((step, stepIndex) => {
+  return steps.flatMap((step, stepIndex): GuideSegment[] => {
     const acupoint = lookup.get(step.acupointId);
-    if (!acupoint) return;
+    if (!acupoint) return [];
     if (acupoint.sides === 'sequential') {
-      segments.push({ stepIndex, acupointId: step.acupointId, side: 'left', seconds: step.seconds });
-      segments.push({ stepIndex, acupointId: step.acupointId, side: 'right', seconds: step.seconds });
-      return;
+      return [
+        { stepIndex, acupointId: step.acupointId, side: 'left', seconds: step.seconds },
+        { stepIndex, acupointId: step.acupointId, side: 'right', seconds: step.seconds },
+      ];
     }
-    segments.push({ stepIndex, acupointId: step.acupointId, side: acupoint.sides === 'together' ? 'both' : 'center', seconds: step.seconds });
+    return [{ stepIndex, acupointId: step.acupointId, side: acupoint.sides === 'together' ? 'both' : 'center', seconds: step.seconds }];
   });
-  return segments;
 }
 
 export type RhythmPhase = 'press' | 'rest';
