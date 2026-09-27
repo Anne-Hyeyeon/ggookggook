@@ -6,9 +6,11 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json",
-    "validate": "tsx src/cli/validate.ts"
+    "validate": "tsx src/cli/validate.ts",
+    "images": "tsx src/cli/images.ts"
   },
   "dependencies": {
-    "@ggookggook/shared": "*"
+    "@ggookggook/shared": "*",
+    "sharp": "^0.35.5"
   }
 }

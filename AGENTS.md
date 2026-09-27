@@ -13,3 +13,4 @@ Expo, React Native, and AWS CDK APIs change often. Check the installed package d
 - `npm test`: run every workspace's tests
 - `npm run typecheck`: typecheck every workspace
 - `npm run validate -w @ggookggook/content`: check content data (add `-- --release` before shipping)
+- `npm run images -w @ggookggook/content [-- <id>]`: normalize `content/images/raw/*` into `content/images/out/<id>.webp`
