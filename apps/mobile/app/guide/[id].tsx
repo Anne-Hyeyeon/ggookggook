@@ -3,7 +3,7 @@ import { insertSession } from '@ggookggook/store';
 import * as Haptics from 'expo-haptics';
 import { useKeepAwake } from 'expo-keep-awake';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
@@ -46,6 +46,22 @@ export default function GuideScreen() {
     [settings.rhythmHaptics],
   );
 
+  const [failedLog, setFailedLog] = useState<SessionLog | null>(null);
+
+  const saveSession = useCallback(
+    async (log: SessionLog) => {
+      try {
+        await insertSession(db, log);
+        setFailedLog(null);
+        router.replace({ pathname: '/done', params: { sessionId: log.id } });
+      } catch (error) {
+        console.error('Failed to save the session', error);
+        setFailedLog(log);
+      }
+    },
+    [db],
+  );
+
   const onFinish = useCallback(
     async (elapsedTotal: number) => {
       if (!symptom) return;
@@ -57,10 +73,9 @@ export default function GuideScreen() {
         durationSeconds: elapsedTotal,
         feedback: null,
       };
-      await insertSession(db, log);
-      router.replace({ pathname: '/done', params: { sessionId: log.id } } as never);
+      await saveSession(log);
     },
-    [db, symptom],
+    [symptom, saveSession],
   );
 
   const { progress, paused, setPaused } = useGuide({
@@ -78,6 +93,9 @@ export default function GuideScreen() {
     return (
       <SafeAreaView style={styles.screen}>
         <View style={styles.body}>
+          <Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={() => router.back()} hitSlop={12}>
+            <Txt variant="sub">닫기</Txt>
+          </Pressable>
           <Txt variant="body">안내할 혈자리가 없어요.</Txt>
         </View>
       </SafeAreaView>
@@ -117,28 +135,54 @@ export default function GuideScreen() {
 
         <View style={styles.timer}>
           <Rule strong />
-          <View style={styles.timerRow}>
-            <Txt variant="number" style={styles.number}>{String(rhythm.secondsLeftInPhase)}</Txt>
-            <View style={styles.timerText}>
-              <Txt style={styles.action}>{rhythm.phase === 'press' ? '꾹 누르세요' : '잠시 떼세요'}</Txt>
-              <Txt variant="sub">{`${rhythm.pressNumber} / ${rhythm.pressCount}회`}</Txt>
+          {failedLog ? (
+            <View style={styles.errorBox}>
+              <Txt variant="body">기록을 저장하지 못했어요.</Txt>
+              <View style={styles.errorButtons}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="다시 저장"
+                  onPress={() => void saveSession(failedLog)}
+                  style={styles.pause}
+                >
+                  <Txt style={styles.pauseLabel}>다시 저장</Txt>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="처음으로"
+                  onPress={() => router.replace('/')}
+                  style={styles.pause}
+                >
+                  <Txt style={styles.pauseLabel}>처음으로</Txt>
+                </Pressable>
+              </View>
             </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={paused ? '계속' : '일시정지'}
-              onPress={() => setPaused(!paused)}
-              style={styles.pause}
-            >
-              <Txt style={styles.pauseLabel}>{paused ? '계속' : '일시정지'}</Txt>
-            </Pressable>
-          </View>
-          <View style={styles.track}>
-            <View style={[styles.fill, { width: `${Math.min(100, (doneSeconds / totalSeconds) * 100)}%` }]} />
-          </View>
-          <View style={styles.nextRow}>
-            <Txt variant="caption">{nextLabel}</Txt>
-            <Txt variant="caption">{`약 ${Math.max(1, Math.ceil((totalSeconds - doneSeconds) / 60))}분 남음`}</Txt>
-          </View>
+          ) : (
+            <>
+              <View style={styles.timerRow}>
+                <Txt variant="number" style={styles.number}>{String(rhythm.secondsLeftInPhase)}</Txt>
+                <View style={styles.timerText}>
+                  <Txt style={styles.action}>{rhythm.phase === 'press' ? '꾹 누르세요' : '잠시 떼세요'}</Txt>
+                  <Txt variant="sub">{`${rhythm.pressNumber} / ${rhythm.pressCount}회`}</Txt>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={paused ? '계속' : '일시정지'}
+                  onPress={() => setPaused(!paused)}
+                  style={styles.pause}
+                >
+                  <Txt style={styles.pauseLabel}>{paused ? '계속' : '일시정지'}</Txt>
+                </Pressable>
+              </View>
+              <View style={styles.track}>
+                <View style={[styles.fill, { width: `${Math.min(100, (doneSeconds / totalSeconds) * 100)}%` }]} />
+              </View>
+              <View style={styles.nextRow}>
+                <Txt variant="caption">{nextLabel}</Txt>
+                <Txt variant="caption">{`약 ${Math.max(1, Math.ceil((totalSeconds - doneSeconds) / 60))}분 남음`}</Txt>
+              </View>
+            </>
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -162,4 +206,6 @@ const styles = StyleSheet.create({
   track: { height: 2, backgroundColor: colors.rule },
   fill: { height: 2, backgroundColor: colors.accent },
   nextRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  errorBox: { gap: space(3), paddingTop: space(2) },
+  errorButtons: { flexDirection: 'row', gap: space(3) },
 });

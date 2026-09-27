@@ -42,3 +42,14 @@ it('stops ticking while paused', async () => {
   expect(result.current.progress).toEqual({ index: 0, elapsed: 0, finished: false });
   expect(onFinish).not.toHaveBeenCalled();
 });
+
+it('does nothing with no segments: no interval, no finish', async () => {
+  const onEvent = jest.fn();
+  const onFinish = jest.fn();
+  await renderHook(() => useGuide({ segments: [], pressSeconds: 1, restSeconds: 1, tickMs: 1000, onEvent, onFinish }));
+  await act(async () => {
+    jest.advanceTimersByTime(5000);
+  });
+  expect(onEvent).not.toHaveBeenCalled();
+  expect(onFinish).not.toHaveBeenCalled();
+});

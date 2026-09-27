@@ -15,9 +15,10 @@ jest.mock('expo-haptics', () => ({
   ImpactFeedbackStyle: { Heavy: 'heavy', Light: 'light' },
   NotificationFeedbackType: { Success: 'success' },
 }));
+let mockParams: { id: string } = { id: 'food_stagnation' };
 jest.mock('expo-router', () => ({
   router: { replace: jest.fn(), back: jest.fn() },
-  useLocalSearchParams: () => ({ id: 'food_stagnation' }),
+  useLocalSearchParams: () => mockParams,
 }));
 
 const mocked = store as jest.Mocked<typeof store>;
@@ -25,6 +26,7 @@ const mocked = store as jest.Mocked<typeof store>;
 beforeEach(() => {
   jest.useFakeTimers();
   jest.clearAllMocks();
+  mockParams = { id: 'food_stagnation' };
   useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS }, disclaimerAcceptedAt: 'x' });
 });
 afterEach(() => jest.useRealTimers());
@@ -75,4 +77,31 @@ it('skips haptics when rhythm haptics are off', async () => {
     jest.advanceTimersByTime(10_000);
   });
   expect(Haptics.impactAsync).not.toHaveBeenCalled();
+});
+
+it('shows a retry option when saving the session fails, and recovers on retry', async () => {
+  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+  mocked.insertSession.mockRejectedValueOnce(new Error('disk full'));
+  await render(<GuideScreen />);
+
+  await act(async () => {
+    jest.advanceTimersByTime(240_000);
+  });
+  expect(screen.getByText('기록을 저장하지 못했어요.')).toBeTruthy();
+  expect(router.replace).not.toHaveBeenCalled();
+  expect(consoleError).toHaveBeenCalled();
+
+  await fireEvent.press(screen.getByRole('button', { name: '다시 저장' }));
+  await act(async () => {});
+  expect(router.replace).toHaveBeenCalledWith({ pathname: '/done', params: { sessionId: expect.any(String) } });
+
+  consoleError.mockRestore();
+});
+
+it('lets you leave the empty-state fallback via 닫기', async () => {
+  mockParams = { id: 'nope' };
+  await render(<GuideScreen />);
+  expect(screen.getByText('안내할 혈자리가 없어요.')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: '닫기' }));
+  expect(router.back).toHaveBeenCalledTimes(1);
 });

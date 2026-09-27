@@ -23,7 +23,7 @@ export function useGuide({ segments, pressSeconds, restSeconds, tickMs, onEvent,
   }, [segments]);
 
   useEffect(() => {
-    if (paused || progressRef.current.finished) return;
+    if (paused || progressRef.current.finished || segments.length === 0) return;
     const timer = setInterval(() => {
       const { progress: next, events } = advanceGuide(progressRef.current, segments, pressSeconds, restSeconds);
       progressRef.current = next;
