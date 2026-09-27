@@ -15,7 +15,9 @@ export default function RootLayout() {
     'Pretendard-Bold': require('pretendard/dist/public/static/Pretendard-Bold.otf'),
     'NotoSerifKR-Bold': NotoSerifKR_700Bold,
   });
-  if (fontError) console.error('Failed to load fonts, falling back to system fonts', fontError);
+  useEffect(() => {
+    if (fontError) console.error('Failed to load fonts, falling back to system fonts', fontError);
+  }, [fontError]);
   // Render as soon as either resolves: a font load failure must not dead-end the app on a blank screen.
   if (!fontsLoaded && !fontError) return null;
   return (

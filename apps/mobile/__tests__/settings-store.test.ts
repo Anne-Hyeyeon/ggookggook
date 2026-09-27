@@ -38,6 +38,31 @@ it('rolls back to the previous settings and rethrows when the save fails', async
   expect(useSettings.getState().settings.rhythmHaptics).toBe(true);
 });
 
+it('does not roll back over a later concurrent update that already succeeded', async () => {
+  useSettings.setState({ settings: { ...DEFAULT_SETTINGS, rhythmHaptics: true, pregnancyMode: false } });
+
+  let rejectFirstSave!: (error: Error) => void;
+  mocked.saveSettings.mockImplementationOnce(
+    () =>
+      new Promise((_resolve, reject) => {
+        rejectFirstSave = reject;
+      }),
+  );
+  mocked.saveSettings.mockImplementationOnce(() => Promise.resolve());
+
+  const firstUpdate = useSettings.getState().update(db, { rhythmHaptics: false });
+  const secondUpdate = useSettings.getState().update(db, { pregnancyMode: true });
+
+  await secondUpdate;
+  expect(useSettings.getState().settings).toMatchObject({ rhythmHaptics: false, pregnancyMode: true });
+
+  rejectFirstSave(new Error('write failed'));
+  await expect(firstUpdate).rejects.toThrow('write failed');
+
+  // The first update's failure must not clobber the second update's already-saved result.
+  expect(useSettings.getState().settings).toMatchObject({ rhythmHaptics: false, pregnancyMode: true });
+});
+
 it('accepts the disclaimer', async () => {
   mocked.acceptDisclaimer.mockResolvedValue('2026-09-28T01:00:00.000Z');
   await useSettings.getState().accept(db);

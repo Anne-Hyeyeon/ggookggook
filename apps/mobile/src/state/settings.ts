@@ -31,7 +31,9 @@ export const useSettings = create<SettingsState>((set, get) => ({
     try {
       await saveSettings(db, settings, new Date());
     } catch (error) {
-      set({ settings: previous });
+      // Only roll back if nothing newer has landed since this call's optimistic set:
+      // a concurrent update that already succeeded must not be clobbered by this one's failure.
+      if (get().settings === settings) set({ settings: previous });
       throw error;
     }
   },
