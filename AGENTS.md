@@ -2,6 +2,7 @@
 
 Acupressure guide app being rebuilt as an Expo (React Native) app with an AWS CDK backend.
 
+- Code conventions: `docs/code-conventions.md`
 - Design spec: `docs/superpowers/specs/2026-09-27-ggookggook-app-design.md`
 - Content data (WHO-reviewed): `content/data/`
 - First-pass illustrations: `content/images/raw/`
