@@ -43,6 +43,7 @@ function Routes() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="symptom/[id]" />
         <Stack.Screen name="guide/[id]" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="done" options={{ gestureEnabled: false }} />
       </Stack.Protected>
       <Stack.Protected guard={!accepted}>
         <Stack.Screen name="welcome" />
