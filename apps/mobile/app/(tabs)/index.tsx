@@ -48,7 +48,12 @@ export default function TodayScreen() {
         contentContainerStyle={styles.content}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Txt variant="caption">{formatDateLine(new Date())}</Txt>
+            <View style={styles.topRow}>
+              <Txt variant="caption">{formatDateLine(new Date())}</Txt>
+              <Pressable accessibilityRole="button" onPress={() => router.push('/settings')} hitSlop={8}>
+                <Txt variant="sub">설정</Txt>
+              </Pressable>
+            </View>
             <Txt variant="title" style={styles.title}>
               어디가{'\n'}불편하세요?
             </Txt>
@@ -98,6 +103,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   content: { paddingHorizontal: space(5), paddingBottom: space(10) },
   header: { paddingTop: space(4), paddingBottom: space(2), gap: space(2) },
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { marginTop: space(1), marginBottom: space(3) },
   search: {
     fontFamily: fonts.regular,

@@ -31,6 +31,12 @@ it('lists every symptom with its minutes and opens one', async () => {
   expect(router.push).toHaveBeenCalledWith('/symptom/headache');
 });
 
+it('opens settings from the header button', async () => {
+  await render(<TodayScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: '설정' }));
+  expect(router.push).toHaveBeenCalledWith('/settings');
+});
+
 it('filters by alias and by acupoint name, and shows an empty state', async () => {
   await render(<TodayScreen />);
   const input = screen.getByPlaceholderText('증상이나 혈자리 이름');

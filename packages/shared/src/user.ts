@@ -45,3 +45,8 @@ export const DEFAULT_SETTINGS: Settings = {
   restSeconds: 2,
   pregnancyMode: false,
 };
+
+export const PRESS_SECONDS_MIN = 3;
+export const PRESS_SECONDS_MAX = 10;
+export const REST_SECONDS_MIN = 1;
+export const REST_SECONDS_MAX = 5;

@@ -4,19 +4,13 @@ import { ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
+import { DISCLAIMER_NOTICES } from '@/disclaimers';
 import { useOnboarding } from '@/state/onboarding';
 import { useSettings } from '@/state/settings';
 import { colors, space } from '@/theme';
 import { Button } from '@/ui/Button';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
-
-const NOTICES = [
-  '꾹꾹은 지압 방법을 안내하는 앱이에요. 진단이나 치료를 대신하지 않아요.',
-  '통증이 심하거나 오래가면 병원 진료를 받으세요.',
-  '지병이 있으면 전문가와 먼저 상의하세요.',
-  '상처나 염증, 부기가 있는 곳은 누르지 마세요.',
-];
 
 export default function WelcomeScreen() {
   const db = useDb();
@@ -67,7 +61,7 @@ export default function WelcomeScreen() {
       <ScrollView contentContainerStyle={styles.body}>
         <Txt variant="heading">시작하기 전에 확인해 주세요</Txt>
         <View style={styles.list}>
-          {NOTICES.map((notice) => (
+          {DISCLAIMER_NOTICES.map((notice) => (
             <View key={notice} style={styles.notice}>
               <Rule />
               <Txt variant="body" style={styles.noticeText}>

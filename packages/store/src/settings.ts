@@ -1,4 +1,11 @@
-import { DEFAULT_SETTINGS, type Settings } from '@ggookggook/shared';
+import {
+  DEFAULT_SETTINGS,
+  PRESS_SECONDS_MAX,
+  PRESS_SECONDS_MIN,
+  REST_SECONDS_MAX,
+  REST_SECONDS_MIN,
+  type Settings,
+} from '@ggookggook/shared';
 import type { SqlDatabase } from './db';
 import { getValue, setValue } from './kv';
 
@@ -26,8 +33,8 @@ export async function loadSettings(db: SqlDatabase): Promise<Settings> {
     const value = stored[key];
     if (typeof value === typeof DEFAULT_SETTINGS[key]) (settings as Record<keyof Settings, unknown>)[key] = value;
   }
-  settings.pressSeconds = clampInt(settings.pressSeconds, 3, 10);
-  settings.restSeconds = clampInt(settings.restSeconds, 1, 5);
+  settings.pressSeconds = clampInt(settings.pressSeconds, PRESS_SECONDS_MIN, PRESS_SECONDS_MAX);
+  settings.restSeconds = clampInt(settings.restSeconds, REST_SECONDS_MIN, REST_SECONDS_MAX);
   return settings;
 }
 

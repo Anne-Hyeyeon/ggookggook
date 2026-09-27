@@ -142,6 +142,11 @@ async function runFlow(page) {
   await search.fill('');
   await page.getByText('최근', { exact: false }).waitFor();
   await shoot(page, '09-today-after.png');
+
+  // 10. Settings, opened from the Today header
+  await page.getByRole('button', { name: '설정' }).click();
+  await page.getByText('앱 정보').waitFor();
+  await shoot(page, '10-settings.png');
 }
 
 async function main() {

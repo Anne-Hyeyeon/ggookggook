@@ -1,10 +1,11 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { routineSummary, sideLabel, topic, visibleSteps } from '@/routine';
 import { useSettings } from '@/state/settings';
 import { colors, fonts, space } from '@/theme';
+import { BackLink } from '@/ui/BackLink';
 import { Button } from '@/ui/Button';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
@@ -89,14 +90,6 @@ export default function SymptomScreen() {
         <Button label="시작" onPress={() => router.push(`/guide/${symptom.id}`)} disabled={steps.length === 0} />
       </View>
     </SafeAreaView>
-  );
-}
-
-function BackLink() {
-  return (
-    <Pressable accessibilityRole="button" accessibilityLabel="뒤로" onPress={() => router.back()} hitSlop={12}>
-      <Txt variant="sub">← 뒤로</Txt>
-    </Pressable>
   );
 }
 
