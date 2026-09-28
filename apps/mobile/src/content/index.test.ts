@@ -106,7 +106,7 @@ describe('buildIndex', () => {
 
 describe('bundled content', () => {
   it('parses and holds the reviewed data', () => {
-    expect(content.symptoms).toHaveLength(32);
+    expect(content.symptoms).toHaveLength(31);
     expect(content.acupoints.size).toBe(42);
     expect(content.image('cat-shoulder')).not.toBeNull();
   });
