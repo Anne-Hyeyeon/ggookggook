@@ -18,6 +18,24 @@ const MIGRATIONS: readonly string[] = [
   );
   CREATE INDEX sessions_completed_at ON sessions (completed_at);
   `,
+  `
+  CREATE TABLE user_routines (
+    id TEXT PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL,
+    steps TEXT NOT NULL,
+    source_symptom_id TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    deleted_at TEXT
+  );
+  CREATE INDEX user_routines_updated_at ON user_routines (updated_at);
+  CREATE TABLE favorites (
+    acupoint_id TEXT PRIMARY KEY NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    deleted_at TEXT
+  );
+  `,
 ];
 
 export async function migrate(db: SqlDatabase): Promise<number> {
