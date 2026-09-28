@@ -186,6 +186,31 @@ async function runFlow(page) {
   await page.getByRole('button', { name: '즐겨찾기에 추가' }).click();
   await page.getByRole('button', { name: '즐겨찾기에서 빼기' }).waitFor();
   await shoot(page, '14-acupoint-hapgok.png');
+
+  // 15-16. A new routine, named and given two acupoints through the picker (no in-app
+  // entry point to /routine/new exists yet, see Task 5, so this deep-links there directly).
+  await page.goto(`http://127.0.0.1:${PORT}/routine/new`, { waitUntil: 'load' });
+  await page.getByText('새 루틴').waitFor();
+  await page.getByPlaceholder('루틴 이름').fill('아침 루틴');
+
+  await page.getByRole('button', { name: '혈자리 추가' }).click();
+  await page.getByText('혈자리 고르기').waitFor();
+  await page.getByRole('button', { name: /^합곡,/ }).click();
+  await page.getByText('합곡').first().waitFor();
+
+  await page.getByRole('button', { name: '혈자리 추가' }).click();
+  await page.getByText('혈자리 고르기').waitFor();
+  await page.getByRole('button', { name: /^내관,/ }).click();
+  await page.getByText('내관').first().waitFor();
+  await shoot(page, '16-routine-editor.png');
+
+  // 17. The picker again, this time with a search typed, showing the filtered result
+  await page.getByRole('button', { name: '혈자리 추가' }).click();
+  await page.getByText('혈자리 고르기').waitFor();
+  const pickerSearch = page.getByPlaceholder('혈자리 이름, 한자, 영문');
+  await pickerSearch.fill('족');
+  await page.getByText('족삼리').waitFor();
+  await shoot(page, '17-routine-picker.png');
 }
 
 async function main() {

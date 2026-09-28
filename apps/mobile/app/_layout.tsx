@@ -60,6 +60,9 @@ function Routes() {
         <Stack.Screen name="guide/routine/[id]" options={{ gestureEnabled: false }} />
         <Stack.Screen name="done" options={{ gestureEnabled: false }} />
         <Stack.Screen name="settings" />
+        <Stack.Screen name="routine/new" />
+        <Stack.Screen name="routine/[id]/edit" />
+        <Stack.Screen name="routine/pick" />
       </Stack.Protected>
       <Stack.Protected guard={!accepted}>
         <Stack.Screen name="welcome" />

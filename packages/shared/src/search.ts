@@ -14,3 +14,12 @@ export function searchSymptoms(
     return haystack.some((text) => normalize(text).includes(needle));
   });
 }
+
+export function searchAcupoints<T extends Pick<Acupoint, 'name'>>(acupoints: readonly T[], query: string): T[] {
+  const needle = normalize(query);
+  if (!needle) return [...acupoints];
+  return acupoints.filter((acupoint) => {
+    const haystack = [acupoint.name.ko, acupoint.name.hanja, acupoint.name.en];
+    return haystack.some((text) => normalize(text).includes(needle));
+  });
+}
