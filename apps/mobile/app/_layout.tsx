@@ -53,6 +53,7 @@ function Routes() {
         <Stack.Screen name="region/[mapId]/[regionId]" />
         <Stack.Screen name="acupoint/[id]" />
         <Stack.Screen name="guide/[id]" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="guide/routine/[id]" options={{ gestureEnabled: false }} />
         <Stack.Screen name="done" options={{ gestureEnabled: false }} />
         <Stack.Screen name="settings" />
       </Stack.Protected>

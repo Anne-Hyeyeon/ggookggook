@@ -9,7 +9,11 @@ jest.mock('@/db/DbProvider', () => {
   const db = {};
   return { useDb: () => db };
 });
-jest.mock('@ggookggook/store', () => ({ getSession: jest.fn(), setSessionFeedback: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('@ggookggook/store', () => ({
+  getSession: jest.fn(),
+  getUserRoutine: jest.fn(),
+  setSessionFeedback: jest.fn().mockResolvedValue(undefined),
+}));
 jest.mock('expo-router', () => ({ router: { replace: jest.fn(), dismissTo: jest.fn() }, useLocalSearchParams: () => ({ sessionId: 's1' }) }));
 
 const mocked = store as jest.Mocked<typeof store>;
@@ -129,4 +133,43 @@ it('keeps the selection and logs an error when setSessionFeedback rejects', asyn
   expect(screen.queryByText('기록해 둘게요.')).toBeNull();
 
   errorSpy.mockRestore();
+});
+
+it('shows a user routine name and its step names once the routine loads', async () => {
+  mocked.getSession.mockResolvedValue({
+    id: 's1',
+    routine: { kind: 'user', routineId: 'r1' },
+    startedAt: '2026-09-28T00:00:00.000Z',
+    completedAt: '2026-09-28T00:04:00.000Z',
+    durationSeconds: 240,
+    feedback: null,
+  });
+  mocked.getUserRoutine.mockResolvedValue({
+    id: 'r1',
+    name: '내 아침 루틴',
+    steps: [{ acupointId: 'LI4', seconds: 60 }, { acupointId: 'PC6', seconds: 60 }],
+    sourceSymptomId: null,
+    createdAt: '2026-09-28T00:00:00.000Z',
+    updatedAt: '2026-09-28T00:00:00.000Z',
+    deletedAt: null,
+  });
+
+  await render(<DoneScreen />);
+  expect(await screen.findByText('내 아침 루틴')).toBeTruthy();
+  expect(screen.getByText('합곡 · 내관')).toBeTruthy();
+});
+
+it('shows 지운 루틴 when the user routine is missing or deleted', async () => {
+  mocked.getSession.mockResolvedValue({
+    id: 's1',
+    routine: { kind: 'user', routineId: 'gone' },
+    startedAt: '2026-09-28T00:00:00.000Z',
+    completedAt: '2026-09-28T00:04:00.000Z',
+    durationSeconds: 240,
+    feedback: null,
+  });
+  mocked.getUserRoutine.mockResolvedValue(null);
+
+  await render(<DoneScreen />);
+  expect(await screen.findByText('지운 루틴')).toBeTruthy();
 });

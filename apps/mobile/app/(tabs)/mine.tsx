@@ -1,5 +1,5 @@
-import type { SessionFeedback, SessionLog } from '@ggookggook/shared';
-import { listCompletedSessions } from '@ggookggook/store';
+import type { SessionFeedback, SessionLog, UserRoutine } from '@ggookggook/shared';
+import { getUserRoutine, listCompletedSessions } from '@ggookggook/store';
 import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -14,9 +14,14 @@ import { Txt } from '@/ui/Txt';
 
 const HISTORY_LIMIT = 60;
 
-// A stable reference so a repeated failed refetch sets state to the same array every time,
-// letting React bail out via Object.is instead of looping on a fresh [] each time.
-const NO_SESSIONS: SessionLog[] = [];
+interface History {
+  sessions: SessionLog[];
+  userRoutines: Map<string, UserRoutine | null>;
+}
+
+// A stable reference so a repeated failed refetch sets state to the same value every time,
+// letting React bail out via Object.is instead of looping on a fresh object each time.
+const EMPTY_HISTORY: History = { sessions: [], userRoutines: new Map() };
 
 const FEEDBACK_LABEL: Record<SessionFeedback, string> = {
   better: '나아졌어요',
@@ -26,8 +31,9 @@ const FEEDBACK_LABEL: Record<SessionFeedback, string> = {
 
 interface HistoryRow {
   session: SessionLog;
-  symptomId: string;
-  symptomName: string;
+  title: string;
+  // Navigation target for a symptom row; a user-routine row has no preview screen yet.
+  symptomId: string | null;
 }
 
 interface DaySection {
@@ -36,13 +42,17 @@ interface DaySection {
   data: HistoryRow[];
 }
 
-function toRows(sessions: SessionLog[]): HistoryRow[] {
+function toRows(sessions: SessionLog[], userRoutines: Map<string, UserRoutine | null>): HistoryRow[] {
   const rows: HistoryRow[] = [];
   for (const session of sessions) {
-    if (session.routine.kind !== 'symptom') continue;
-    const symptom = content.symptom(session.routine.symptomId);
-    if (!symptom) continue;
-    rows.push({ session, symptomId: symptom.id, symptomName: symptom.name });
+    if (session.routine.kind === 'symptom') {
+      const symptom = content.symptom(session.routine.symptomId);
+      if (!symptom) continue;
+      rows.push({ session, title: symptom.name, symptomId: symptom.id });
+      continue;
+    }
+    const routine = userRoutines.get(session.routine.routineId);
+    rows.push({ session, title: routine ? routine.name : '지운 루틴', symptomId: null });
   }
   return rows;
 }
@@ -64,26 +74,30 @@ function groupByDay(rows: HistoryRow[], now: Date): DaySection[] {
 
 export default function MineScreen() {
   const db = useDb();
-  const [sessions, setSessions] = useState<SessionLog[]>(NO_SESSIONS);
+  const [history, setHistory] = useState<History>(EMPTY_HISTORY);
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      listCompletedSessions(db, HISTORY_LIMIT)
-        .then((list) => {
-          if (active) setSessions(list);
-        })
-        .catch((error) => {
+      (async () => {
+        try {
+          const sessions = await listCompletedSessions(db, HISTORY_LIMIT);
+          const routineIds = [...new Set(sessions.flatMap((s) => (s.routine.kind === 'user' ? [s.routine.routineId] : [])))];
+          const routines = await Promise.all(routineIds.map((id) => getUserRoutine(db, id)));
+          if (!active) return;
+          setHistory({ sessions, userRoutines: new Map(routineIds.map((id, i) => [id, routines[i] ?? null])) });
+        } catch (error) {
           console.error('Failed to load session history', error);
-          if (active) setSessions(NO_SESSIONS);
-        });
+          if (active) setHistory(EMPTY_HISTORY);
+        }
+      })();
       return () => {
         active = false;
       };
     }, [db]),
   );
 
-  const rows = toRows(sessions);
+  const rows = toRows(history.sessions, history.userRoutines);
   const sections = groupByDay(rows, new Date());
   const cat = content.image('cat-shoulder');
 
@@ -123,12 +137,28 @@ export default function MineScreen() {
 }
 
 function HistoryRowView({ row }: { row: HistoryRow }) {
-  const { session, symptomId, symptomName } = row;
+  const { session, title, symptomId } = row;
   const timestamp = session.completedAt ?? session.startedAt;
   const time = formatTimeOfDay(timestamp);
   const duration = formatDuration(session.durationSeconds);
   const feedbackLabel = session.feedback ? FEEDBACK_LABEL[session.feedback] : null;
-  const accessibilityLabel = [symptomName, time, duration, feedbackLabel].filter(Boolean).join(' · ');
+  const accessibilityLabel = [title, time, duration, feedbackLabel].filter(Boolean).join(' · ');
+
+  const inner = (
+    <>
+      <View style={styles.rowText}>
+        <Txt maxFontSizeMultiplier={1.4} style={styles.rowName}>{title}</Txt>
+        <Txt variant="sub">{`${time} · ${duration}`}</Txt>
+      </View>
+      {feedbackLabel !== null && (
+        <Txt variant="caption" style={session.feedback === 'better' ? styles.feedbackBetter : styles.feedbackOther}>
+          {feedbackLabel}
+        </Txt>
+      )}
+    </>
+  );
+
+  if (symptomId === null) return <View style={styles.row}>{inner}</View>;
 
   return (
     <Pressable
@@ -137,15 +167,7 @@ function HistoryRowView({ row }: { row: HistoryRow }) {
       onPress={() => router.push(`/symptom/${symptomId}`)}
       style={styles.row}
     >
-      <View style={styles.rowText}>
-        <Txt maxFontSizeMultiplier={1.4} style={styles.rowName}>{symptomName}</Txt>
-        <Txt variant="sub">{`${time} · ${duration}`}</Txt>
-      </View>
-      {feedbackLabel !== null && (
-        <Txt variant="caption" style={session.feedback === 'better' ? styles.feedbackBetter : styles.feedbackOther}>
-          {feedbackLabel}
-        </Txt>
-      )}
+      {inner}
     </Pressable>
   );
 }

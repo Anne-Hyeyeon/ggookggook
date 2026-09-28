@@ -1,5 +1,5 @@
-import type { SessionFeedback, SessionLog } from '@ggookggook/shared';
-import { getSession, setSessionFeedback } from '@ggookggook/store';
+import type { SessionFeedback, SessionLog, Settings, UserRoutine } from '@ggookggook/shared';
+import { getSession, getUserRoutine, setSessionFeedback } from '@ggookggook/store';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
 import { formatDuration } from '@/format';
-import { visibleSteps } from '@/routine';
+import { resolveRoutine, type ResolvedRoutine } from '@/routines';
 import { useSettings } from '@/state/settings';
 import { colors, fonts, space } from '@/theme';
 import { Txt } from '@/ui/Txt';
@@ -19,11 +19,24 @@ const OPTIONS: { value: SessionFeedback; label: string }[] = [
   { value: 'worse', label: '더 불편해요' },
 ];
 
+function resolveDoneRoutine(
+  session: SessionLog | null,
+  userRoutine: UserRoutine | null | undefined,
+  settings: Settings,
+): ResolvedRoutine | null {
+  if (!session) return null;
+  if (session.routine.kind === 'symptom') return resolveRoutine({ kind: 'symptom', id: session.routine.symptomId }, { settings });
+  if (userRoutine === undefined) return null;
+  if (userRoutine === null) return { title: '지운 루틴', steps: [] };
+  return resolveRoutine({ kind: 'user', id: session.routine.routineId }, { settings, userRoutine });
+}
+
 export default function DoneScreen() {
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
   const db = useDb();
   const settings = useSettings((state) => state.settings);
   const [session, setSession] = useState<SessionLog | null>(null);
+  const [userRoutine, setUserRoutine] = useState<UserRoutine | null | undefined>(undefined);
   const [feedback, setFeedback] = useState<SessionFeedback | null>(null);
   const [feedbackStatus, setFeedbackStatus] = useState<'idle' | 'saved' | 'error'>('idle');
 
@@ -35,6 +48,16 @@ export default function DoneScreen() {
         setSession(loaded);
         // A feedback choice the user already made while this was loading must win.
         setFeedback((current) => current ?? loaded?.feedback ?? null);
+        if (loaded?.routine.kind === 'user') {
+          getUserRoutine(db, loaded.routine.routineId)
+            .then((routine) => {
+              if (!cancelled) setUserRoutine(routine);
+            })
+            .catch((error) => {
+              console.error('Failed to load the routine', error);
+              if (!cancelled) setUserRoutine(null);
+            });
+        }
       })
       .catch((error) => {
         console.error('Failed to load the session', error);
@@ -46,13 +69,8 @@ export default function DoneScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
-  const symptom = session?.routine.kind === 'symptom' ? content.symptom(session.routine.symptomId) : undefined;
-  const names = symptom
-    ? visibleSteps(symptom, settings)
-        .map((step) => content.acupoints.get(step.acupointId)?.name.ko ?? '')
-        .filter(Boolean)
-        .join(' · ')
-    : '';
+  const resolved = resolveDoneRoutine(session, userRoutine, settings);
+  const names = resolved?.steps.map((step) => content.acupoints.get(step.acupointId)?.name.ko ?? '').filter(Boolean).join(' · ') ?? '';
   const cat = content.image('cat-shoulder');
 
   const choose = (value: SessionFeedback) => {
@@ -70,9 +88,9 @@ export default function DoneScreen() {
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.body}>
         {cat !== null && <Image source={cat} style={styles.cat} contentFit="contain" accessibilityIgnoresInvertColors />}
-        {symptom && (
+        {resolved && (
           <Txt variant="caption" style={styles.center}>
-            {symptom.name}
+            {resolved.title}
           </Txt>
         )}
         <Txt variant="heading" style={styles.center}>

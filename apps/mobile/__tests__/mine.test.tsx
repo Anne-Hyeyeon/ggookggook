@@ -9,7 +9,7 @@ jest.mock('@/db/DbProvider', () => {
   const db = {};
   return { useDb: () => db };
 });
-jest.mock('@ggookggook/store', () => ({ listCompletedSessions: jest.fn() }));
+jest.mock('@ggookggook/store', () => ({ listCompletedSessions: jest.fn(), getUserRoutine: jest.fn() }));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn() },
   useFocusEffect: (effect: () => void | (() => void)) => {
@@ -115,4 +115,32 @@ it('shows the empty state when every session is a ghost', async () => {
 
   await render(<MineScreen />);
   expect(await screen.findByText('아직 기록이 없어요.')).toBeTruthy();
+});
+
+it('shows a user routine session with its stored name, not navigable to a symptom detail', async () => {
+  mocked.listCompletedSessions.mockResolvedValue([log('s1', today(10, 0), { routine: { kind: 'user', routineId: 'r1' } })]);
+  mocked.getUserRoutine.mockResolvedValue({
+    id: 'r1',
+    name: '내 아침 루틴',
+    steps: [],
+    sourceSymptomId: null,
+    createdAt: '2026-09-28T00:00:00.000Z',
+    updatedAt: '2026-09-28T00:00:00.000Z',
+    deletedAt: null,
+  });
+
+  await render(<MineScreen />);
+  expect(await screen.findByText('내 아침 루틴')).toBeTruthy();
+  expect(mocked.getUserRoutine).toHaveBeenCalledWith({}, 'r1');
+
+  await fireEvent.press(screen.getByText('내 아침 루틴'));
+  expect(router.push).not.toHaveBeenCalled();
+});
+
+it('shows 지운 루틴 for a user routine session whose routine was deleted or is missing', async () => {
+  mocked.listCompletedSessions.mockResolvedValue([log('s1', today(10, 0), { routine: { kind: 'user', routineId: 'gone' } })]);
+  mocked.getUserRoutine.mockResolvedValue(null);
+
+  await render(<MineScreen />);
+  expect(await screen.findByText('지운 루틴')).toBeTruthy();
 });

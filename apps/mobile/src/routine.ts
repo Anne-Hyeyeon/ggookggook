@@ -10,9 +10,13 @@ import {
 } from '@ggookggook/shared';
 import { content } from '@/content';
 
-export function visibleSteps(symptom: Symptom, settings: Settings): RoutineStep[] {
-  const resolved = resolveSteps(symptom.steps, content.acupoints);
+export function visibleStepsFor(steps: readonly RoutineStep[], settings: Settings): RoutineStep[] {
+  const resolved = resolveSteps(steps, content.acupoints);
   return settings.pregnancyMode ? stepsForPregnancy(resolved, content.acupoints) : resolved;
+}
+
+export function visibleSteps(symptom: Symptom, settings: Settings): RoutineStep[] {
+  return visibleStepsFor(symptom.steps, settings);
 }
 
 export function routineSummary(steps: RoutineStep[]): { count: number; minutes: number } {
