@@ -72,7 +72,7 @@ describe('a completely fresh app', () => {
     await render(<MineScreen />);
     expect(await screen.findByText('아직 기록이 없어요.')).toBeTruthy();
     expect(screen.getByText('오늘 탭에서 불편한 곳을 골라 보세요.')).toBeTruthy();
-    expect(screen.getByText('하트를 누른 혈자리가 여기에 모여요.')).toBeTruthy();
+    expect(screen.getByText('즐겨찾기를 누른 혈자리가 여기에 모여요.')).toBeTruthy();
     expect(screen.getByText('새 루틴 만들기')).toBeTruthy();
     expect(screen.queryByText('나만의 루틴 만들기는 준비 중이에요.')).toBeNull();
   });
@@ -104,7 +104,7 @@ describe('즐겨찾는 혈자리', () => {
     expect(screen.getByText('합곡')).toBeTruthy();
     expect(screen.getByText('合谷')).toBeTruthy();
     expect(screen.getByText('손등에서 엄지와 검지 뼈 사이입니다.')).toBeTruthy();
-    expect(screen.queryByText('하트를 누른 혈자리가 여기에 모여요.')).toBeNull();
+    expect(screen.queryByText('즐겨찾기를 누른 혈자리가 여기에 모여요.')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: /^합곡,/ }));
     expect(router.push).toHaveBeenCalledWith('/acupoint/LI4');
@@ -112,7 +112,7 @@ describe('즐겨찾는 혈자리', () => {
 
   it('shows the empty line when there are no favorites', async () => {
     await render(<MineScreen />);
-    expect(await screen.findByText('하트를 누른 혈자리가 여기에 모여요.')).toBeTruthy();
+    expect(await screen.findByText('즐겨찾기를 누른 혈자리가 여기에 모여요.')).toBeTruthy();
   });
 });
 

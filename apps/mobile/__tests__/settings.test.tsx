@@ -161,11 +161,25 @@ it('shows the app version and content version', async () => {
 });
 
 describe('daily reminder', () => {
-  it('shows the default time and routine before any reminder is configured', async () => {
+  it('hides the time and routine rows while the reminder is off', async () => {
     await render(<SettingsScreen />);
     expect(screen.getByRole('switch', { name: '매일 알려 주기' }).props.value).toBe(false);
+    expect(screen.queryByText('오후 3시')).toBeNull();
+    expect(screen.queryByText('00분')).toBeNull();
+    expect(screen.queryByRole('button', { name: '루틴 선택' })).toBeNull();
+  });
+
+  it('shows the time and routine rows with their default values once enabled', async () => {
+    useSettings.setState({
+      settings: {
+        ...DEFAULT_SETTINGS,
+        reminder: { enabled: true, hour: 15, minute: 0, routine: { kind: 'symptom', id: 'eye_fatigue' } },
+      },
+    });
+    await render(<SettingsScreen />);
     expect(screen.getByText('오후 3시')).toBeTruthy();
     expect(screen.getByText('00분')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '루틴 선택' })).toBeTruthy();
     expect(screen.getByText('눈이 뻑뻑할 때')).toBeTruthy();
   });
 
@@ -208,14 +222,15 @@ describe('daily reminder', () => {
       {},
       { reminder: { enabled: false, hour: 15, minute: 0, routine: { kind: 'symptom', id: 'eye_fatigue' } } },
     );
-    expect(mockedReminder.cancelReminder).toHaveBeenCalled();
+    await waitFor(() => expect(mockedReminder.cancelReminder).toHaveBeenCalled());
     expect(mockedReminder.scheduleDailyReminder).not.toHaveBeenCalled();
   });
 
-  it('shows the unsupported notice on web instead of a permission error', async () => {
+  it('shows the unsupported notice on web and disables the switch instead of a permission error', async () => {
     mockedReminder.isReminderSupported.mockReturnValue(false);
     await render(<SettingsScreen />);
     expect(screen.getByText('이 기기에서는 알림을 쓸 수 없어요.')).toBeTruthy();
+    expect(screen.getByRole('switch', { name: '매일 알려 주기' }).props.disabled).toBe(true);
   });
 
   it('steps the hour and minute, wrapping at both ends, and reschedules while enabled', async () => {
@@ -232,10 +247,10 @@ describe('daily reminder', () => {
       {},
       { reminder: { enabled: true, hour: 0, minute: 0, routine: { kind: 'symptom', id: 'eye_fatigue' } } },
     );
-    expect(mockedReminder.scheduleDailyReminder).toHaveBeenCalledWith(
+    await waitFor(() => expect(mockedReminder.scheduleDailyReminder).toHaveBeenCalledWith(
       { enabled: true, hour: 0, minute: 0, routine: { kind: 'symptom', id: 'eye_fatigue' } },
       '눈이 뻑뻑할 때',
-    );
+    ));
 
     await fireEvent.press(screen.getByRole('button', { name: '시간 분 줄이기' }));
     expect(update).toHaveBeenCalledWith(
@@ -244,15 +259,7 @@ describe('daily reminder', () => {
     );
   });
 
-  it('does not schedule while disabled, only persists the change', async () => {
-    await render(<SettingsScreen />);
-    await fireEvent.press(screen.getByRole('button', { name: '시간 시 늘리기' }));
-    expect(update).toHaveBeenCalled();
-    expect(mockedReminder.scheduleDailyReminder).not.toHaveBeenCalled();
-    expect(mockedReminder.cancelReminder).toHaveBeenCalled();
-  });
-
-  it('lists symptoms and my routines in the routine picker and selects one', async () => {
+  it('lists symptoms and my routines in the routine picker, selects one, and collapses the list', async () => {
     mocked.listUserRoutines.mockResolvedValue([userRoutine()]);
     useSettings.setState({
       settings: {
@@ -271,10 +278,11 @@ describe('daily reminder', () => {
       {},
       { reminder: { enabled: true, hour: 15, minute: 0, routine: { kind: 'user', id: 'r1' } } },
     );
-    expect(mockedReminder.scheduleDailyReminder).toHaveBeenCalledWith(
+    await waitFor(() => expect(mockedReminder.scheduleDailyReminder).toHaveBeenCalledWith(
       { enabled: true, hour: 15, minute: 0, routine: { kind: 'user', id: 'r1' } },
       '아침 루틴',
-    );
+    ));
+    expect(screen.queryByRole('button', { name: '아침 루틴' })).toBeNull();
   });
 
   it('falls back to the default symptom title when the chosen user routine is missing', async () => {
@@ -288,5 +296,43 @@ describe('daily reminder', () => {
     await render(<SettingsScreen />);
 
     await waitFor(() => expect(screen.getByText('눈이 뻑뻑할 때')).toBeTruthy());
+  });
+
+  it('rolls the reminder back and shows the save error when scheduling fails after the write succeeds', async () => {
+    mockedReminder.scheduleDailyReminder.mockRejectedValue(new Error('schedule failed'));
+    await render(<SettingsScreen />);
+    await fireEvent(screen.getByRole('switch', { name: '매일 알려 주기' }), 'valueChange', true);
+
+    await waitFor(() => expect(screen.getByText('저장하지 못했어요. 다시 눌러 주세요.')).toBeTruthy());
+    expect(update).toHaveBeenNthCalledWith(
+      1,
+      {},
+      { reminder: { enabled: true, hour: 15, minute: 0, routine: { kind: 'symptom', id: 'eye_fatigue' } } },
+    );
+    expect(update).toHaveBeenNthCalledWith(2, {}, { reminder: null });
+  });
+
+  it('rolls the reminder back and shows the save error when canceling fails after the write succeeds', async () => {
+    useSettings.setState({
+      settings: {
+        ...DEFAULT_SETTINGS,
+        reminder: { enabled: true, hour: 15, minute: 0, routine: { kind: 'symptom', id: 'eye_fatigue' } },
+      },
+    });
+    mockedReminder.cancelReminder.mockRejectedValue(new Error('cancel failed'));
+    await render(<SettingsScreen />);
+    await fireEvent(screen.getByRole('switch', { name: '매일 알려 주기' }), 'valueChange', false);
+
+    await waitFor(() => expect(screen.getByText('저장하지 못했어요. 다시 눌러 주세요.')).toBeTruthy());
+    expect(update).toHaveBeenNthCalledWith(
+      1,
+      {},
+      { reminder: { enabled: false, hour: 15, minute: 0, routine: { kind: 'symptom', id: 'eye_fatigue' } } },
+    );
+    expect(update).toHaveBeenNthCalledWith(
+      2,
+      {},
+      { reminder: { enabled: true, hour: 15, minute: 0, routine: { kind: 'symptom', id: 'eye_fatigue' } } },
+    );
   });
 });

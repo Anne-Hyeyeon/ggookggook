@@ -1,9 +1,10 @@
 import { DEFAULT_SETTINGS, type UserRoutine } from '@ggookggook/shared';
 import * as store from '@ggookggook/store';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { BackHandler } from 'react-native';
 import RoutinePreviewScreen from '../app/routine/[id]/index';
+import * as reminderModule from '@/notifications/reminder';
 import { useSettings } from '@/state/settings';
 
 let mockParams: { id: string } = { id: 'r1' };
@@ -11,7 +12,13 @@ jest.mock('@/db/DbProvider', () => {
   const db = {};
   return { useDb: () => db };
 });
-jest.mock('@ggookggook/store', () => ({ getUserRoutine: jest.fn(), deleteUserRoutine: jest.fn() }));
+jest.mock('@ggookggook/store', () => ({ getUserRoutine: jest.fn(), deleteUserRoutine: jest.fn(), saveSettings: jest.fn() }));
+jest.mock('@/notifications/reminder', () => {
+  const actual = jest.requireActual('@/notifications/reminder');
+  // Only the Notifications-touching call is mocked; reminderRoutineFallback stays real (it's
+  // pure), so these tests exercise the same fallback logic the app runs.
+  return { ...actual, scheduleDailyReminder: jest.fn() };
+});
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn(), dismissTo: jest.fn() },
   useLocalSearchParams: () => mockParams,
@@ -31,6 +38,7 @@ async function pressHardwareBack() {
 }
 
 const mocked = store as jest.Mocked<typeof store>;
+const mockedReminder = reminderModule as jest.Mocked<typeof reminderModule>;
 
 const routine: UserRoutine = {
   id: 'r1',
@@ -186,5 +194,62 @@ describe('deleting', () => {
     expect(router.dismissTo).not.toHaveBeenCalled();
     expect(screen.getByText('아침 루틴')).toBeTruthy();
     consoleError.mockRestore();
+  });
+
+  describe('reminder fallback', () => {
+    it('falls the reminder back to the default symptom and reschedules when it pointed at the deleted routine', async () => {
+      useSettings.setState({
+        settings: {
+          ...DEFAULT_SETTINGS,
+          reminder: { enabled: true, hour: 15, minute: 0, routine: { kind: 'user', id: 'r1' } },
+        },
+      });
+      mocked.getUserRoutine.mockResolvedValue(routine);
+      mocked.deleteUserRoutine.mockResolvedValue(undefined);
+      mocked.saveSettings.mockResolvedValue(undefined);
+      await render(<RoutinePreviewScreen />);
+      await fireEvent.press(await screen.findByRole('button', { name: '지우기' }));
+      await fireEvent.press(screen.getByRole('button', { name: '삭제' }));
+
+      const fallenBack = { enabled: true, hour: 15, minute: 0, routine: { kind: 'symptom', id: 'eye_fatigue' } };
+      await waitFor(() => expect(mockedReminder.scheduleDailyReminder).toHaveBeenCalledWith(fallenBack, '눈이 뻑뻑할 때'));
+      expect(mocked.saveSettings).toHaveBeenCalledWith({}, expect.objectContaining({ reminder: fallenBack }), expect.any(Date));
+    });
+
+    it('leaves a reminder pointed at a different routine untouched', async () => {
+      useSettings.setState({
+        settings: {
+          ...DEFAULT_SETTINGS,
+          reminder: { enabled: true, hour: 15, minute: 0, routine: { kind: 'user', id: 'other' } },
+        },
+      });
+      mocked.getUserRoutine.mockResolvedValue(routine);
+      mocked.deleteUserRoutine.mockResolvedValue(undefined);
+      await render(<RoutinePreviewScreen />);
+      await fireEvent.press(await screen.findByRole('button', { name: '지우기' }));
+      await fireEvent.press(screen.getByRole('button', { name: '삭제' }));
+
+      await waitFor(() => expect(router.dismissTo).toHaveBeenCalledWith('/mine'));
+      expect(mockedReminder.scheduleDailyReminder).not.toHaveBeenCalled();
+      expect(mocked.saveSettings).not.toHaveBeenCalled();
+    });
+
+    it('leaves a disabled reminder untouched even if it points at the deleted routine', async () => {
+      useSettings.setState({
+        settings: {
+          ...DEFAULT_SETTINGS,
+          reminder: { enabled: false, hour: 15, minute: 0, routine: { kind: 'user', id: 'r1' } },
+        },
+      });
+      mocked.getUserRoutine.mockResolvedValue(routine);
+      mocked.deleteUserRoutine.mockResolvedValue(undefined);
+      await render(<RoutinePreviewScreen />);
+      await fireEvent.press(await screen.findByRole('button', { name: '지우기' }));
+      await fireEvent.press(screen.getByRole('button', { name: '삭제' }));
+
+      await waitFor(() => expect(router.dismissTo).toHaveBeenCalledWith('/mine'));
+      expect(mockedReminder.scheduleDailyReminder).not.toHaveBeenCalled();
+      expect(mocked.saveSettings).not.toHaveBeenCalled();
+    });
   });
 });

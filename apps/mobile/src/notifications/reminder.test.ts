@@ -1,3 +1,4 @@
+import type { Reminder } from '@ggookggook/shared';
 import { Platform } from 'react-native';
 import {
   addReminderResponseListener,
@@ -5,7 +6,9 @@ import {
   DAILY_REMINDER_ID,
   ensurePermission,
   getLastNotificationRoute,
+  registerNotificationHandler,
   reminderRouteFromResponse,
+  reminderRoutineFallback,
   scheduleDailyReminder,
 } from './reminder';
 
@@ -15,6 +18,7 @@ const mockScheduleNotificationAsync = jest.fn();
 const mockCancelScheduledNotificationAsync = jest.fn();
 const mockGetLastNotificationResponse = jest.fn();
 const mockAddNotificationResponseReceivedListener = jest.fn();
+const mockSetNotificationHandler = jest.fn();
 
 jest.mock('expo-notifications', () => ({
   SchedulableTriggerInputTypes: { DAILY: 'daily' },
@@ -24,6 +28,7 @@ jest.mock('expo-notifications', () => ({
   cancelScheduledNotificationAsync: (...args: unknown[]) => mockCancelScheduledNotificationAsync(...args),
   getLastNotificationResponse: (...args: unknown[]) => mockGetLastNotificationResponse(...args),
   addNotificationResponseReceivedListener: (...args: unknown[]) => mockAddNotificationResponseReceivedListener(...args),
+  setNotificationHandler: (...args: unknown[]) => mockSetNotificationHandler(...args),
 }));
 
 function response(data: unknown) {
@@ -156,5 +161,55 @@ describe('addReminderResponseListener', () => {
     const subscription = addReminderResponseListener(jest.fn());
     expect(mockAddNotificationResponseReceivedListener).not.toHaveBeenCalled();
     expect(() => subscription.remove()).not.toThrow();
+  });
+});
+
+describe('registerNotificationHandler', () => {
+  it('registers a handler that shows the notification without sound or a badge', async () => {
+    registerNotificationHandler();
+
+    expect(mockSetNotificationHandler).toHaveBeenCalledTimes(1);
+    const handler = mockSetNotificationHandler.mock.calls[0][0];
+    await expect(handler.handleNotification()).resolves.toEqual({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+    });
+  });
+
+  it('does nothing on web', () => {
+    Platform.OS = 'web';
+    registerNotificationHandler();
+    expect(mockSetNotificationHandler).not.toHaveBeenCalled();
+  });
+});
+
+describe('reminderRoutineFallback', () => {
+  const reminder: Reminder = { enabled: true, hour: 15, minute: 0, routine: { kind: 'user', id: 'r1' } };
+
+  it('returns the exact same reference when the reminder is null', () => {
+    expect(reminderRoutineFallback(null, 'r1')).toBeNull();
+  });
+
+  it('returns the exact same reference when the reminder is disabled', () => {
+    const disabled = { ...reminder, enabled: false };
+    expect(reminderRoutineFallback(disabled, 'r1')).toBe(disabled);
+  });
+
+  it('returns the exact same reference when the reminder points at a symptom', () => {
+    const symptomReminder: Reminder = { ...reminder, routine: { kind: 'symptom', id: 'eye_fatigue' } };
+    expect(reminderRoutineFallback(symptomReminder, 'r1')).toBe(symptomReminder);
+  });
+
+  it('returns the exact same reference when the reminder points at a different user routine', () => {
+    expect(reminderRoutineFallback(reminder, 'other')).toBe(reminder);
+  });
+
+  it('falls back to the default symptom when the reminder points at the deleted routine', () => {
+    expect(reminderRoutineFallback(reminder, 'r1')).toEqual({
+      ...reminder,
+      routine: { kind: 'symptom', id: 'eye_fatigue' },
+    });
   });
 });

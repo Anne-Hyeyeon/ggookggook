@@ -5,11 +5,15 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DbProvider, useDb } from '@/db/DbProvider';
-import { addReminderResponseListener, getLastNotificationRoute } from '@/notifications/reminder';
+import { addReminderResponseListener, getLastNotificationRoute, registerNotificationHandler } from '@/notifications/reminder';
 import { useFavorites } from '@/state/favorites';
 import { useOnboarding } from '@/state/onboarding';
 import { useSettings } from '@/state/settings';
 import { colors } from '@/theme';
+
+// Module-scope, not inside a component: registers exactly once, when the app's JS first
+// loads, rather than on every RootLayout render.
+registerNotificationHandler();
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({

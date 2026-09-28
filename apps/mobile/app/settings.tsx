@@ -116,29 +116,44 @@ export default function SettingsScreen() {
 
   // The single place that both persists a reminder change and keeps the OS-level schedule in
   // sync with it (cancel and reschedule on any change), so every caller below just describes
-  // what changed instead of repeating the schedule/cancel dance.
+  // what changed instead of repeating the schedule/cancel dance. If the OS-level part fails
+  // after the settings write already landed, the write is rolled back to `previous` (through
+  // the same `update`) and the standard save-error line is shown: storage must never end up
+  // claiming a schedule that was never actually set.
   const commitReminder = useCallback(
     (patch: Partial<Reminder>) => {
-      const current = useSettings.getState().settings.reminder ?? DEFAULT_REMINDER;
-      const next: Reminder = { ...current, ...patch };
-      apply({ reminder: next });
-      if (next.enabled) {
-        scheduleDailyReminder(next, reminderRoutineTitle(next.routine, myRoutines)).catch((error: unknown) => {
-          console.error('Failed to schedule the daily reminder', error);
+      const previous = useSettings.getState().settings.reminder;
+      const next: Reminder = { ...(previous ?? DEFAULT_REMINDER), ...patch };
+      setSaveError(false);
+      update(db, { reminder: next })
+        .then(() => {
+          const synced = next.enabled
+            ? scheduleDailyReminder(next, reminderRoutineTitle(next.routine, myRoutines))
+            : cancelReminder();
+          return synced.catch((error: unknown) => {
+            console.error('Failed to sync the daily reminder with the OS', error);
+            return update(db, { reminder: previous }).then(
+              () => setSaveError(true),
+              (rollbackError: unknown) => {
+                console.error('Failed to roll back the reminder after a failed schedule', rollbackError);
+                setSaveError(true);
+              },
+            );
+          });
+        })
+        .catch((error: unknown) => {
+          console.error('Failed to save the reminder', error);
+          setSaveError(true);
         });
-      } else {
-        cancelReminder().catch((error: unknown) => {
-          console.error('Failed to cancel the daily reminder', error);
-        });
-      }
     },
-    [apply, myRoutines],
+    [db, update, myRoutines],
   );
 
   const handleReminderToggle = useCallback(
     (value: boolean) => {
       setPermissionDenied(false);
       if (!value) {
+        setRoutinePickerOpen(false);
         commitReminder({ enabled: false });
         return;
       }
@@ -235,6 +250,7 @@ export default function SettingsScreen() {
             label="매일 알려 주기"
             sub={isReminderSupported() ? undefined : '이 기기에서는 알림을 쓸 수 없어요.'}
             value={reminder.enabled}
+            disabled={!isReminderSupported()}
             onValueChange={handleReminderToggle}
             style={styles.row}
           />
@@ -243,51 +259,59 @@ export default function SettingsScreen() {
               알림 권한이 꺼져 있어요. 기기 설정에서 켜 주세요.
             </Txt>
           )}
-          <WrapStepperRow
-            label="시"
-            valueLabel={reminderHourLabel(reminder.hour)}
-            decrementLabel="시간 시 줄이기"
-            incrementLabel="시간 시 늘리기"
-            onDecrement={() => stepReminderHour(-1)}
-            onIncrement={() => stepReminderHour(1)}
-          />
-          <WrapStepperRow
-            label="분"
-            valueLabel={reminderMinuteLabel(reminder.minute)}
-            decrementLabel="시간 분 줄이기"
-            incrementLabel="시간 분 늘리기"
-            onDecrement={() => stepReminderMinute(-1)}
-            onIncrement={() => stepReminderMinute(1)}
-          />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="루틴 선택"
-            accessibilityState={{ expanded: routinePickerOpen }}
-            onPress={() => setRoutinePickerOpen((open) => !open)}
-            style={styles.row}
-          >
-            <Txt variant="body">루틴</Txt>
-            <Txt variant="sub">{reminderRoutineName}</Txt>
-          </Pressable>
-          {routinePickerOpen && (
-            <View style={styles.notices}>
-              {content.symptoms.map((symptom) => (
-                <ReminderRoutineOption
-                  key={`symptom-${symptom.id}`}
-                  label={symptom.name}
-                  selected={reminder.routine.kind === 'symptom' && reminder.routine.id === symptom.id}
-                  onPress={() => pickReminderRoutine({ kind: 'symptom', id: symptom.id })}
-                />
-              ))}
-              {myRoutines.map((routine) => (
-                <ReminderRoutineOption
-                  key={`user-${routine.id}`}
-                  label={routine.name}
-                  selected={reminder.routine.kind === 'user' && reminder.routine.id === routine.id}
-                  onPress={() => pickReminderRoutine({ kind: 'user', id: routine.id })}
-                />
-              ))}
-            </View>
+          {reminder.enabled && (
+            <>
+              <WrapStepperRow
+                label="시"
+                valueLabel={reminderHourLabel(reminder.hour)}
+                decrementLabel="시간 시 줄이기"
+                incrementLabel="시간 시 늘리기"
+                onDecrement={() => stepReminderHour(-1)}
+                onIncrement={() => stepReminderHour(1)}
+              />
+              <WrapStepperRow
+                label="분"
+                valueLabel={reminderMinuteLabel(reminder.minute)}
+                decrementLabel="시간 분 줄이기"
+                incrementLabel="시간 분 늘리기"
+                onDecrement={() => stepReminderMinute(-1)}
+                onIncrement={() => stepReminderMinute(1)}
+              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="루틴 선택"
+                accessibilityState={{ expanded: routinePickerOpen }}
+                onPress={() => setRoutinePickerOpen((open) => !open)}
+                style={styles.row}
+              >
+                <Txt variant="body">루틴</Txt>
+                <Txt variant="sub">{reminderRoutineName}</Txt>
+              </Pressable>
+              {routinePickerOpen && (
+                <View>
+                  {content.symptoms.map((symptom) => (
+                    <View key={`symptom-${symptom.id}`}>
+                      <Rule />
+                      <ReminderRoutineOption
+                        label={symptom.name}
+                        selected={reminder.routine.kind === 'symptom' && reminder.routine.id === symptom.id}
+                        onPress={() => pickReminderRoutine({ kind: 'symptom', id: symptom.id })}
+                      />
+                    </View>
+                  ))}
+                  {myRoutines.map((routine) => (
+                    <View key={`user-${routine.id}`}>
+                      <Rule />
+                      <ReminderRoutineOption
+                        label={routine.name}
+                        selected={reminder.routine.kind === 'user' && reminder.routine.id === routine.id}
+                        onPress={() => pickReminderRoutine({ kind: 'user', id: routine.id })}
+                      />
+                    </View>
+                  ))}
+                </View>
+              )}
+            </>
           )}
           <Rule />
           <Pressable
@@ -441,6 +465,6 @@ const styles = StyleSheet.create({
   stepSymbol: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
   stepValue: { minWidth: 34, textAlign: 'center' },
   timeValue: { minWidth: 64, textAlign: 'center' },
-  routineOption: { paddingVertical: space(2), paddingLeft: space(1) },
+  routineOption: { paddingVertical: space(3) },
   routineOptionSelected: { fontFamily: fonts.semibold, color: colors.accent },
 });

@@ -12,11 +12,12 @@ interface ToggleProps {
   label: string;
   sub?: string;
   value: boolean;
+  disabled?: boolean;
   onValueChange: (value: boolean) => void;
   style?: StyleProp<ViewStyle>;
 }
 
-export function Toggle({ label, sub, value, onValueChange, style }: ToggleProps) {
+export function Toggle({ label, sub, value, disabled, onValueChange, style }: ToggleProps) {
   return (
     <View style={[styles.row, style]}>
       <View style={styles.text}>
@@ -26,7 +27,9 @@ export function Toggle({ label, sub, value, onValueChange, style }: ToggleProps)
       <Switch
         accessibilityRole="switch"
         accessibilityLabel={label}
+        accessibilityState={{ disabled }}
         value={value}
+        disabled={disabled}
         onValueChange={onValueChange}
         trackColor={{ true: colors.accent, false: colors.rule }}
         thumbColor={colors.card}

@@ -33,7 +33,7 @@ const FEEDBACK_LABEL: Record<SessionFeedback, string> = {
   worse: '더 불편해요',
 };
 
-const FAVORITES_EMPTY_TEXT = '하트를 누른 혈자리가 여기에 모여요.';
+const FAVORITES_EMPTY_TEXT = '즐겨찾기를 누른 혈자리가 여기에 모여요.';
 const HISTORY_EMPTY_TEXT = '아직 기록이 없어요.';
 
 interface HistoryRow {

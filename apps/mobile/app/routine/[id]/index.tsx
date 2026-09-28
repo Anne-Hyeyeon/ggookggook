@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
 import { ROUTINE_DISCLAIMER } from '@/disclaimers';
+import { reminderRoutineFallback, scheduleDailyReminder } from '@/notifications/reminder';
 import { routineSummary, sideLabel, topic, visibleStepsFor } from '@/routine';
 import { isUserRoutineUsable } from '@/routines';
 import { useSettings } from '@/state/settings';
@@ -51,6 +52,18 @@ export default function RoutinePreviewScreen() {
     deleteUserRoutine(db, id, new Date())
       .then(() => {
         router.dismissTo('/mine');
+        // If the reminder pointed at this now-deleted routine, fall it back to the default
+        // symptom instead of leaving it pointed at a routine that no longer exists.
+        const previousReminder = useSettings.getState().settings.reminder;
+        const nextReminder = reminderRoutineFallback(previousReminder, id);
+        if (!nextReminder || nextReminder === previousReminder) return;
+        useSettings
+          .getState()
+          .update(db, { reminder: nextReminder })
+          .then(() => scheduleDailyReminder(nextReminder, content.symptom(nextReminder.routine.id)?.name ?? ''))
+          .catch((error: unknown) => {
+            console.error('Failed to fall back the reminder after deleting its routine', error);
+          });
       })
       .catch((error: unknown) => {
         console.error('Failed to delete the routine', error);

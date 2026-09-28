@@ -1,4 +1,4 @@
-import type { Reminder } from '@ggookggook/shared';
+import { DEFAULT_REMINDER_ROUTINE, type Reminder } from '@ggookggook/shared';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
@@ -12,6 +12,20 @@ export type ReminderRoute = `/symptom/${string}` | `/routine/${string}`;
 // here is a no-op there instead of throwing, so callers don't need their own Platform checks.
 export function isReminderSupported(): boolean {
   return Platform.OS !== 'web';
+}
+
+// Without this, a reminder that fires while the app is already open is silently dropped
+// instead of shown: the default handler (unset) suppresses foreground notifications.
+export function registerNotificationHandler(): void {
+  if (!isReminderSupported()) return;
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+    }),
+  });
 }
 
 export async function ensurePermission(): Promise<boolean> {
@@ -43,6 +57,16 @@ export async function scheduleDailyReminder(reminder: Pick<Reminder, 'hour' | 'm
 export async function cancelReminder(): Promise<void> {
   if (!isReminderSupported()) return;
   await Notifications.cancelScheduledNotificationAsync(DAILY_REMINDER_ID);
+}
+
+// Pure: a deleted user routine that an enabled reminder points at falls back to the default
+// symptom, so a later reschedule never targets a routine that no longer exists. Returns the
+// exact same reference when nothing needs to change, so a caller can cheaply tell via `!==`
+// whether it needs to persist and reschedule.
+export function reminderRoutineFallback(reminder: Reminder | null, deletedRoutineId: string): Reminder | null {
+  if (!reminder?.enabled) return reminder;
+  if (reminder.routine.kind !== 'user' || reminder.routine.id !== deletedRoutineId) return reminder;
+  return { ...reminder, routine: DEFAULT_REMINDER_ROUTINE };
 }
 
 // Malformed or unrecognized notification data (a stale shape from a previous app version, a

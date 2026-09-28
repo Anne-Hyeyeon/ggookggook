@@ -16,3 +16,10 @@ it('omits the sub text when none is given', async () => {
   await render(<Toggle label="리듬 진동" value onValueChange={jest.fn()} />);
   expect(screen.getByRole('switch', { name: '리듬 진동' }).props.value).toBe(true);
 });
+
+it('disables the switch and reports it through accessibilityState', async () => {
+  await render(<Toggle label="매일 알려 주기" value={false} disabled onValueChange={jest.fn()} />);
+  const toggle = screen.getByRole('switch', { name: '매일 알려 주기' });
+  expect(toggle.props.disabled).toBe(true);
+  expect(toggle.props.accessibilityState.disabled).toBe(true);
+});

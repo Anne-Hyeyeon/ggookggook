@@ -27,15 +27,23 @@ jest.mock('expo-router', () => ({
 jest.mock('@/notifications/reminder', () => ({
   getLastNotificationRoute: jest.fn(() => null),
   addReminderResponseListener: jest.fn(() => ({ remove: jest.fn() })),
+  registerNotificationHandler: jest.fn(),
 }));
 
 const mockedReminder = reminderModule as jest.Mocked<typeof reminderModule>;
+// Captured before the first beforeEach's clearAllMocks: `../app/_layout`'s module-scope call
+// to registerNotificationHandler() already ran once, above, when it was imported.
+const registeredAtModuleLoad = mockedReminder.registerNotificationHandler.mock.calls.length;
 
 beforeEach(() => {
   jest.clearAllMocks();
   useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS }, load: jest.fn().mockResolvedValue(undefined) });
   useOnboarding.setState({ loaded: true, disclaimerAcceptedAt: null, load: jest.fn().mockResolvedValue(undefined) } as never);
   useFavorites.setState({ loaded: true, ids: new Set(), load: jest.fn().mockResolvedValue(undefined) } as never);
+});
+
+it('registers the notification handler once, at app module load', () => {
+  expect(registeredAtModuleLoad).toBe(1);
 });
 
 it('does not register a reminder response listener before the disclaimer is accepted', async () => {

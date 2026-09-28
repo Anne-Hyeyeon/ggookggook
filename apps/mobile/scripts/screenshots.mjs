@@ -122,7 +122,7 @@ async function runFlow(page) {
   // 새 루틴 만들기 affordance, and no history yet, so the big empty-state cat shows once
   // instead of three separate per-section empty lines (see mine.tsx's `allEmpty`).
   await page.getByRole('tab', { name: '내 루틴' }).click();
-  await page.getByText('하트를 누른 혈자리가 여기에 모여요.').waitFor();
+  await page.getByText('즐겨찾기를 누른 혈자리가 여기에 모여요.').waitFor();
   await page.getByText('오늘 탭에서 불편한 곳을 골라 보세요.').waitFor();
   await shoot(page, '15-mine-empty.png');
   await page.getByRole('tab', { name: '오늘' }).click();
@@ -249,14 +249,11 @@ async function runFlow(page) {
   await page.getByText('나아졌어요', { exact: true }).waitFor();
   await shoot(page, '20-mine-full.png');
 
-  // 21. Settings, scrolled to the 알림 section: the daily-reminder switch (off, with its
-  // web-unsupported note since local notifications don't work in this harness), the default
-  // time (오후 3시 / 00분), and the routine picker open, listing symptoms plus the 아침 루틴
-  // created in steps 15-18.
+  // 21. Settings, scrolled to the 알림 section: the daily-reminder switch, off and disabled on
+  // web (with its "이 기기에서는 알림을 쓸 수 없어요." note). The time/minute/routine rows
+  // stay collapsed while off, keeping the section short instead of showing every routine.
   await page.goto(`http://127.0.0.1:${PORT}/settings`, { waitUntil: 'load' });
   await page.getByText('이 기기에서는 알림을 쓸 수 없어요.').waitFor();
-  await page.getByRole('button', { name: '루틴 선택' }).click();
-  await page.getByText('아침 루틴').waitFor();
   await page.getByText('이 기기에서는 알림을 쓸 수 없어요.').scrollIntoViewIfNeeded();
   await shoot(page, '21-settings-reminder.png');
 }
