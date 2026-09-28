@@ -19,7 +19,8 @@
         "x": 0.5,
         "y": 0.118,
         "plateIds": [
-          "face-front"
+          "face-front",
+          "jaw-ear"
         ]
       },
       {

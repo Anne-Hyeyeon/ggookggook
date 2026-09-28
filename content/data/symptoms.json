@@ -215,5 +215,178 @@
       { "acupointId": "ST36", "seconds": 60 }
     ],
     "seeDoctor": "부기가 며칠 넘게 빠지지 않거나 소변량이 줄면 병원 진료를 받으세요."
+  },
+  {
+    "id": "hangover_relief",
+    "name": "숙취가 있을 때",
+    "aliases": ["숙취", "해장", "술 마신 다음 날"],
+    "steps": [
+      { "acupointId": "LI4", "seconds": 60 },
+      { "acupointId": "PC6", "seconds": 60 },
+      { "acupointId": "ST36", "seconds": 60 }
+    ],
+    "seeDoctor": "심한 복통이나 반복되는 구토가 있으면 병원 진료를 받으세요. 의식이 흐려지면 바로 119에 연락하세요."
+  },
+  {
+    "id": "nasal_congestion",
+    "name": "코가 막힐 때",
+    "aliases": ["코막힘", "비염", "알레르기 비염", "콧물"],
+    "steps": [
+      { "acupointId": "LI4", "seconds": 60 },
+      { "acupointId": "LI20", "seconds": 60 },
+      { "acupointId": "GV29", "seconds": 60 }
+    ],
+    "seeDoctor": "누런 콧물이나 코막힘이 일주일 넘게 이어지거나 얼굴 통증, 고열이 함께 있으면 이비인후과 진료를 받으세요."
+  },
+  {
+    "id": "hiccups",
+    "name": "딸꾹질이 날 때",
+    "aliases": ["딸꾹질"],
+    "steps": [
+      { "acupointId": "PC6", "seconds": 60 },
+      { "acupointId": "CV17", "seconds": 60 }
+    ],
+    "seeDoctor": "딸꾹질이 48시간 넘게 이어지거나 가슴 통증, 호흡곤란이 함께 있으면 병원 진료를 받으세요."
+  },
+  {
+    "id": "toothache_temporary",
+    "name": "이가 아플 때",
+    "aliases": ["치통", "치과 가기 전", "잇몸 통증"],
+    "steps": [
+      { "acupointId": "LI4", "seconds": 60 },
+      { "acupointId": "ST6", "seconds": 60 },
+      { "acupointId": "ST7", "seconds": 60 }
+    ],
+    "seeDoctor": "이 지압은 치과 진료 전까지 잠시 도움이 될 수 있습니다. 얼굴이 붓거나 열이 나면 빠르게 치과 진료를 받으세요."
+  },
+  {
+    "id": "wrist_strain",
+    "name": "손목이 뻐근할 때",
+    "aliases": ["손목 통증", "마우스 손목", "손목터널증후군"],
+    "steps": [
+      { "acupointId": "PC6", "seconds": 60 },
+      { "acupointId": "TE5", "seconds": 60 },
+      { "acupointId": "LI4", "seconds": 60 }
+    ],
+    "seeDoctor": "손이 저리거나 감각이 둔해지고 엄지 쪽 힘이 빠지면 병원 진료를 받으세요."
+  },
+  {
+    "id": "knee_ache",
+    "name": "무릎이 시큰할 때",
+    "aliases": ["무릎 통증", "무릎 시림", "무릎 관절통"],
+    "steps": [
+      { "acupointId": "ST35", "seconds": 60 },
+      { "acupointId": "ST36", "seconds": 60 },
+      { "acupointId": "GB34", "seconds": 60 }
+    ],
+    "seeDoctor": "무릎이 갑자기 심하게 붓거나 뜨겁고 열감이 있으면, 또는 다친 뒤 아프기 시작했다면 병원 진료를 받으세요."
+  },
+  {
+    "id": "leg_swelling",
+    "name": "다리가 부을 때",
+    "aliases": ["다리 부종", "하지부종"],
+    "steps": [
+      { "acupointId": "SP9", "seconds": 60 },
+      { "acupointId": "SP6", "seconds": 60 },
+      { "acupointId": "ST36", "seconds": 60 }
+    ],
+    "seeDoctor": "한쪽 다리만 갑자기 붓고 아프거나 피부색이 달라지면 혈전일 수 있으니 바로 병원에 가세요. 정맥류가 있는 부위는 누르지 마세요."
+  },
+  {
+    "id": "calf_cramp",
+    "name": "종아리에 쥐가 날 때",
+    "aliases": ["종아리 쥐", "장딴지 쥐", "다리 경련"],
+    "steps": [
+      { "acupointId": "BL57", "seconds": 60 },
+      { "acupointId": "BL40", "seconds": 60 }
+    ],
+    "seeDoctor": "쥐가 자주 반복되거나 다리가 붓고 아프면 병원 진료를 받으세요."
+  },
+  {
+    "id": "fatigue",
+    "name": "기운이 없을 때",
+    "aliases": ["피곤할 때", "만성피로", "무기력할 때"],
+    "steps": [
+      { "acupointId": "ST36", "seconds": 60 },
+      { "acupointId": "CV6", "seconds": 60 },
+      { "acupointId": "GV20", "seconds": 60 }
+    ],
+    "seeDoctor": "피로가 한 달 넘게 이어지거나 이유 없이 체중이 줄면 병원 진료를 받으세요."
+  },
+  {
+    "id": "chest_tightness",
+    "name": "가슴이 답답할 때",
+    "aliases": ["가슴 답답함", "화병", "흉비"],
+    "steps": [
+      { "acupointId": "PC6", "seconds": 60 },
+      { "acupointId": "HT7", "seconds": 60 },
+      { "acupointId": "CV17", "seconds": 60 }
+    ],
+    "seeDoctor": "가슴 통증이 팔이나 턱으로 번지거나 식은땀, 호흡곤란이 함께 오면 지압을 멈추고 바로 119에 연락하세요. 답답함이 반복되면 병원 진료를 받으세요."
+  },
+  {
+    "id": "ear_fullness_tinnitus",
+    "name": "귀가 먹먹할 때",
+    "aliases": ["이충만감", "이명", "귀 먹먹함"],
+    "steps": [
+      { "acupointId": "TE21", "seconds": 60 },
+      { "acupointId": "KI3", "seconds": 60 },
+      { "acupointId": "GB20", "seconds": 60 }
+    ],
+    "seeDoctor": "갑자기 한쪽 귀가 안 들리거나 어지럼증이 심하면 바로 병원에 가세요. 먹먹함이 일주일 넘게 이어지면 이비인후과 진료를 받으세요."
+  },
+  {
+    "id": "jaw_tmj",
+    "name": "턱이 뻐근할 때",
+    "aliases": ["턱관절", "턱관절 통증", "이 갈 때"],
+    "steps": [
+      { "acupointId": "LI4", "seconds": 60 },
+      { "acupointId": "ST6", "seconds": 60 },
+      { "acupointId": "ST7", "seconds": 60 }
+    ],
+    "seeDoctor": "입을 벌릴 때 턱이 걸리거나 빠지는 느낌이 있으면 병원 진료를 받으세요."
+  },
+  {
+    "id": "cold_onset",
+    "name": "감기 기운이 있을 때",
+    "aliases": ["감기 초기", "몸살 기운", "코감기"],
+    "steps": [
+      { "acupointId": "LI4", "seconds": 60 },
+      { "acupointId": "GV14", "seconds": 60 },
+      { "acupointId": "GB20", "seconds": 60 }
+    ],
+    "seeDoctor": "고열이 3일 넘게 이어지거나 숨쉬기가 힘들면 병원 진료를 받으세요."
+  },
+  {
+    "id": "hot_flashes_menopause",
+    "name": "열감이 확 오를 때",
+    "aliases": ["갱년기", "안면홍조", "상열감"],
+    "steps": [
+      { "acupointId": "KI3", "seconds": 60 },
+      { "acupointId": "SP6", "seconds": 60 },
+      { "acupointId": "LR3", "seconds": 60 }
+    ],
+    "seeDoctor": "열감과 함께 가슴 두근거림이나 식은땀이 심하면 병원 진료를 받으세요."
+  },
+  {
+    "id": "tired_feet",
+    "name": "발이 피곤할 때",
+    "aliases": ["발 피로", "종일 서 있었을 때"],
+    "steps": [
+      { "acupointId": "KI1", "seconds": 60 },
+      { "acupointId": "BL60", "seconds": 60 }
+    ],
+    "seeDoctor": "발이 저리거나 감각이 둔해지는 증상이 계속되면 병원 진료를 받으세요."
+  },
+  {
+    "id": "migraine",
+    "name": "머리 한쪽이 지끈거릴 때",
+    "aliases": ["편두통", "한쪽 머리 아플 때"],
+    "steps": [
+      { "acupointId": "EX-HN5", "seconds": 60 },
+      { "acupointId": "GB20", "seconds": 60 },
+      { "acupointId": "LR3", "seconds": 60 }
+    ],
+    "seeDoctor": "평소와 다른 심한 두통이거나 시야 이상, 팔다리 힘 빠짐이 함께 오면 바로 119에 연락하세요."
   }
 ]

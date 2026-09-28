@@ -532,5 +532,75 @@
     "defaultSeconds": 60,
     "cautions": [],
     "whoLocation": "On the sole of the foot, in the deepest depression of the sole when the toes are flexed."
+  },
+  {
+    "id": "ST6",
+    "name": {
+      "ko": "협거",
+      "hanja": "頰車",
+      "en": "Hyeopgeo"
+    },
+    "sides": "together",
+    "location": "뺨에서 아래턱뼈 모서리보다 살짝 위, 이를 꽉 물면 볼록해지는 근육의 한가운데입니다.",
+    "technique": "이를 살짝 물어 근육을 도드라지게 한 뒤 힘을 빼고, 검지나 중지 끝으로 지그시 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the cheek, in the depression one finger-breadth (middle finger) anterior and superior to the lower angle of the mandible where muscle masseter attaches, at the prominence of the muscle when the teeth are clenched."
+  },
+  {
+    "id": "ST7",
+    "name": {
+      "ko": "하관",
+      "hanja": "下關",
+      "en": "Hagwan"
+    },
+    "sides": "together",
+    "location": "귀 앞쪽, 광대뼈 아래 가장자리와 아래턱뼈 관절 사이의 오목한 곳입니다. 입을 다물면 오목해지고 벌리면 볼록해지는 자리입니다.",
+    "technique": "입을 다문 채 검지나 중지 끝으로 수직으로 지그시 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the face, anterior to the ear, in the depression between the zygomatic arch and the condyloid process of the mandible."
+  },
+  {
+    "id": "ST35",
+    "name": {
+      "ko": "독비",
+      "hanja": "犢鼻",
+      "en": "Dokbi"
+    },
+    "sides": "sequential",
+    "location": "무릎을 굽혔을 때 무릎뼈 아래 바깥쪽에 생기는 오목한 곳입니다. 무릎뼈 아래 인대의 바깥쪽 옆입니다.",
+    "technique": "무릎을 굽힌 채 엄지로 무릎뼈 쪽을 향해 지그시 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "When the knee is flexed, the point is at the knee, below the patella, in the depression lateral to the patellar ligament."
+  },
+  {
+    "id": "SP9",
+    "name": {
+      "ko": "음릉천",
+      "hanja": "陰陵泉",
+      "en": "Eumneungcheon"
+    },
+    "sides": "sequential",
+    "location": "정강이뼈 안쪽을 무릎 쪽으로 쓸어 올라가면 뼈가 굵어지며 꺾이는 자리에 손가락이 걸립니다. 그 뒤쪽 오목한 곳입니다.",
+    "technique": "엄지로 정강이뼈 쪽을 향해 꾹 누르세요. 뻐근할 정도로 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "On the lower border of the medial condyle of the tibia, in the depression between the posterior border of the tibia and gastrocnemius muscle."
+  },
+  {
+    "id": "TE21",
+    "name": {
+      "ko": "이문",
+      "hanja": "耳門",
+      "en": "Imun"
+    },
+    "sides": "together",
+    "location": "입을 살짝 벌리면 귓구멍 앞쪽에 오목한 곳이 나타납니다. 광대뼈 뒤쪽 끝 바로 앞의 그 오목한 곳입니다.",
+    "technique": "입을 살짝 벌린 채 검지 끝으로 귀 쪽을 향해 가볍게 누르세요. 아프지 않을 만큼 부드럽게 누르세요.",
+    "defaultSeconds": 60,
+    "cautions": [],
+    "whoLocation": "In front of the supratragic notch, in the depression of the posterior border of the condylar process of the mandible when the mouth is open."
   }
 ]

@@ -152,7 +152,15 @@ it('keeps search order instead of re-sorting by usage while searching', async ()
   const input = screen.getByPlaceholderText('증상이나 혈자리 이름');
   await fireEvent.changeText(input, '통증');
   const order = (await screen.findAllByTestId(/^minutes-/)).map((node) => node.props.testID);
-  expect(order).toEqual(['minutes-shoulder_pain', 'minutes-back_pain', 'minutes-neck_pain']);
+  expect(order).toEqual([
+    'minutes-shoulder_pain',
+    'minutes-back_pain',
+    'minutes-neck_pain',
+    'minutes-toothache_temporary',
+    'minutes-wrist_strain',
+    'minutes-knee_ache',
+    'minutes-jaw_tmj',
+  ]);
 });
 
 it('falls back to no history when the store rejects', async () => {

@@ -1,10 +1,10 @@
 # 남은 일러스트 목록
 
-아직 없는 그림 14개의 프롬프트 모음입니다.
+아직 없는 그림 15개의 프롬프트 모음입니다.
 
 ## 사용법
 
-- 부위 그림 13개와 전신 뒷면 지도 1개(`body-back`)입니다.
+- 부위 그림 14개와 전신 뒷면 지도 1개(`body-back`)입니다.
 - 만드는 방법 전체는 `docs/illustration-style-guide.md`를 따릅니다.
 - 그림마다 새 ChatGPT 채팅을 엽니다.
 - 아래 프롬프트를 그대로 붙여 넣습니다.
@@ -15,7 +15,7 @@
 - 프롬프트는 `npm run prompt -w @ggookggook/content -- <id>`로 언제든 다시 뽑을 수 있습니다.
 - 아래 글은 그 명령의 결과를 그대로 옮긴 것입니다.
 
-## 몸 부위 그림 (13개)
+## 몸 부위 그림 (14개)
 
 - `head-top` · 정수리
 
@@ -80,7 +80,7 @@
 - `leg-inner` · 종아리 안쪽과 발 안쪽
 
   ```
-  A clean illustration of the inner side of a Korean adult's right lower leg and foot seen from the inside, from mid-calf to the big toe, the inner ankle bone visible, a plain seamless legging ending above the ankle. Style: fine single-weight ink line art in warm charcoal (#3A3732). No color fill, no shading, no hatching, no color anywhere. No text, labels, arrows, or markers. Anatomically accurate: exactly five fingers and five toes wherever hands or feet appear. No visible veins or tendons, and only a faint line per joint. Transparent background, with no glow, vignette, shadow, ground line, or gradient. Centered with generous margin. Square 1:1.
+  A clean illustration of the inner side of a Korean adult's right lower leg and foot seen from the inside, from below the knee to the big toe, the inner ankle bone visible, a plain seamless legging ending above the ankle. Style: fine single-weight ink line art in warm charcoal (#3A3732). No color fill, no shading, no hatching, no color anywhere. No text, labels, arrows, or markers. Anatomically accurate: exactly five fingers and five toes wherever hands or feet appear. No visible veins or tendons, and only a faint line per joint. Transparent background, with no glow, vignette, shadow, ground line, or gradient. Centered with generous margin. Square 1:1.
   ```
 
 - `ankle-outer` · 발목 바깥쪽
@@ -99,6 +99,12 @@
 
   ```
   A clean illustration of the sole of a Korean adult's right foot viewed straight on, toes at the top, heel at the bottom, toes slightly curled. Style: fine single-weight ink line art in warm charcoal (#3A3732). No color fill, no shading, no hatching, no color anywhere. No text, labels, arrows, or markers. Anatomically accurate: exactly five fingers and five toes wherever hands or feet appear. No visible veins or tendons, and only a faint line per joint. Transparent background, with no glow, vignette, shadow, ground line, or gradient. Centered with generous margin. Square 1:1.
+  ```
+
+- `jaw-ear` · 턱과 귀 앞
+
+  ```
+  A clean illustration of the left side of a Korean adult's face seen from a three-quarter angle, hair tucked behind the ear, jaw very slightly clenched so the cheek muscle shows, the ear, temple, and jawline visible. Style: fine single-weight ink line art in warm charcoal (#3A3732). No color fill, no shading, no hatching, no color anywhere. No text, labels, arrows, or markers. Anatomically accurate: exactly five fingers and five toes wherever hands or feet appear. No visible veins or tendons, and only a faint line per joint. Transparent background, with no glow, vignette, shadow, ground line, or gradient. Centered with generous margin. Square 1:1.
   ```
 
 ## 전신 지도 (1개)

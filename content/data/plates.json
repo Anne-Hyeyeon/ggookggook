@@ -125,7 +125,8 @@
     "depicts": "right",
     "acupointIds": [
       "ST36",
-      "GB34"
+      "GB34",
+      "ST35"
     ],
     "pins": []
   },
@@ -143,12 +144,13 @@
   {
     "id": "leg-inner",
     "name": "종아리 안쪽과 발 안쪽",
-    "subject": "the inner side of a Korean adult's right lower leg and foot seen from the inside, from mid-calf to the big toe, the inner ankle bone visible, a plain seamless legging ending above the ankle",
+    "subject": "the inner side of a Korean adult's right lower leg and foot seen from the inside, from below the knee to the big toe, the inner ankle bone visible, a plain seamless legging ending above the ankle",
     "depicts": "right",
     "acupointIds": [
       "SP6",
       "KI3",
-      "SP4"
+      "SP4",
+      "SP9"
     ],
     "pins": []
   },
@@ -179,6 +181,18 @@
     "depicts": "right",
     "acupointIds": [
       "KI1"
+    ],
+    "pins": []
+  },
+  {
+    "id": "jaw-ear",
+    "name": "턱과 귀 앞",
+    "subject": "the left side of a Korean adult's face seen from a three-quarter angle, hair tucked behind the ear, jaw very slightly clenched so the cheek muscle shows, the ear, temple, and jawline visible",
+    "depicts": "left",
+    "acupointIds": [
+      "ST6",
+      "ST7",
+      "TE21"
     ],
     "pins": []
   }
