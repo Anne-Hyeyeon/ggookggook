@@ -1,9 +1,12 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
+import { useDb } from '@/db/DbProvider';
 import { ROUTINE_DISCLAIMER } from '@/disclaimers';
 import { routineSummary, sideLabel, visibleSteps } from '@/routine';
+import { useFavorites } from '@/state/favorites';
 import { useSettings } from '@/state/settings';
 import { colors, fonts, space } from '@/theme';
 import { BackLink } from '@/ui/BackLink';
@@ -13,10 +16,22 @@ import { Txt } from '@/ui/Txt';
 
 export default function AcupointScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const db = useDb();
   const settings = useSettings((state) => state.settings);
+  const isFavorite = useFavorites((state) => state.ids.has(id));
+  const toggleFavorite = useFavorites((state) => state.toggle);
+  const [favoriteError, setFavoriteError] = useState(false);
   const { width } = useWindowDimensions();
   const plateSize = Math.min(width - space(10), 280);
   const acupoint = content.acupoints.get(id);
+
+  const handleToggleFavorite = useCallback(() => {
+    setFavoriteError(false);
+    toggleFavorite(db, id).catch((error: unknown) => {
+      console.error('Failed to save a favorite', error);
+      setFavoriteError(true);
+    });
+  }, [db, id, toggleFavorite]);
 
   if (!acupoint) {
     return (
@@ -35,7 +50,25 @@ export default function AcupointScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.body}>
-        <BackLink onPress={() => router.back()} />
+        <View style={styles.topRow}>
+          <BackLink onPress={() => router.back()} />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={isFavorite ? '즐겨찾기에서 빼기' : '즐겨찾기에 추가'}
+            accessibilityState={{ selected: isFavorite }}
+            hitSlop={12}
+            onPress={handleToggleFavorite}
+          >
+            <Txt variant="sub" style={isFavorite ? styles.favoriteOn : undefined}>
+              {isFavorite ? '즐겨찾는 중' : '즐겨찾기'}
+            </Txt>
+          </Pressable>
+        </View>
+        {favoriteError && (
+          <Txt variant="sub" style={styles.error}>
+            저장하지 못했어요. 다시 눌러 주세요.
+          </Txt>
+        )}
         <View style={styles.head}>
           <View style={styles.nameRow}>
             <Txt variant="point" style={styles.pointName}>{acupoint.name.ko}</Txt>
@@ -99,6 +132,9 @@ export default function AcupointScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   body: { padding: space(5), gap: space(5), paddingBottom: space(8) },
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  favoriteOn: { color: colors.accent },
+  error: { color: colors.accent },
   head: { gap: space(1.5) },
   nameRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: space(1.5) },
   pointName: { fontSize: 27 },

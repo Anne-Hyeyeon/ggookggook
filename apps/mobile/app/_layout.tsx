@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DbProvider, useDb } from '@/db/DbProvider';
+import { useFavorites } from '@/state/favorites';
 import { useOnboarding } from '@/state/onboarding';
 import { useSettings } from '@/state/settings';
 import { colors } from '@/theme';
@@ -38,13 +39,16 @@ function Routes() {
   const onboardingLoaded = useOnboarding((state) => state.loaded);
   const accepted = useOnboarding((state) => state.disclaimerAcceptedAt !== null);
   const loadOnboarding = useOnboarding((state) => state.load);
+  const favoritesLoaded = useFavorites((state) => state.loaded);
+  const loadFavorites = useFavorites((state) => state.load);
 
   useEffect(() => {
     void loadSettings(db);
     void loadOnboarding(db);
-  }, [db, loadSettings, loadOnboarding]);
+    void loadFavorites(db);
+  }, [db, loadSettings, loadOnboarding, loadFavorites]);
 
-  if (!settingsLoaded || !onboardingLoaded) return null;
+  if (!settingsLoaded || !onboardingLoaded || !favoritesLoaded) return null;
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
       <Stack.Protected guard={accepted}>

@@ -179,9 +179,12 @@ async function runFlow(page) {
   await page.getByText('합곡', { exact: true }).waitFor();
   await shoot(page, '13-region-hand.png');
 
-  // 14. Acupoint detail for 합곡, including its routines and pregnancy caution
+  // 14. Acupoint detail for 합곡, including its routines, pregnancy caution, and the
+  // favorite toggle turned on (top right, next to 뒤로)
   await page.getByText('합곡', { exact: true }).click();
   await page.getByText('이 혈자리를 쓰는 루틴').waitFor();
+  await page.getByRole('button', { name: '즐겨찾기에 추가' }).click();
+  await page.getByRole('button', { name: '즐겨찾기에서 빼기' }).waitFor();
   await shoot(page, '14-acupoint-hapgok.png');
 }
 
