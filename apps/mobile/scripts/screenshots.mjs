@@ -118,15 +118,15 @@ async function runFlow(page) {
   await search.waitFor();
   await shoot(page, '03-today.png');
 
-  // 4. Search "잠이 안" (matches the 불면 symptom)
+  // 4. Search "잠이 안" (matches the 잠이 안 올 때 symptom)
   await search.fill('잠이 안');
-  await page.getByText('불면', { exact: true }).waitFor();
+  await page.getByText('잠이 안 올 때', { exact: true }).waitFor();
   await shoot(page, '04-search.png');
 
-  // 5. Symptom detail for headache (두통)
+  // 5. Symptom detail for headache, found via its old disease-name alias (두통)
   await search.fill('두통');
-  await page.getByText('두통', { exact: true }).waitFor();
-  await page.getByText('두통', { exact: true }).click();
+  await page.getByText('머리가 아플 때', { exact: true }).waitFor();
+  await page.getByText('머리가 아플 때', { exact: true }).click();
   await page.getByRole('button', { name: '시작' }).waitFor();
   await shoot(page, '05-symptom.png');
 

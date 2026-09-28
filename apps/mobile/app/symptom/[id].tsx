@@ -46,7 +46,7 @@ export default function SymptomScreen() {
       <ScrollView contentContainerStyle={styles.body}>
         <BackLink onPress={() => router.back()} />
         <View style={styles.head}>
-          <Txt variant="title">{symptom.name}</Txt>
+          <Txt variant="title" numberOfLines={2}>{symptom.name}</Txt>
           {symptom.aliases.length > 0 && <Txt variant="sub">{symptom.aliases.join(' · ')}</Txt>}
           <Txt style={styles.summary}>{`${count}곳 · 약 ${minutes}분`}</Txt>
         </View>

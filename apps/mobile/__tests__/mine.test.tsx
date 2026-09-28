@@ -82,9 +82,9 @@ it('groups sessions by local day, newest first, with a day header and feedback l
   expect(screen.getByText('어제')).toBeTruthy();
   expect(screen.getByText(formatDateLine(oldDate))).toBeTruthy();
 
-  expect(screen.getAllByText('두통')).toHaveLength(2);
-  expect(screen.getByText('불면')).toBeTruthy();
-  expect(screen.getByText('식체')).toBeTruthy();
+  expect(screen.getAllByText('머리가 아플 때')).toHaveLength(2);
+  expect(screen.getByText('잠이 안 올 때')).toBeTruthy();
+  expect(screen.getByText('체했을 때')).toBeTruthy();
 
   expect(screen.getByText('오후 3:12 · 4분')).toBeTruthy();
   expect(screen.getByText('오전 9:30 · 4분')).toBeTruthy();
@@ -95,7 +95,7 @@ it('groups sessions by local day, newest first, with a day header and feedback l
 
   expect(screen.getByText('나만의 루틴 만들기는 준비 중이에요.')).toBeTruthy();
 
-  await fireEvent.press(screen.getByRole('button', { name: /^두통 · 오후 3:12/ }));
+  await fireEvent.press(screen.getByRole('button', { name: /^머리가 아플 때 · 오후 3:12/ }));
   expect(router.push).toHaveBeenCalledWith('/symptom/headache');
 });
 
@@ -106,7 +106,7 @@ it('skips a session whose symptom no longer exists in content, without crashing'
   ]);
 
   await render(<MineScreen />);
-  expect(await screen.findByText('두통')).toBeTruthy();
+  expect(await screen.findByText('머리가 아플 때')).toBeTruthy();
   expect(screen.queryByText('아직 기록이 없어요.')).toBeNull();
 });
 

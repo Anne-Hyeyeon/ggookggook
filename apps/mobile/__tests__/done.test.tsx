@@ -29,7 +29,8 @@ beforeEach(() => {
 
 it('shows the result and records feedback', async () => {
   await render(<DoneScreen />);
-  expect(await screen.findByText('식체 루틴을 마쳤어요')).toBeTruthy();
+  expect(await screen.findByText('루틴을 마쳤어요')).toBeTruthy();
+  expect(screen.getByText('체했을 때')).toBeTruthy();
   expect(screen.getByText('4분')).toBeTruthy();
   expect(screen.getByText('합곡 · 내관')).toBeTruthy();
 
@@ -48,7 +49,8 @@ it('lists only the steps that survive pregnancy filtering', async () => {
   useSettings.setState({ settings: { ...DEFAULT_SETTINGS, pregnancyMode: true } });
 
   await render(<DoneScreen />);
-  expect(await screen.findByText('식체 루틴을 마쳤어요')).toBeTruthy();
+  expect(await screen.findByText('루틴을 마쳤어요')).toBeTruthy();
+  expect(screen.getByText('체했을 때')).toBeTruthy();
   expect(screen.getByText('내관')).toBeTruthy();
   expect(screen.queryByText('합곡')).toBeNull();
   expect(screen.queryByText('합곡 · 내관')).toBeNull();
@@ -101,7 +103,8 @@ it('keeps a feedback choice made before the session finishes loading', async () 
     });
     await Promise.resolve();
   });
-  await screen.findByText('식체 루틴을 마쳤어요');
+  await screen.findByText('루틴을 마쳤어요');
+  expect(screen.getByText('체했을 때')).toBeTruthy();
 
   expect(screen.getByRole('button', { name: '나아졌어요' }).props.accessibilityState).toMatchObject({ selected: true });
 });
@@ -111,7 +114,8 @@ it('keeps the selection and logs an error when setSessionFeedback rejects', asyn
   const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
   await render(<DoneScreen />);
-  await screen.findByText('식체 루틴을 마쳤어요');
+  await screen.findByText('루틴을 마쳤어요');
+  expect(screen.getByText('체했을 때')).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('button', { name: '나아졌어요' }));
   await act(async () => {

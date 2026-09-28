@@ -1,8 +1,9 @@
 [
   {
     "id": "headache",
-    "name": "두통",
+    "name": "머리가 아플 때",
     "aliases": [
+      "두통",
       "머리 아플 때"
     ],
     "steps": [
@@ -14,9 +15,10 @@
   },
   {
     "id": "insomnia",
-    "name": "불면",
+    "name": "잠이 안 올 때",
     "aliases": [
-      "잠이 안 올 때",
+      "불면",
+      "불면증",
       "잠 못 잘 때"
     ],
     "steps": [
@@ -28,8 +30,9 @@
   },
   {
     "id": "stress",
-    "name": "스트레스",
+    "name": "스트레스 받을 때",
     "aliases": [
+      "스트레스",
       "긴장될 때",
       "불안할 때"
     ],
@@ -41,8 +44,9 @@
   },
   {
     "id": "indigestion",
-    "name": "소화불량",
+    "name": "속이 더부룩할 때",
     "aliases": [
+      "소화불량",
       "소화가 안 될 때",
       "더부룩할 때"
     ],
@@ -55,10 +59,10 @@
   },
   {
     "id": "shoulder_pain",
-    "name": "어깨 통증",
+    "name": "어깨가 뭉쳤을 때",
     "aliases": [
-      "어깨 결림",
-      "어깨가 뭉쳤을 때"
+      "어깨 통증",
+      "어깨 결림"
     ],
     "steps": [
       { "acupointId": "GB21", "seconds": 60 },
@@ -68,8 +72,9 @@
   },
   {
     "id": "back_pain",
-    "name": "허리 통증",
+    "name": "허리가 뻐근할 때",
     "aliases": [
+      "허리 통증",
       "허리 아플 때"
     ],
     "steps": [
@@ -80,9 +85,9 @@
   },
   {
     "id": "eye_fatigue",
-    "name": "눈 피로",
+    "name": "눈이 뻑뻑할 때",
     "aliases": [
-      "눈이 뻑뻑할 때",
+      "눈 피로",
       "눈이 침침할 때"
     ],
     "steps": [
@@ -94,9 +99,9 @@
   },
   {
     "id": "nausea",
-    "name": "메스꺼움",
+    "name": "속이 울렁거릴 때",
     "aliases": [
-      "속이 울렁거릴 때",
+      "메스꺼움",
       "멀미"
     ],
     "steps": [
@@ -107,10 +112,10 @@
   },
   {
     "id": "neck_pain",
-    "name": "목 통증",
+    "name": "목이 뻐근할 때",
     "aliases": [
-      "목 결림",
-      "목이 뻐근할 때"
+      "목 통증",
+      "목 결림"
     ],
     "steps": [
       { "acupointId": "GB20", "seconds": 60 },
@@ -121,8 +126,9 @@
   },
   {
     "id": "menstrual_pain",
-    "name": "생리통",
+    "name": "생리 기간이 힘들 때",
     "aliases": [
+      "생리통",
       "생리할 때 배 아플 때"
     ],
     "steps": [
@@ -134,8 +140,9 @@
   },
   {
     "id": "cold_extremities",
-    "name": "수족냉증",
+    "name": "손발이 찰 때 (수족냉증)",
     "aliases": [
+      "수족냉증",
       "손발이 찰 때"
     ],
     "steps": [
@@ -146,9 +153,9 @@
   },
   {
     "id": "concentration",
-    "name": "집중력",
+    "name": "집중이 안 될 때",
     "aliases": [
-      "집중이 안 될 때",
+      "집중력",
       "머리가 멍할 때"
     ],
     "steps": [
@@ -172,9 +179,9 @@
   },
   {
     "id": "food_stagnation",
-    "name": "식체",
+    "name": "체했을 때",
     "aliases": [
-      "체했을 때",
+      "식체",
       "얹혔을 때"
     ],
     "steps": [
@@ -185,9 +192,9 @@
   },
   {
     "id": "constipation",
-    "name": "변비",
+    "name": "변이 안 나올 때",
     "aliases": [
-      "변이 안 나올 때"
+      "변비"
     ],
     "steps": [
       { "acupointId": "ST25", "seconds": 60 },
@@ -198,10 +205,10 @@
   },
   {
     "id": "facial_swelling",
-    "name": "얼굴 부종",
+    "name": "얼굴이 부었을 때",
     "aliases": [
-      "얼굴 부기",
-      "얼굴이 부었을 때"
+      "얼굴 부종",
+      "얼굴 부기"
     ],
     "steps": [
       { "acupointId": "LI20", "seconds": 60 },

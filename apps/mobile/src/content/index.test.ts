@@ -118,6 +118,6 @@ describe('bundled content', () => {
   });
 
   it('finds the routines that use 합곡', () => {
-    expect(content.symptomsFor('LI4').map((symptom) => symptom.name)).toContain('두통');
+    expect(content.symptomsFor('LI4').map((symptom) => symptom.name)).toContain('머리가 아플 때');
   });
 });

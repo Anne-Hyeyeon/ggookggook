@@ -70,8 +70,13 @@ export default function DoneScreen() {
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.body}>
         {cat !== null && <Image source={cat} style={styles.cat} contentFit="contain" accessibilityIgnoresInvertColors />}
+        {symptom && (
+          <Txt variant="caption" style={styles.center}>
+            {symptom.name}
+          </Txt>
+        )}
         <Txt variant="heading" style={styles.center}>
-          {symptom ? `${symptom.name} 루틴을 마쳤어요` : '루틴을 마쳤어요'}
+          루틴을 마쳤어요
         </Txt>
         {names !== '' && (
           <Txt variant="pointSmall" style={styles.center}>

@@ -27,8 +27,8 @@ it('shows the location, technique, pregnancy caution, and related routines for �
   expect(screen.getByText('누르는 법')).toBeTruthy();
   expect(screen.getByText('임신 중에는 누르지 마세요.')).toBeTruthy();
   expect(screen.getByText('이 혈자리를 쓰는 루틴')).toBeTruthy();
-  expect(screen.getByText('두통')).toBeTruthy();
-  await fireEvent.press(screen.getByText('두통'));
+  expect(screen.getByText('머리가 아플 때')).toBeTruthy();
+  await fireEvent.press(screen.getByText('머리가 아플 때'));
   expect(router.push).toHaveBeenCalledWith('/symptom/headache');
 });
 

@@ -18,8 +18,8 @@ beforeEach(() => {
 
 it('shows the routine, the pregnancy caution, and when to see a doctor', async () => {
   await render(<SymptomScreen />);
-  expect(screen.getByText('두통')).toBeTruthy();
-  expect(screen.getByText('머리 아플 때')).toBeTruthy();
+  expect(screen.getByText('머리가 아플 때')).toBeTruthy();
+  expect(screen.getByText('두통 · 머리 아플 때')).toBeTruthy();
   expect(screen.getByText('3곳 · 약 4분')).toBeTruthy();
   expect(screen.getByText('합곡')).toBeTruthy();
   expect(screen.getByText('임신 중이면 합곡은 누르지 마세요.')).toBeTruthy();

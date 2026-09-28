@@ -35,9 +35,9 @@ beforeEach(() => {
 
 it('lists every symptom with its minutes and opens one', async () => {
   await render(<TodayScreen />);
-  expect(screen.getByText('두통')).toBeTruthy();
+  expect(screen.getByText('머리가 아플 때')).toBeTruthy();
   expect(screen.getByText('급똥참기')).toBeTruthy();
-  await fireEvent.press(screen.getByText('두통'));
+  await fireEvent.press(screen.getByText('머리가 아플 때'));
   expect(router.push).toHaveBeenCalledWith('/symptom/headache');
 });
 
@@ -47,7 +47,7 @@ it('opens settings from the header button', async () => {
   expect(router.push).toHaveBeenCalledWith('/settings');
 });
 
-it('updates the displayed minutes for 두통 when pregnancy mode changes', async () => {
+it('updates the displayed minutes for 머리가 아플 때 when pregnancy mode changes', async () => {
   await render(<TodayScreen />);
   expect(screen.getByTestId('minutes-headache')).toHaveTextContent('4분');
 
@@ -61,15 +61,25 @@ it('updates the displayed minutes for 두통 when pregnancy mode changes', async
 it('filters by alias and by acupoint name, and shows an empty state', async () => {
   await render(<TodayScreen />);
   const input = screen.getByPlaceholderText('증상이나 혈자리 이름');
-  await fireEvent.changeText(input, '잠이 안');
-  expect(screen.getByText('불면')).toBeTruthy();
-  expect(screen.queryByText('두통')).toBeNull();
+  await fireEvent.changeText(input, '불면');
+  expect(screen.getByText('잠이 안 올 때')).toBeTruthy();
+  expect(screen.queryByText('머리가 아플 때')).toBeNull();
 
   await fireEvent.changeText(input, '합곡');
-  expect(screen.getByText('두통')).toBeTruthy();
+  expect(screen.getByText('머리가 아플 때')).toBeTruthy();
 
   await fireEvent.changeText(input, '없는말');
   expect(screen.getByText('찾는 증상이 없어요. 다른 말로 찾아보세요.')).toBeTruthy();
+});
+
+it('finds symptoms by their old disease-name alias', async () => {
+  await render(<TodayScreen />);
+  const input = screen.getByPlaceholderText('증상이나 혈자리 이름');
+  await fireEvent.changeText(input, '불면증');
+  expect(screen.getByText('잠이 안 올 때')).toBeTruthy();
+
+  await fireEvent.changeText(input, '두통');
+  expect(screen.getByText('머리가 아플 때')).toBeTruthy();
 });
 
 it('shows the most recent routine', async () => {
@@ -82,7 +92,7 @@ it('shows the most recent routine', async () => {
     feedback: 'better',
   });
   await render(<TodayScreen />);
-  expect(await screen.findByText('최근 · 두통 · 오늘')).toBeTruthy();
+  expect(await screen.findByText('최근 · 머리가 아플 때 · 오늘')).toBeTruthy();
 });
 
 it('starts the recent routine again from its 다시 하기 affordance', async () => {
@@ -124,7 +134,7 @@ it('hides the better-feedback line when there is no positive feedback yet', asyn
   });
   mocked.countSessionsByFeedback.mockResolvedValue(0);
   await render(<TodayScreen />);
-  await screen.findByText('최근 · 두통 · 오늘');
+  await screen.findByText('최근 · 머리가 아플 때 · 오늘');
   expect(screen.queryByText(/나아졌어요/)).toBeNull();
 });
 
@@ -151,6 +161,6 @@ it('falls back to no history when the store rejects', async () => {
   mocked.countSessionsBySymptom.mockRejectedValue(new Error('boom'));
   await render(<TodayScreen />);
   await waitFor(() => expect(consoleError).toHaveBeenCalled());
-  expect(screen.getByText('두통')).toBeTruthy();
+  expect(screen.getByText('머리가 아플 때')).toBeTruthy();
   consoleError.mockRestore();
 });
