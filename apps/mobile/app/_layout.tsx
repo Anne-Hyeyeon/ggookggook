@@ -1,6 +1,6 @@
 import { NotoSerifKR_700Bold } from '@expo-google-fonts/noto-serif-kr';
 import { useFonts } from 'expo-font';
-import { router, Stack } from 'expo-router';
+import { router, Stack, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -48,6 +48,7 @@ export function Routes() {
   const loadOnboarding = useOnboarding((state) => state.load);
   const favoritesLoaded = useFavorites((state) => state.loaded);
   const loadFavorites = useFavorites((state) => state.load);
+  const navigationReady = useRootNavigationState()?.key != null;
 
   useEffect(() => {
     void loadSettings(db);
@@ -57,15 +58,16 @@ export function Routes() {
 
   // Tapping the daily reminder opens the routine's preview, whether the tap launched the app
   // cold (getLastNotificationRoute, a snapshot rather than an event) or arrived while it was
-  // already running (the listener). Gated on `accepted`: before the disclaimer, none of the
-  // routes a reminder points at are even mounted.
+  // already running (the listener). Gated on `accepted` (before the disclaimer, none of the
+  // routes a reminder points at are even mounted) and on the root navigator being ready
+  // (router.push before it has mounted is silently dropped).
   useEffect(() => {
-    if (!accepted) return;
+    if (!accepted || !navigationReady) return;
     const initialRoute = getLastNotificationRoute();
     if (initialRoute) router.push(initialRoute);
     const subscription = addReminderResponseListener((route) => router.push(route));
     return () => subscription.remove();
-  }, [accepted]);
+  }, [accepted, navigationReady]);
 
   if (!settingsLoaded || !onboardingLoaded || !favoritesLoaded) return null;
   return (
@@ -79,9 +81,13 @@ export function Routes() {
         <Stack.Screen name="guide/routine/[id]" options={{ gestureEnabled: false }} />
         <Stack.Screen name="done" options={{ gestureEnabled: false }} />
         <Stack.Screen name="settings" />
-        <Stack.Screen name="routine/new" />
+        {/* expo-router (SDK 57) vendors react-navigation internally and doesn't expose
+            usePreventRemove publicly (no @react-navigation/* package is even installed), so
+            an iOS swipe-back while the editor is dirty can't show the same confirm-leave
+            overlay 뒤로 does; disabling the gesture forces 뒤로/hardware back instead. */}
+        <Stack.Screen name="routine/new" options={{ gestureEnabled: false }} />
         <Stack.Screen name="routine/[id]/index" />
-        <Stack.Screen name="routine/[id]/edit" />
+        <Stack.Screen name="routine/[id]/edit" options={{ gestureEnabled: false }} />
         <Stack.Screen name="routine/pick" />
       </Stack.Protected>
       <Stack.Protected guard={!accepted}>

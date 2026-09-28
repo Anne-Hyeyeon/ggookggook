@@ -14,12 +14,18 @@ jest.mock('@/db/DbProvider', () => {
     useDb: () => db,
   };
 });
+const mockUseRootNavigationState = jest.fn(() => ({ key: 'root' }));
+const mockScreenProps = new Map<string, Record<string, unknown>>();
 jest.mock('expo-router', () => ({
   router: { push: jest.fn() },
+  useRootNavigationState: () => mockUseRootNavigationState(),
   Stack: Object.assign(
     ({ children }: { children: React.ReactNode }) => children,
     {
-      Screen: () => null,
+      Screen: (props: { name: string } & Record<string, unknown>) => {
+        mockScreenProps.set(props.name, props);
+        return null;
+      },
       Protected: ({ guard, children }: { guard: boolean; children: React.ReactNode }) => (guard ? children : null),
     },
   ),
@@ -37,6 +43,7 @@ const registeredAtModuleLoad = mockedReminder.registerNotificationHandler.mock.c
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockUseRootNavigationState.mockReturnValue({ key: 'root' } as never);
   useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS }, load: jest.fn().mockResolvedValue(undefined) });
   useOnboarding.setState({ loaded: true, disclaimerAcceptedAt: null, load: jest.fn().mockResolvedValue(undefined) } as never);
   useFavorites.setState({ loaded: true, ids: new Set(), load: jest.fn().mockResolvedValue(undefined) } as never);
@@ -61,6 +68,23 @@ it('navigates to the last notification route on a cold start once accepted', asy
   await waitFor(() => expect(router.push).toHaveBeenCalledWith('/symptom/eye_fatigue'));
 });
 
+it('does not push before the root navigator is ready, then pushes once it is', async () => {
+  useOnboarding.setState({ disclaimerAcceptedAt: '2026-09-28T00:00:00.000Z' } as never);
+  mockedReminder.getLastNotificationRoute.mockReturnValue('/symptom/eye_fatigue');
+  mockUseRootNavigationState.mockReturnValue(undefined as never);
+
+  const { rerender } = await render(<Routes />);
+  expect(router.push).not.toHaveBeenCalled();
+  expect(mockedReminder.getLastNotificationRoute).not.toHaveBeenCalled();
+  expect(mockedReminder.addReminderResponseListener).not.toHaveBeenCalled();
+
+  mockUseRootNavigationState.mockReturnValue({ key: 'root' } as never);
+  await rerender(<Routes />);
+
+  await waitFor(() => expect(router.push).toHaveBeenCalledTimes(1));
+  expect(router.push).toHaveBeenCalledWith('/symptom/eye_fatigue');
+});
+
 it('navigates to the route a tapped notification resolves to while the app is running', async () => {
   useOnboarding.setState({ disclaimerAcceptedAt: '2026-09-28T00:00:00.000Z' } as never);
   let handler: (route: '/symptom/eye_fatigue' | `/routine/${string}`) => void = () => {};
@@ -74,4 +98,11 @@ it('navigates to the route a tapped notification resolves to while the app is ru
 
   handler('/routine/r1');
   expect(router.push).toHaveBeenCalledWith('/routine/r1');
+});
+
+it('disables the iOS swipe-back gesture on the routine editor screens', async () => {
+  await render(<Routes />);
+  expect(mockScreenProps.get('routine/new')?.options).toEqual(expect.objectContaining({ gestureEnabled: false }));
+  expect(mockScreenProps.get('routine/[id]/edit')?.options).toEqual(expect.objectContaining({ gestureEnabled: false }));
+  expect(mockScreenProps.get('routine/[id]/index')?.options).toBeUndefined();
 });
