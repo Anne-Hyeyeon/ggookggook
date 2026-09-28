@@ -118,6 +118,16 @@ async function runFlow(page) {
   await search.waitFor();
   await shoot(page, '03-today.png');
 
+  // 15. 내 루틴 (mine) tab, completely fresh: no favorites, no user routines beyond the
+  // 새 루틴 만들기 affordance, and no history yet, so the big empty-state cat shows once
+  // instead of three separate per-section empty lines (see mine.tsx's `allEmpty`).
+  await page.getByRole('tab', { name: '내 루틴' }).click();
+  await page.getByText('하트를 누른 혈자리가 여기에 모여요.').waitFor();
+  await page.getByText('오늘 탭에서 불편한 곳을 골라 보세요.').waitFor();
+  await shoot(page, '15-mine-empty.png');
+  await page.getByRole('tab', { name: '오늘' }).click();
+  await search.waitFor();
+
   // 4. Search "잠이 안" (matches the 잠이 안 올 때 symptom)
   await search.fill('잠이 안');
   await page.getByText('잠이 안 올 때', { exact: true }).waitFor();
@@ -229,6 +239,15 @@ async function runFlow(page) {
   await page.getByRole('button', { name: '새 루틴 만들기' }).waitFor();
   await page.getByText('아침 루틴').waitFor();
   await shoot(page, '19-add-to-routine.png');
+
+  // 20. 내 루틴 tab, fully populated: 합곡 favorited (step 14), 아침 루틴 created and now
+  // holding all three added acupoints (steps 16-19), and the finished headache routine
+  // from step 8 still in 지난 기록.
+  await page.goto(`http://127.0.0.1:${PORT}/mine`, { waitUntil: 'load' });
+  await page.getByText('아침 루틴').waitFor();
+  await page.getByText('합곡', { exact: true }).waitFor();
+  await page.getByText('나아졌어요', { exact: true }).waitFor();
+  await shoot(page, '20-mine-full.png');
 }
 
 async function main() {
