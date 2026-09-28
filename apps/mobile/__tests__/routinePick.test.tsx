@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import PickAcupointScreen from '../app/routine/pick';
 import { useFavorites } from '@/state/favorites';
-import { useRoutineDraft } from '@/state/routineDraft';
+import { toRoutineSteps, useRoutineDraft } from '@/state/routineDraft';
 
 jest.mock('expo-router', () => ({
   router: { back: jest.fn() },
@@ -61,7 +61,7 @@ it('shows an empty state when nothing matches', async () => {
 it('adds the tapped acupoint with its default seconds to the draft and goes back', async () => {
   await render(<PickAcupointScreen />);
   await fireEvent.press(screen.getByRole('button', { name: /^합곡,/ }));
-  expect(useRoutineDraft.getState().draft.steps).toEqual([{ acupointId: 'LI4', seconds: 60 }]);
+  expect(toRoutineSteps(useRoutineDraft.getState().draft.steps)).toEqual([{ acupointId: 'LI4', seconds: 60 }]);
   expect(router.back).toHaveBeenCalledTimes(1);
 });
 
@@ -69,7 +69,7 @@ it('appends to an existing draft instead of replacing it', async () => {
   useRoutineDraft.getState().addAcupoint({ acupointId: 'PC6', seconds: 60 });
   await render(<PickAcupointScreen />);
   await fireEvent.press(screen.getByRole('button', { name: /^합곡,/ }));
-  expect(useRoutineDraft.getState().draft.steps).toEqual([
+  expect(toRoutineSteps(useRoutineDraft.getState().draft.steps)).toEqual([
     { acupointId: 'PC6', seconds: 60 },
     { acupointId: 'LI4', seconds: 60 },
   ]);

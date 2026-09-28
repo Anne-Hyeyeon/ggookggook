@@ -37,20 +37,23 @@ function clampSeconds(seconds: number): number {
   return Math.min(USER_ROUTINE_LIMITS.secondsMax, Math.max(USER_ROUTINE_LIMITS.secondsMin, snapped));
 }
 
-function inRange(steps: readonly RoutineStep[], index: number): boolean {
+function inRange(steps: readonly unknown[], index: number): boolean {
   return index >= 0 && index < steps.length;
 }
 
-export function addStep(steps: readonly RoutineStep[], step: RoutineStep): RoutineStep[] {
+// Generic over T so a caller carrying extra per-step fields (the routine draft's local,
+// unpersisted React key) gets that field preserved through add/remove/move/setSeconds
+// instead of being narrowed away to the bare { acupointId, seconds } shape.
+export function addStep<T extends RoutineStep>(steps: readonly T[], step: T): T[] {
   return [...steps, { ...step, seconds: clampSeconds(step.seconds) }];
 }
 
-export function removeStep(steps: readonly RoutineStep[], index: number): RoutineStep[] {
+export function removeStep<T extends RoutineStep>(steps: readonly T[], index: number): T[] {
   if (!inRange(steps, index)) return [...steps];
   return steps.filter((_, i) => i !== index);
 }
 
-export function moveStep(steps: readonly RoutineStep[], from: number, to: number): RoutineStep[] {
+export function moveStep<T extends RoutineStep>(steps: readonly T[], from: number, to: number): T[] {
   if (!inRange(steps, from) || !inRange(steps, to)) return [...steps];
   const next = [...steps];
   const moved = next[from];
@@ -60,7 +63,7 @@ export function moveStep(steps: readonly RoutineStep[], from: number, to: number
   return next;
 }
 
-export function setStepSeconds(steps: readonly RoutineStep[], index: number, seconds: number): RoutineStep[] {
+export function setStepSeconds<T extends RoutineStep>(steps: readonly T[], index: number, seconds: number): T[] {
   if (!inRange(steps, index)) return [...steps];
   return steps.map((step, i) => (i === index ? { ...step, seconds: clampSeconds(seconds) } : step));
 }

@@ -1,5 +1,5 @@
 import type { UserRoutine } from '@ggookggook/shared';
-import { isRoutineDraftDirty, useRoutineDraft } from '@/state/routineDraft';
+import { isRoutineDraftDirty, toRoutineSteps, useRoutineDraft, type DraftStep } from '@/state/routineDraft';
 
 const routine: UserRoutine = {
   id: 'r1',
@@ -11,6 +11,8 @@ const routine: UserRoutine = {
   deletedAt: null,
 };
 
+const draftStep = (acupointId: string, seconds = 60, key = 'k'): DraftStep => ({ acupointId, seconds, key });
+
 beforeEach(() => {
   useRoutineDraft.getState().startNew();
 });
@@ -21,10 +23,14 @@ it('starts new with an empty draft and no original', () => {
   expect(useRoutineDraft.getState()).toMatchObject({ original: null, draft: { name: '', steps: [], sourceSymptomId: null } });
 });
 
-it('starts edit with the routine loaded into both draft and original', () => {
+it('starts edit with the routine loaded into both draft and original, assigning each step a fresh key', () => {
   useRoutineDraft.getState().startEdit(routine);
   expect(useRoutineDraft.getState().original).toEqual(routine);
-  expect(useRoutineDraft.getState().draft).toEqual({ name: '아침 루틴', steps: routine.steps, sourceSymptomId: null });
+  const { draft } = useRoutineDraft.getState();
+  expect(draft.name).toBe('아침 루틴');
+  expect(toRoutineSteps(draft.steps)).toEqual(routine.steps);
+  expect(draft.steps.map((step) => step.key).every((key) => typeof key === 'string' && key.length > 0)).toBe(true);
+  expect(new Set(draft.steps.map((step) => step.key)).size).toBe(draft.steps.length);
 });
 
 it('sets the name', () => {
@@ -32,29 +38,50 @@ it('sets the name', () => {
   expect(useRoutineDraft.getState().draft.name).toBe('저녁 루틴');
 });
 
-it('adds an acupoint, clamping and snapping its seconds', () => {
+it('adds an acupoint, clamping and snapping its seconds, and assigning it a key', () => {
   useRoutineDraft.getState().addAcupoint({ acupointId: 'PC6', seconds: 34 });
-  expect(useRoutineDraft.getState().draft.steps).toEqual([{ acupointId: 'PC6', seconds: 30 }]);
+  const { steps } = useRoutineDraft.getState().draft;
+  expect(toRoutineSteps(steps)).toEqual([{ acupointId: 'PC6', seconds: 30 }]);
+  expect(typeof steps[0]?.key).toBe('string');
+});
+
+it('gives each added acupoint its own key, even for the same acupoint twice', () => {
+  useRoutineDraft.getState().addAcupoint({ acupointId: 'LI4', seconds: 60 });
+  useRoutineDraft.getState().addAcupoint({ acupointId: 'LI4', seconds: 90 });
+  const { steps } = useRoutineDraft.getState().draft;
+  expect(steps[0]?.key).not.toBe(steps[1]?.key);
 });
 
 it('removes a step by index without mutating the previous array', () => {
   useRoutineDraft.getState().startEdit(routine);
   const before = useRoutineDraft.getState().draft.steps;
   useRoutineDraft.getState().removeStep(0);
-  expect(useRoutineDraft.getState().draft.steps).toEqual([{ acupointId: 'ST36', seconds: 90 }]);
-  expect(before).toEqual(routine.steps);
+  expect(toRoutineSteps(useRoutineDraft.getState().draft.steps)).toEqual([{ acupointId: 'ST36', seconds: 90 }]);
+  expect(toRoutineSteps(before)).toEqual(routine.steps);
 });
 
 it('moves a step from one index to another', () => {
   useRoutineDraft.getState().startEdit(routine);
   useRoutineDraft.getState().moveStep(0, 1);
-  expect(useRoutineDraft.getState().draft.steps).toEqual([{ acupointId: 'ST36', seconds: 90 }, { acupointId: 'LI4', seconds: 60 }]);
+  expect(toRoutineSteps(useRoutineDraft.getState().draft.steps)).toEqual([
+    { acupointId: 'ST36', seconds: 90 },
+    { acupointId: 'LI4', seconds: 60 },
+  ]);
 });
 
 it('sets a step seconds, clamped and snapped', () => {
   useRoutineDraft.getState().startEdit(routine);
   useRoutineDraft.getState().setStepSeconds(0, 605);
-  expect(useRoutineDraft.getState().draft.steps[0]).toEqual({ acupointId: 'LI4', seconds: 600 });
+  expect(toRoutineSteps(useRoutineDraft.getState().draft.steps)[0]).toEqual({ acupointId: 'LI4', seconds: 600 });
+});
+
+describe('toRoutineSteps', () => {
+  it('strips the draft-only key, leaving just acupointId and seconds', () => {
+    expect(toRoutineSteps([draftStep('LI4', 60, 'a'), draftStep('ST36', 90, 'b')])).toEqual([
+      { acupointId: 'LI4', seconds: 60 },
+      { acupointId: 'ST36', seconds: 90 },
+    ]);
+  });
 });
 
 describe('isRoutineDraftDirty', () => {
@@ -64,23 +91,25 @@ describe('isRoutineDraftDirty', () => {
 
   it('is true once a new draft has a name or steps', () => {
     expect(isRoutineDraftDirty({ name: '루틴', steps: [], sourceSymptomId: null }, null)).toBe(true);
-    expect(isRoutineDraftDirty({ name: '', steps: [{ acupointId: 'LI4', seconds: 60 }], sourceSymptomId: null }, null)).toBe(true);
+    expect(isRoutineDraftDirty({ name: '', steps: [draftStep('LI4')], sourceSymptomId: null }, null)).toBe(true);
   });
 
-  it('is false when an edited draft matches its original', () => {
-    expect(isRoutineDraftDirty({ name: routine.name, steps: routine.steps, sourceSymptomId: null }, routine)).toBe(false);
+  it('is false when an edited draft matches its original, regardless of the draft keys', () => {
+    const steps = routine.steps.map((step, i) => draftStep(step.acupointId, step.seconds, `key-${i}`));
+    expect(isRoutineDraftDirty({ name: routine.name, steps, sourceSymptomId: null }, routine)).toBe(false);
   });
 
   it('is true once an edited draft changes the name', () => {
-    expect(isRoutineDraftDirty({ name: '다른 이름', steps: routine.steps, sourceSymptomId: null }, routine)).toBe(true);
+    const steps = routine.steps.map((step) => draftStep(step.acupointId, step.seconds));
+    expect(isRoutineDraftDirty({ name: '다른 이름', steps, sourceSymptomId: null }, routine)).toBe(true);
   });
 
   it('is true once an edited draft changes a step', () => {
-    const changed = [{ acupointId: 'LI4', seconds: 70 }, { acupointId: 'ST36', seconds: 90 }];
+    const changed = [draftStep('LI4', 70), draftStep('ST36', 90)];
     expect(isRoutineDraftDirty({ name: routine.name, steps: changed, sourceSymptomId: null }, routine)).toBe(true);
   });
 
   it('is true once an edited draft changes the step count', () => {
-    expect(isRoutineDraftDirty({ name: routine.name, steps: [routine.steps[0]!], sourceSymptomId: null }, routine)).toBe(true);
+    expect(isRoutineDraftDirty({ name: routine.name, steps: [draftStep('LI4', 60)], sourceSymptomId: null }, routine)).toBe(true);
   });
 });

@@ -4,7 +4,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { BackHandler, Platform } from 'react-native';
 import NewRoutineScreen from '../app/routine/new';
-import { useRoutineDraft } from '@/state/routineDraft';
+import { toRoutineSteps, useRoutineDraft } from '@/state/routineDraft';
 
 jest.mock('@/db/DbProvider', () => {
   const db = {};
@@ -144,7 +144,57 @@ it('does not lose an increment when the stepper is pressed twice before either s
     button.props.onClick();
     button.props.onClick();
   });
-  expect(useRoutineDraft.getState().draft.steps[0]).toEqual({ acupointId: 'LI4', seconds: 80 });
+  expect(toRoutineSteps(useRoutineDraft.getState().draft.steps)[0]).toEqual({ acupointId: 'LI4', seconds: 80 });
+});
+
+it('removes only the middle step once, even when 빼기 is double-tapped before either settles', async () => {
+  await render(<NewRoutineScreen />);
+  await withStore(() => {
+    useRoutineDraft.getState().addAcupoint({ acupointId: 'LI4', seconds: 60 });
+    useRoutineDraft.getState().addAcupoint({ acupointId: 'PC6', seconds: 60 });
+    useRoutineDraft.getState().addAcupoint({ acupointId: 'ST36', seconds: 60 });
+  });
+  const removeMiddle = screen.getByRole('button', { name: '내관 빼기' });
+  await act(async () => {
+    removeMiddle.props.onClick();
+    removeMiddle.props.onClick();
+  });
+  expect(toRoutineSteps(useRoutineDraft.getState().draft.steps)).toEqual([
+    { acupointId: 'LI4', seconds: 60 },
+    { acupointId: 'ST36', seconds: 60 },
+  ]);
+});
+
+it('moves the last step to the front when 위로 is double-tapped before either settles', async () => {
+  await render(<NewRoutineScreen />);
+  await withStore(() => {
+    useRoutineDraft.getState().addAcupoint({ acupointId: 'LI4', seconds: 60 });
+    useRoutineDraft.getState().addAcupoint({ acupointId: 'PC6', seconds: 60 });
+    useRoutineDraft.getState().addAcupoint({ acupointId: 'ST36', seconds: 60 });
+  });
+  const moveLastUp = screen.getByRole('button', { name: '족삼리 위로' });
+  await act(async () => {
+    moveLastUp.props.onClick();
+    moveLastUp.props.onClick();
+  });
+  expect(toRoutineSteps(useRoutineDraft.getState().draft.steps)).toEqual([
+    { acupointId: 'ST36', seconds: 60 },
+    { acupointId: 'LI4', seconds: 60 },
+    { acupointId: 'PC6', seconds: 60 },
+  ]);
+});
+
+it('acts on the tapped duplicate acupoint by its own draft key, not the shared acupoint id', async () => {
+  await render(<NewRoutineScreen />);
+  await withStore(() => {
+    useRoutineDraft.getState().addAcupoint({ acupointId: 'LI4', seconds: 60 });
+    useRoutineDraft.getState().addAcupoint({ acupointId: 'LI4', seconds: 90 });
+  });
+  const removeButtons = screen.getAllByRole('button', { name: '합곡 빼기' });
+  expect(removeButtons).toHaveLength(2);
+
+  await fireEvent.press(removeButtons[1]!);
+  expect(toRoutineSteps(useRoutineDraft.getState().draft.steps)).toEqual([{ acupointId: 'LI4', seconds: 60 }]);
 });
 
 it('removes a step with 빼기', async () => {

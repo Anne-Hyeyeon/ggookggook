@@ -7,17 +7,29 @@ import {
   type UserRoutine,
 } from '@ggookggook/shared';
 import { create } from 'zustand';
+import { newId } from '@/id';
+
+// A local, unpersisted identity for a step while it lives in the draft: acts as the React
+// key and the target move/remove/setSeconds resolve to a live index by, instead of the
+// step's render-time index (which a fast double tap can race past, see routineNew.test.tsx).
+export interface DraftStep extends RoutineStep {
+  key: string;
+}
 
 export interface RoutineDraft {
   name: string;
-  steps: RoutineStep[];
+  steps: DraftStep[];
   sourceSymptomId: string | null;
 }
 
 const EMPTY_DRAFT: RoutineDraft = { name: '', steps: [], sourceSymptomId: null };
 
 function toDraft(routine: UserRoutine): RoutineDraft {
-  return { name: routine.name, steps: routine.steps, sourceSymptomId: routine.sourceSymptomId };
+  return { name: routine.name, steps: routine.steps.map((step) => ({ ...step, key: newId() })), sourceSymptomId: routine.sourceSymptomId };
+}
+
+export function toRoutineSteps(steps: readonly DraftStep[]): RoutineStep[] {
+  return steps.map(({ acupointId, seconds }) => ({ acupointId, seconds }));
 }
 
 interface RoutineDraftState {
@@ -45,7 +57,7 @@ export const useRoutineDraft = create<RoutineDraftState>((set) => ({
     set((state) => ({ draft: { ...state.draft, name } }));
   },
   addAcupoint(step) {
-    set((state) => ({ draft: { ...state.draft, steps: addStepPure(state.draft.steps, step) } }));
+    set((state) => ({ draft: { ...state.draft, steps: addStepPure(state.draft.steps, { ...step, key: newId() }) } }));
   },
   removeStep(index) {
     set((state) => ({ draft: { ...state.draft, steps: removeStepPure(state.draft.steps, index) } }));

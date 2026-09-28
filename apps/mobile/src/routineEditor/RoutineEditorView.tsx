@@ -7,8 +7,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
 import { newId } from '@/id';
-import { isRoutineDraftDirty, useRoutineDraft } from '@/state/routineDraft';
+import { isRoutineDraftDirty, toRoutineSteps, useRoutineDraft } from '@/state/routineDraft';
 import { colors, fonts, space } from '@/theme';
+import { BackLink } from '@/ui/BackLink';
 import { Button } from '@/ui/Button';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
@@ -27,20 +28,42 @@ export function RoutineEditorView() {
   const [saveError, setSaveError] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
 
-  const validation = validateUserRoutine({ name: draft.name, steps: draft.steps, sourceSymptomId: draft.sourceSymptomId });
+  const validation = validateUserRoutine({ name: draft.name, steps: toRoutineSteps(draft.steps), sourceSymptomId: draft.sourceSymptomId });
   const showErrors = dirty && !validation.ok;
   const atStepsMax = draft.steps.length >= USER_ROUTINE_LIMITS.stepsMax;
 
-  // Read the live draft at press time rather than the seconds closed over by this row's render:
-  // two taps on the same stepper fired before a re-render lands must each build on the other's
-  // result, not both on the same stale value (the race fixed for the settings screen steppers).
+  // Every step action below resolves a stable draft key to its live index at press time,
+  // via useRoutineDraft.getState() rather than the index closed over by this row's render:
+  // two taps fired before a re-render lands must each build on the other's result. A step
+  // removed by the first tap is simply not found by the second (a no-op), and a step moved
+  // by the first tap is found at its new position by the second, so both taps still land.
   const stepSeconds = useCallback(
-    (index: number, direction: 1 | -1) => {
-      const current = useRoutineDraft.getState().draft.steps[index]?.seconds;
-      if (current === undefined) return;
+    (key: string, direction: 1 | -1) => {
+      const steps = useRoutineDraft.getState().draft.steps;
+      const index = steps.findIndex((step) => step.key === key);
+      const current = steps[index]?.seconds;
+      if (index === -1 || current === undefined) return;
       setStepSeconds(index, current + direction * USER_ROUTINE_LIMITS.secondsStep);
     },
     [setStepSeconds],
+  );
+
+  const moveByKey = useCallback(
+    (key: string, direction: -1 | 1) => {
+      const index = useRoutineDraft.getState().draft.steps.findIndex((step) => step.key === key);
+      if (index === -1) return;
+      moveStep(index, index + direction);
+    },
+    [moveStep],
+  );
+
+  const removeByKey = useCallback(
+    (key: string) => {
+      const index = useRoutineDraft.getState().draft.steps.findIndex((step) => step.key === key);
+      if (index === -1) return;
+      removeStep(index);
+    },
+    [removeStep],
   );
 
   const handleBackPress = useCallback(() => {
@@ -76,7 +99,8 @@ export function RoutineEditorView() {
 
   const handleSave = useCallback(() => {
     const state = useRoutineDraft.getState();
-    const result = validateUserRoutine({ name: state.draft.name, steps: state.draft.steps, sourceSymptomId: state.draft.sourceSymptomId });
+    const steps = toRoutineSteps(state.draft.steps);
+    const result = validateUserRoutine({ name: state.draft.name, steps, sourceSymptomId: state.draft.sourceSymptomId });
     if (!result.ok) return;
     setSaving(true);
     setSaveError(false);
@@ -109,9 +133,7 @@ export function RoutineEditorView() {
     <SafeAreaView style={styles.screen}>
       <View style={styles.body} importantForAccessibility={confirmLeave ? 'no-hide-descendants' : 'auto'}>
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          <Pressable accessibilityRole="button" accessibilityLabel="뒤로" onPress={handleBackPress} hitSlop={12}>
-            <Txt variant="sub">← 뒤로</Txt>
-          </Pressable>
+          <BackLink onPress={handleBackPress} />
           <Txt variant="title">{original ? '루틴 편집' : '새 루틴'}</Txt>
 
           {saveError && (
@@ -153,7 +175,7 @@ export function RoutineEditorView() {
               const atSecondsMin = step.seconds <= USER_ROUTINE_LIMITS.secondsMin;
               const atSecondsMax = step.seconds >= USER_ROUTINE_LIMITS.secondsMax;
               return (
-                <View key={index}>
+                <View key={step.key}>
                   <View style={styles.stepRow}>
                     <View style={styles.stepHead}>
                       <Txt variant="pointSmall" style={styles.stepName}>{name}</Txt>
@@ -166,7 +188,7 @@ export function RoutineEditorView() {
                         accessibilityState={{ disabled: atSecondsMin }}
                         disabled={atSecondsMin}
                         hitSlop={8}
-                        onPress={() => stepSeconds(index, -1)}
+                        onPress={() => stepSeconds(step.key, -1)}
                         style={({ pressed }) => [styles.stepButton, (pressed || atSecondsMin) && styles.stepButtonDim]}
                       >
                         <Txt style={styles.stepSymbol}>−</Txt>
@@ -178,7 +200,7 @@ export function RoutineEditorView() {
                         accessibilityState={{ disabled: atSecondsMax }}
                         disabled={atSecondsMax}
                         hitSlop={8}
-                        onPress={() => stepSeconds(index, 1)}
+                        onPress={() => stepSeconds(step.key, 1)}
                         style={({ pressed }) => [styles.stepButton, (pressed || atSecondsMax) && styles.stepButtonDim]}
                       >
                         <Txt style={styles.stepSymbol}>+</Txt>
@@ -191,7 +213,7 @@ export function RoutineEditorView() {
                       accessibilityLabel={`${name} 위로`}
                       accessibilityState={{ disabled: atFirst }}
                       disabled={atFirst}
-                      onPress={() => moveStep(index, index - 1)}
+                      onPress={() => moveByKey(step.key, -1)}
                       style={({ pressed }) => [styles.actionButton, (pressed || atFirst) && styles.actionButtonDim]}
                     >
                       <Txt variant="sub">위로</Txt>
@@ -201,7 +223,7 @@ export function RoutineEditorView() {
                       accessibilityLabel={`${name} 아래로`}
                       accessibilityState={{ disabled: atLast }}
                       disabled={atLast}
-                      onPress={() => moveStep(index, index + 1)}
+                      onPress={() => moveByKey(step.key, 1)}
                       style={({ pressed }) => [styles.actionButton, (pressed || atLast) && styles.actionButtonDim]}
                     >
                       <Txt variant="sub">아래로</Txt>
@@ -209,7 +231,7 @@ export function RoutineEditorView() {
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`${name} 빼기`}
-                      onPress={() => removeStep(index)}
+                      onPress={() => removeByKey(step.key)}
                       style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonDim]}
                     >
                       <Txt variant="sub" style={styles.removeLabel}>빼기</Txt>
