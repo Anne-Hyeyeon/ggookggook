@@ -117,7 +117,7 @@ it('shows the empty state when every session is a ghost', async () => {
   expect(await screen.findByText('아직 기록이 없어요.')).toBeTruthy();
 });
 
-it('shows a user routine session with its stored name, not navigable to a symptom detail', async () => {
+it('shows a user routine session with its stored name, navigable to its preview', async () => {
   mocked.listCompletedSessions.mockResolvedValue([log('s1', today(10, 0), { routine: { kind: 'user', routineId: 'r1' } })]);
   mocked.getUserRoutine.mockResolvedValue({
     id: 'r1',
@@ -134,15 +134,17 @@ it('shows a user routine session with its stored name, not navigable to a sympto
   expect(mocked.getUserRoutine).toHaveBeenCalledWith({}, 'r1');
 
   await fireEvent.press(screen.getByText('내 아침 루틴'));
-  expect(router.push).not.toHaveBeenCalled();
+  expect(router.push).toHaveBeenCalledWith('/routine/r1');
 });
 
-it('shows 지운 루틴 for a user routine session whose routine no longer exists', async () => {
+it('shows 지운 루틴 for a user routine session whose routine no longer exists, not navigable', async () => {
   mocked.listCompletedSessions.mockResolvedValue([log('s1', today(10, 0), { routine: { kind: 'user', routineId: 'gone' } })]);
   mocked.getUserRoutine.mockResolvedValue(null);
 
   await render(<MineScreen />);
   expect(await screen.findByText('지운 루틴')).toBeTruthy();
+  await fireEvent.press(screen.getByText('지운 루틴'));
+  expect(router.push).not.toHaveBeenCalled();
 });
 
 it('shows 지운 루틴, not the old name, for a soft-deleted user routine session', async () => {

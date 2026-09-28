@@ -1,9 +1,14 @@
+import { saveUserRoutine } from '@ggookggook/store';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
+import { useDb } from '@/db/DbProvider';
 import { ROUTINE_DISCLAIMER } from '@/disclaimers';
+import { newId } from '@/id';
 import { routineSummary, sideLabel, topic, visibleSteps } from '@/routine';
+import { copySymptomToUserRoutine } from '@/routines';
 import { useSettings } from '@/state/settings';
 import { colors, fonts, space } from '@/theme';
 import { BackLink } from '@/ui/BackLink';
@@ -15,8 +20,28 @@ const nameOf = (id: string) => content.acupoints.get(id)?.name.ko ?? id;
 
 export default function SymptomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const db = useDb();
   const settings = useSettings((state) => state.settings);
   const symptom = content.symptom(id);
+  const [copying, setCopying] = useState(false);
+  const [copyError, setCopyError] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    if (!symptom) return;
+    setCopyError(false);
+    setCopying(true);
+    const now = new Date();
+    const routineId = newId();
+    saveUserRoutine(db, copySymptomToUserRoutine(symptom, routineId, now.toISOString()), now)
+      .then(() => {
+        router.push(`/routine/${routineId}/edit`);
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to copy the symptom into a routine', error);
+        setCopyError(true);
+      })
+      .finally(() => setCopying(false));
+  }, [db, symptom]);
 
   if (!symptom) {
     return (
@@ -77,6 +102,11 @@ export default function SymptomScreen() {
         </View>
 
         {cautionText && <Txt variant="sub" style={styles.caution}>{cautionText}</Txt>}
+        {copyError && (
+          <Txt variant="sub" style={styles.error}>
+            저장하지 못했어요. 다시 눌러 주세요.
+          </Txt>
+        )}
 
         <View style={styles.doctor}>
           <Rule strong />
@@ -88,6 +118,12 @@ export default function SymptomScreen() {
       </ScrollView>
       <View style={styles.footer}>
         <Button label="시작" onPress={() => router.push(`/guide/${symptom.id}`)} disabled={steps.length === 0} />
+        <Button
+          label={copying ? '복사하는 중…' : '내 루틴으로 복사'}
+          kind="secondary"
+          onPress={handleCopy}
+          disabled={copying}
+        />
       </View>
     </SafeAreaView>
   );
@@ -107,5 +143,6 @@ const styles = StyleSheet.create({
   caution: { color: colors.accent },
   doctor: { gap: space(2) },
   doctorTitle: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink, marginTop: space(2) },
-  footer: { padding: space(5), paddingTop: space(2) },
+  error: { color: colors.accent },
+  footer: { padding: space(5), paddingTop: space(2), gap: space(3) },
 });

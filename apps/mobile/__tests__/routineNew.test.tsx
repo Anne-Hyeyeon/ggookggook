@@ -11,8 +11,10 @@ jest.mock('@/db/DbProvider', () => {
   return { useDb: () => db };
 });
 jest.mock('@ggookggook/store', () => ({ saveUserRoutine: jest.fn() }));
+let mockParams: { prefillAcupointId?: string } = {};
 jest.mock('expo-router', () => ({
-  router: { push: jest.fn(), back: jest.fn() },
+  router: { push: jest.fn(), back: jest.fn(), replace: jest.fn() },
+  useLocalSearchParams: () => mockParams,
   useFocusEffect: (effect: () => void | (() => void)) => {
     const { useEffect } = jest.requireActual('react');
     useEffect(effect, [effect]);
@@ -49,6 +51,7 @@ const previousRoutine: UserRoutine = {
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(BackHandler, 'addEventListener');
+  mockParams = {};
   mocked.saveUserRoutine.mockResolvedValue(undefined);
   useRoutineDraft.getState().startEdit(previousRoutine);
 });
@@ -58,6 +61,19 @@ it('starts empty and resets any leftover draft from a previous edit', async () =
   expect(screen.getByText('새 루틴')).toBeTruthy();
   expect(screen.queryByText('이전 편집')).toBeNull();
   expect(screen.queryByText('족삼리')).toBeNull();
+  expect(screen.getByRole('button', { name: '저장' }).props.accessibilityState.disabled).toBe(true);
+});
+
+it('prefills the draft with an acupoint passed via the route params', async () => {
+  mockParams = { prefillAcupointId: 'LI4' };
+  await render(<NewRoutineScreen />);
+  expect(screen.getByText('합곡')).toBeTruthy();
+  expect(screen.getByText('60초')).toBeTruthy();
+});
+
+it('ignores an unknown prefill acupoint id and starts empty', async () => {
+  mockParams = { prefillAcupointId: 'not-a-real-id' };
+  await render(<NewRoutineScreen />);
   expect(screen.getByRole('button', { name: '저장' }).props.accessibilityState.disabled).toBe(true);
 });
 
@@ -206,7 +222,7 @@ it('removes a step with 빼기', async () => {
   expect(screen.queryByText('합곡')).toBeNull();
 });
 
-it('saves the routine and goes back', async () => {
+it('saves the routine and opens its new preview', async () => {
   await render(<NewRoutineScreen />);
   await fireEvent.changeText(screen.getByLabelText('루틴 이름'), '아침 루틴');
   await withStore(() => {
@@ -224,7 +240,9 @@ it('saves the routine and goes back', async () => {
     }),
     expect.any(Date),
   );
-  expect(router.back).toHaveBeenCalledTimes(1);
+  const savedId = (mocked.saveUserRoutine.mock.calls[0]?.[1] as { id: string }).id;
+  expect(router.replace).toHaveBeenCalledWith(`/routine/${savedId}`);
+  expect(router.back).not.toHaveBeenCalled();
 });
 
 it('shows an error and stays editable when saving fails', async () => {

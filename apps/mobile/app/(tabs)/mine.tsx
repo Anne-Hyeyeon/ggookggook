@@ -33,8 +33,9 @@ const FEEDBACK_LABEL: Record<SessionFeedback, string> = {
 interface HistoryRow {
   session: SessionLog;
   title: string;
-  // Navigation target for a symptom row; a user-routine row has no preview screen yet.
-  symptomId: string | null;
+  // Navigation target for this row's preview screen; null for a deleted user routine,
+  // which has nothing left to preview.
+  href: `/symptom/${string}` | `/routine/${string}` | null;
 }
 
 interface DaySection {
@@ -49,11 +50,12 @@ function toRows(sessions: SessionLog[], userRoutines: Map<string, UserRoutine | 
     if (session.routine.kind === 'symptom') {
       const symptom = content.symptom(session.routine.symptomId);
       if (!symptom) continue;
-      rows.push({ session, title: symptom.name, symptomId: symptom.id });
+      rows.push({ session, title: symptom.name, href: `/symptom/${symptom.id}` });
       continue;
     }
     const routine = userRoutines.get(session.routine.routineId);
-    rows.push({ session, title: isUserRoutineUsable(routine) ? routine.name : DELETED_ROUTINE_LABEL, symptomId: null });
+    const usable = isUserRoutineUsable(routine);
+    rows.push({ session, title: usable ? routine.name : DELETED_ROUTINE_LABEL, href: usable ? `/routine/${routine.id}` : null });
   }
   return rows;
 }
@@ -138,7 +140,7 @@ export default function MineScreen() {
 }
 
 function HistoryRowView({ row }: { row: HistoryRow }) {
-  const { session, title, symptomId } = row;
+  const { session, title, href } = row;
   const timestamp = session.completedAt ?? session.startedAt;
   const time = formatTimeOfDay(timestamp);
   const duration = formatDuration(session.durationSeconds);
@@ -159,15 +161,10 @@ function HistoryRowView({ row }: { row: HistoryRow }) {
     </>
   );
 
-  if (symptomId === null) return <View style={styles.row}>{inner}</View>;
+  if (href === null) return <View style={styles.row}>{inner}</View>;
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      onPress={() => router.push(`/symptom/${symptomId}`)}
-      style={styles.row}
-    >
+    <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel} onPress={() => router.push(href)} style={styles.row}>
       {inner}
     </Pressable>
   );

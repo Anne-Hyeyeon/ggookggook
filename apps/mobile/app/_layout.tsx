@@ -61,6 +61,7 @@ function Routes() {
         <Stack.Screen name="done" options={{ gestureEnabled: false }} />
         <Stack.Screen name="settings" />
         <Stack.Screen name="routine/new" />
+        <Stack.Screen name="routine/[id]/index" />
         <Stack.Screen name="routine/[id]/edit" />
         <Stack.Screen name="routine/pick" />
       </Stack.Protected>

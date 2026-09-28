@@ -105,10 +105,12 @@ export function RoutineEditorView() {
     setSaving(true);
     setSaveError(false);
     const now = new Date();
+    const isNew = state.original === null;
+    const id = state.original?.id ?? newId();
     saveUserRoutine(
       db,
       {
-        id: state.original?.id ?? newId(),
+        id,
         name: result.value.name,
         steps: result.value.steps,
         sourceSymptomId: result.value.sourceSymptomId,
@@ -119,8 +121,11 @@ export function RoutineEditorView() {
       now,
     )
       .then(() => {
-        // Task 5 adds /routine/[id]; once it exists this should router.replace there instead.
-        router.back();
+        // A new routine has no preview to go back to yet, so it opens its own; editing
+        // an existing one always started from that preview, so 뒤로 returns to it directly
+        // instead of pushing a second copy onto the stack.
+        if (isNew) router.replace(`/routine/${id}`);
+        else router.back();
       })
       .catch((error: unknown) => {
         console.error('Failed to save the routine', error);

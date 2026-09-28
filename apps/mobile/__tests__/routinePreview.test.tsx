@@ -1,0 +1,144 @@
+import { DEFAULT_SETTINGS, type UserRoutine } from '@ggookggook/shared';
+import * as store from '@ggookggook/store';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { router } from 'expo-router';
+import RoutinePreviewScreen from '../app/routine/[id]/index';
+import { useSettings } from '@/state/settings';
+
+let mockParams: { id: string } = { id: 'r1' };
+jest.mock('@/db/DbProvider', () => {
+  const db = {};
+  return { useDb: () => db };
+});
+jest.mock('@ggookggook/store', () => ({ getUserRoutine: jest.fn(), deleteUserRoutine: jest.fn() }));
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn(), back: jest.fn(), dismissTo: jest.fn() },
+  useLocalSearchParams: () => mockParams,
+}));
+
+const mocked = store as jest.Mocked<typeof store>;
+
+const routine: UserRoutine = {
+  id: 'r1',
+  name: '아침 루틴',
+  steps: [{ acupointId: 'LI4', seconds: 60 }, { acupointId: 'ST36', seconds: 90 }],
+  sourceSymptomId: null,
+  createdAt: '2026-09-20T00:00:00.000Z',
+  updatedAt: '2026-09-20T00:00:00.000Z',
+  deletedAt: null,
+};
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockParams = { id: 'r1' };
+  useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS } });
+});
+
+it('shows nothing while loading, then the routine once it resolves', async () => {
+  let resolveGet: ((routine: UserRoutine | null) => void) | undefined;
+  mocked.getUserRoutine.mockReturnValueOnce(
+    new Promise((resolve) => {
+      resolveGet = resolve;
+    }),
+  );
+  await render(<RoutinePreviewScreen />);
+  expect(screen.queryByText('아침 루틴')).toBeNull();
+
+  await act(async () => {
+    resolveGet?.(routine);
+  });
+  expect(screen.getByText('아침 루틴')).toBeTruthy();
+  expect(screen.getByText('2곳 · 약 5분')).toBeTruthy();
+  expect(screen.getByText('합곡')).toBeTruthy();
+  expect(screen.getByText('족삼리')).toBeTruthy();
+  expect(screen.getByText('임신 중이면 합곡은 누르지 마세요.')).toBeTruthy();
+});
+
+it('leaves out contraindicated points in pregnancy mode and says so', async () => {
+  useSettings.setState({ settings: { ...DEFAULT_SETTINGS, pregnancyMode: true } });
+  mocked.getUserRoutine.mockResolvedValue(routine);
+  await render(<RoutinePreviewScreen />);
+  expect(await screen.findByText('족삼리')).toBeTruthy();
+  expect(screen.queryByText('합곡')).toBeNull();
+  expect(screen.getByText('임신 중이라 합곡은 뺐어요.')).toBeTruthy();
+  expect(screen.getByText('1곳 · 약 3분')).toBeTruthy();
+});
+
+it('shows a not-found state via 뒤로 when the routine is missing', async () => {
+  mocked.getUserRoutine.mockResolvedValue(null);
+  await render(<RoutinePreviewScreen />);
+  expect(await screen.findByText('지운 루틴이에요.')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: '뒤로' }));
+  expect(router.back).toHaveBeenCalledTimes(1);
+});
+
+it('shows a not-found state for a soft-deleted routine', async () => {
+  mocked.getUserRoutine.mockResolvedValue({ ...routine, deletedAt: '2026-09-25T00:00:00.000Z' });
+  await render(<RoutinePreviewScreen />);
+  expect(await screen.findByText('지운 루틴이에요.')).toBeTruthy();
+});
+
+it('shows a not-found state and logs an error when the load fails', async () => {
+  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+  mocked.getUserRoutine.mockRejectedValueOnce(new Error('read failed'));
+  await render(<RoutinePreviewScreen />);
+  expect(await screen.findByText('지운 루틴이에요.')).toBeTruthy();
+  expect(consoleError).toHaveBeenCalled();
+  consoleError.mockRestore();
+});
+
+it('starts the routine', async () => {
+  mocked.getUserRoutine.mockResolvedValue(routine);
+  await render(<RoutinePreviewScreen />);
+  await fireEvent.press(await screen.findByRole('button', { name: '시작' }));
+  expect(router.push).toHaveBeenCalledWith('/guide/routine/r1');
+});
+
+it('opens the editor', async () => {
+  mocked.getUserRoutine.mockResolvedValue(routine);
+  await render(<RoutinePreviewScreen />);
+  await fireEvent.press(await screen.findByRole('button', { name: '편집' }));
+  expect(router.push).toHaveBeenCalledWith('/routine/r1/edit');
+});
+
+describe('deleting', () => {
+  it('asks for confirmation before deleting', async () => {
+    mocked.getUserRoutine.mockResolvedValue(routine);
+    await render(<RoutinePreviewScreen />);
+    await fireEvent.press(await screen.findByRole('button', { name: '지우기' }));
+    expect(screen.getByText('이 루틴을 지울까요?')).toBeTruthy();
+    expect(mocked.deleteUserRoutine).not.toHaveBeenCalled();
+  });
+
+  it('cancels without deleting', async () => {
+    mocked.getUserRoutine.mockResolvedValue(routine);
+    await render(<RoutinePreviewScreen />);
+    await fireEvent.press(await screen.findByRole('button', { name: '지우기' }));
+    await fireEvent.press(screen.getByRole('button', { name: '취소' }));
+    expect(screen.queryByText('이 루틴을 지울까요?')).toBeNull();
+    expect(mocked.deleteUserRoutine).not.toHaveBeenCalled();
+  });
+
+  it('soft deletes and returns to 내 루틴 on confirm', async () => {
+    mocked.getUserRoutine.mockResolvedValue(routine);
+    mocked.deleteUserRoutine.mockResolvedValue(undefined);
+    await render(<RoutinePreviewScreen />);
+    await fireEvent.press(await screen.findByRole('button', { name: '지우기' }));
+    await fireEvent.press(screen.getByRole('button', { name: '삭제' }));
+    expect(mocked.deleteUserRoutine).toHaveBeenCalledWith({}, 'r1', expect.any(Date));
+    expect(router.dismissTo).toHaveBeenCalledWith('/mine');
+  });
+
+  it('shows an error and keeps the routine visible when the delete fails', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mocked.getUserRoutine.mockResolvedValue(routine);
+    mocked.deleteUserRoutine.mockRejectedValueOnce(new Error('write failed'));
+    await render(<RoutinePreviewScreen />);
+    await fireEvent.press(await screen.findByRole('button', { name: '지우기' }));
+    await fireEvent.press(screen.getByRole('button', { name: '삭제' }));
+    expect(await screen.findByText('지우지 못했어요. 다시 눌러 주세요.')).toBeTruthy();
+    expect(router.dismissTo).not.toHaveBeenCalled();
+    expect(screen.getByText('아침 루틴')).toBeTruthy();
+    consoleError.mockRestore();
+  });
+});

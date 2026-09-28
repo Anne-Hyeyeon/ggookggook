@@ -1,4 +1,4 @@
-import type { RoutineStep, SessionRoutineRef, Settings, UserRoutine } from '@ggookggook/shared';
+import { USER_ROUTINE_LIMITS, type RoutineStep, type SessionRoutineRef, type Settings, type Symptom, type UserRoutine } from '@ggookggook/shared';
 import { content } from '@/content';
 import { visibleStepsFor } from '@/routine';
 
@@ -38,4 +38,22 @@ export function resolveRoutine(ref: RoutineRef, deps: ResolveRoutineDeps): Resol
 
 export function toSessionRoutineRef(ref: RoutineRef): SessionRoutineRef {
   return ref.kind === 'symptom' ? { kind: 'symptom', symptomId: ref.id } : { kind: 'user', routineId: ref.id };
+}
+
+// "내 루틴으로 복사" copies the symptom's full step list, not the pregnancy-filtered view
+// on screen: filtering is re-applied wherever the resulting user routine is shown or run.
+export function symptomRoutineName(name: string): string {
+  return name.trim().slice(0, USER_ROUTINE_LIMITS.nameMaxLength);
+}
+
+export function copySymptomToUserRoutine(symptom: Symptom, id: string, now: string): UserRoutine {
+  return {
+    id,
+    name: symptomRoutineName(symptom.name),
+    steps: symptom.steps,
+    sourceSymptomId: symptom.id,
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
+  };
 }

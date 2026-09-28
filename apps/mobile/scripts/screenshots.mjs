@@ -211,6 +211,24 @@ async function runFlow(page) {
   await pickerSearch.fill('족');
   await page.getByText('족삼리').waitFor();
   await shoot(page, '17-routine-picker.png');
+
+  // 18. Save the routine (discarding the unpicked picker search above) and land on its
+  // new preview: numbers, serif names, seconds, 시작/편집/지우기.
+  await page.getByRole('button', { name: '뒤로' }).click();
+  await page.getByRole('button', { name: '저장' }).click();
+  await page.waitForURL('**/routine/**');
+  await page.getByRole('button', { name: '시작' }).waitFor();
+  await page.getByRole('button', { name: '지우기' }).waitFor();
+  await shoot(page, '18-routine-preview.png');
+
+  // 19. Acupoint detail for 족삼리, with the 루틴에 추가 sheet open: my routines (the one
+  // just created, above) with step counts, and 새 루틴 만들기.
+  await page.goto(`http://127.0.0.1:${PORT}/acupoint/ST36`, { waitUntil: 'load' });
+  await page.getByText('족삼리').first().waitFor();
+  await page.getByRole('button', { name: '루틴에 추가' }).click();
+  await page.getByRole('button', { name: '새 루틴 만들기' }).waitFor();
+  await page.getByText('아침 루틴').waitFor();
+  await shoot(page, '19-add-to-routine.png');
 }
 
 async function main() {

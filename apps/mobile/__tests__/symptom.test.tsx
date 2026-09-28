@@ -1,14 +1,22 @@
 import { DEFAULT_SETTINGS } from '@ggookggook/shared';
+import * as store from '@ggookggook/store';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import SymptomScreen from '../app/symptom/[id]';
 import { useSettings } from '@/state/settings';
 
 let mockParams: { id: string } = { id: 'headache' };
+jest.mock('@/db/DbProvider', () => {
+  const db = {};
+  return { useDb: () => db };
+});
+jest.mock('@ggookggook/store', () => ({ saveUserRoutine: jest.fn() }));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn() },
   useLocalSearchParams: () => mockParams,
 }));
+
+const mocked = store as jest.Mocked<typeof store>;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -40,4 +48,43 @@ it('handles an unknown symptom', async () => {
   mockParams = { id: 'nope' };
   await render(<SymptomScreen />);
   expect(screen.getByText('찾을 수 없는 증상이에요.')).toBeTruthy();
+});
+
+describe('내 루틴으로 복사', () => {
+  it('copies the full, unfiltered symptom steps and opens the new routine editor', async () => {
+    mocked.saveUserRoutine.mockResolvedValue(undefined);
+    // Pregnancy mode hides LI4 on screen, but the copy still gets all 3 steps: filtering
+    // is re-applied wherever the resulting user routine is shown or run, not baked in here.
+    useSettings.setState({ settings: { ...DEFAULT_SETTINGS, pregnancyMode: true } });
+    await render(<SymptomScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: '내 루틴으로 복사' }));
+
+    expect(mocked.saveUserRoutine).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({
+        name: '머리가 아플 때',
+        steps: [
+          { acupointId: 'LI4', seconds: 60 },
+          { acupointId: 'EX-HN5', seconds: 60 },
+          { acupointId: 'GB20', seconds: 60 },
+        ],
+        sourceSymptomId: 'headache',
+        deletedAt: null,
+      }),
+      expect.any(Date),
+    );
+    const savedId = (mocked.saveUserRoutine.mock.calls[0]?.[1] as { id: string }).id;
+    expect(router.push).toHaveBeenCalledWith(`/routine/${savedId}/edit`);
+  });
+
+  it('shows an error and stays on the symptom when the copy fails', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mocked.saveUserRoutine.mockRejectedValueOnce(new Error('write failed'));
+    await render(<SymptomScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: '내 루틴으로 복사' }));
+
+    expect(await screen.findByText('저장하지 못했어요. 다시 눌러 주세요.')).toBeTruthy();
+    expect(router.push).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
 });
