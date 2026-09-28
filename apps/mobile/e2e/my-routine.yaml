@@ -9,22 +9,18 @@ appId: kr.ggookggook.app
 - tapOn: "내 루틴"
 - assertVisible: "새 루틴 만들기"
 - tapOn: "새 루틴 만들기"
-- tapOn:
-    text: "루틴 이름"
-    isKeyboardKey: false
+- tapOn: "루틴 이름"
 - inputText: "테스트 루틴"
 - tapOn: "혈자리 추가"
-- tapOn:
-    text: "혈자리 이름, 한자, 영문"
-    isKeyboardKey: false
+- tapOn: "혈자리 이름, 한자, 영문"
 - inputText: "합곡"
-- tapOn: "합곡"
-- tapOn: "혈자리 추가"
 - tapOn:
-    text: "혈자리 이름, 한자, 영문"
-    isKeyboardKey: false
+    text: "합곡, .*"
+- tapOn: "혈자리 추가"
+- tapOn: "혈자리 이름, 한자, 영문"
 - inputText: "내관"
-- tapOn: "내관"
+- tapOn:
+    text: "내관, .*"
 - tapOn: "저장"
 - tapOn: "시작"
 - extendedWaitUntil:
@@ -35,3 +31,4 @@ appId: kr.ggookggook.app
 - tapOn: "처음으로"
 - tapOn: "내 루틴"
 - assertVisible: "테스트 루틴"
+- assertVisible: "나아졌어요"

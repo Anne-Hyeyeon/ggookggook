@@ -197,8 +197,9 @@ async function runFlow(page) {
   await page.getByRole('button', { name: '즐겨찾기에서 빼기' }).waitFor();
   await shoot(page, '14-acupoint-hapgok.png');
 
-  // 15-16. A new routine, named and given two acupoints through the picker (no in-app
-  // entry point to /routine/new exists yet, see Task 5, so this deep-links there directly).
+  // 15-16. A new routine, named and given two acupoints through the picker. 내 루틴's own
+  // 새 루틴 만들기 row leads here too (see step 15's empty-state shot above); this deep-links
+  // directly instead, since that row isn't otherwise needed on screen for this shot.
   await page.goto(`http://127.0.0.1:${PORT}/routine/new`, { waitUntil: 'load' });
   await page.getByText('새 루틴').waitFor();
   await page.getByPlaceholder('루틴 이름').fill('아침 루틴');
