@@ -1,4 +1,4 @@
-import type { RoutineStep, UserRoutine } from '@ggookggook/shared';
+import { routineStepSchema, type RoutineStep, type UserRoutine } from '@ggookggook/shared';
 import type { SqlDatabase } from './db';
 
 interface UserRoutineRow {
@@ -11,14 +11,22 @@ interface UserRoutineRow {
   deleted_at: string | null;
 }
 
+const userRoutineStepsSchema = routineStepSchema.array();
+
 function parseSteps(raw: string): RoutineStep[] {
+  let value: unknown;
   try {
-    const value: unknown = JSON.parse(raw);
-    return Array.isArray(value) ? (value as RoutineStep[]) : [];
+    value = JSON.parse(raw);
   } catch (error) {
     console.error('Failed to parse user routine steps', error);
     return [];
   }
+  const result = userRoutineStepsSchema.safeParse(value);
+  if (!result.success) {
+    console.error('Failed to parse user routine steps', result.error);
+    return [];
+  }
+  return result.data;
 }
 
 function toRoutine(row: UserRoutineRow): UserRoutine {

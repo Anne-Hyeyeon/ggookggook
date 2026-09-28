@@ -59,6 +59,19 @@ describe('saveUserRoutine / getUserRoutine', () => {
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
   });
+
+  it('rejects a JSON array of malformed step objects, logging and returning an empty array', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const malformed = JSON.stringify([{ acupointId: 123, seconds: 'sixty' }, { acupointId: 'LI4' }]);
+    await db.runAsync(
+      'INSERT INTO user_routines (id, name, steps, source_symptom_id, created_at, updated_at, deleted_at) VALUES (?, ?, ?, NULL, ?, ?, NULL)',
+      ['malformed', 'name', malformed, '2026-09-28T00:00:00.000Z', '2026-09-28T00:00:00.000Z'],
+    );
+    const saved = await getUserRoutine(db, 'malformed');
+    expect(saved?.steps).toEqual([]);
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
 });
 
 describe('listUserRoutines', () => {
