@@ -10,7 +10,7 @@ import {
   type Reminder,
   type UserRoutine,
 } from '@ggookggook/shared';
-import { listUserRoutines } from '@ggookggook/store';
+import { getUserRoutine, listUserRoutines, type SqlDatabase } from '@ggookggook/store';
 import Constants from 'expo-constants';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -20,7 +20,7 @@ import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
 import { DISCLAIMER_NOTICES } from '@/disclaimers';
 import { cancelReminder, ensurePermission, isReminderSupported, scheduleDailyReminder } from '@/notifications/reminder';
-import type { RoutineRef } from '@/routines';
+import { isUserRoutineUsable, type RoutineRef } from '@/routines';
 import { useSettings } from '@/state/settings';
 import { colors, fonts, space } from '@/theme';
 import { BackLink } from '@/ui/BackLink';
@@ -53,6 +53,22 @@ function reminderRoutineTitle(routine: RoutineRef, myRoutines: UserRoutine[]): s
   // both for display here and for whatever gets scheduled next: never a broken/empty body.
   const found = myRoutines.find((routineCandidate) => routineCandidate.id === routine.id);
   return found?.name ?? content.symptom(DEFAULT_REMINDER_ROUTINE.id)?.name ?? '';
+}
+
+// Used right before scheduling (never for the on-screen label, which `reminderRoutineTitle`
+// still covers): a user-routine reminder always loads its own routine directly instead of
+// trusting the picker's `myRoutines` list, which loads on focus and can still be empty (or
+// stale) the moment the toggle is flipped or the hour/minute is stepped, right after the
+// screen mounts. That race would otherwise schedule the OS notification with the wrong body.
+async function resolveScheduledReminderTitle(db: SqlDatabase, routine: RoutineRef): Promise<string> {
+  if (routine.kind === 'symptom') {
+    return content.symptom(routine.id)?.name ?? content.symptom(DEFAULT_REMINDER_ROUTINE.id)?.name ?? '';
+  }
+  const found = await getUserRoutine(db, routine.id).catch((error: unknown) => {
+    console.error('Failed to load the reminder routine before scheduling', error);
+    return null;
+  });
+  return isUserRoutineUsable(found) ? found.name : content.symptom(DEFAULT_REMINDER_ROUTINE.id)?.name ?? '';
 }
 
 export default function SettingsScreen() {
@@ -128,7 +144,7 @@ export default function SettingsScreen() {
       update(db, { reminder: next })
         .then(() => {
           const synced = next.enabled
-            ? scheduleDailyReminder(next, reminderRoutineTitle(next.routine, myRoutines))
+            ? resolveScheduledReminderTitle(db, next.routine).then((title) => scheduleDailyReminder(next, title))
             : cancelReminder();
           return synced.catch((error: unknown) => {
             console.error('Failed to sync the daily reminder with the OS', error);
@@ -146,7 +162,7 @@ export default function SettingsScreen() {
           setSaveError(true);
         });
     },
-    [db, update, myRoutines],
+    [db, update],
   );
 
   const handleReminderToggle = useCallback(
@@ -264,16 +280,16 @@ export default function SettingsScreen() {
               <WrapStepperRow
                 label="시"
                 valueLabel={reminderHourLabel(reminder.hour)}
-                decrementLabel="시간 시 줄이기"
-                incrementLabel="시간 시 늘리기"
+                decrementLabel="알림 시각 줄이기"
+                incrementLabel="알림 시각 늘리기"
                 onDecrement={() => stepReminderHour(-1)}
                 onIncrement={() => stepReminderHour(1)}
               />
               <WrapStepperRow
                 label="분"
                 valueLabel={reminderMinuteLabel(reminder.minute)}
-                decrementLabel="시간 분 줄이기"
-                incrementLabel="시간 분 늘리기"
+                decrementLabel="알림 분 줄이기"
+                incrementLabel="알림 분 늘리기"
                 onDecrement={() => stepReminderMinute(-1)}
                 onIncrement={() => stepReminderMinute(1)}
               />

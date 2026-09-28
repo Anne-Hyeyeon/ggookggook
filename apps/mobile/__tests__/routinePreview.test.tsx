@@ -178,7 +178,7 @@ describe('deleting', () => {
     mocked.deleteUserRoutine.mockResolvedValue(undefined);
     await render(<RoutinePreviewScreen />);
     await fireEvent.press(await screen.findByRole('button', { name: '지우기' }));
-    await fireEvent.press(screen.getByRole('button', { name: '삭제' }));
+    await fireEvent.press(screen.getByTestId('confirm-delete-button'));
     expect(mocked.deleteUserRoutine).toHaveBeenCalledWith({}, 'r1', expect.any(Date));
     expect(router.dismissTo).toHaveBeenCalledWith('/mine');
   });
@@ -189,7 +189,7 @@ describe('deleting', () => {
     mocked.deleteUserRoutine.mockRejectedValueOnce(new Error('write failed'));
     await render(<RoutinePreviewScreen />);
     await fireEvent.press(await screen.findByRole('button', { name: '지우기' }));
-    await fireEvent.press(screen.getByRole('button', { name: '삭제' }));
+    await fireEvent.press(screen.getByTestId('confirm-delete-button'));
     expect(await screen.findByText('지우지 못했어요. 다시 눌러 주세요.')).toBeTruthy();
     expect(router.dismissTo).not.toHaveBeenCalled();
     expect(screen.getByText('아침 루틴')).toBeTruthy();
@@ -209,7 +209,7 @@ describe('deleting', () => {
       mocked.saveSettings.mockResolvedValue(undefined);
       await render(<RoutinePreviewScreen />);
       await fireEvent.press(await screen.findByRole('button', { name: '지우기' }));
-      await fireEvent.press(screen.getByRole('button', { name: '삭제' }));
+      await fireEvent.press(screen.getByTestId('confirm-delete-button'));
 
       const fallenBack = { enabled: true, hour: 15, minute: 0, routine: { kind: 'symptom', id: 'eye_fatigue' } };
       await waitFor(() => expect(mockedReminder.scheduleDailyReminder).toHaveBeenCalledWith(fallenBack, '눈이 뻑뻑할 때'));
@@ -227,14 +227,14 @@ describe('deleting', () => {
       mocked.deleteUserRoutine.mockResolvedValue(undefined);
       await render(<RoutinePreviewScreen />);
       await fireEvent.press(await screen.findByRole('button', { name: '지우기' }));
-      await fireEvent.press(screen.getByRole('button', { name: '삭제' }));
+      await fireEvent.press(screen.getByTestId('confirm-delete-button'));
 
       await waitFor(() => expect(router.dismissTo).toHaveBeenCalledWith('/mine'));
       expect(mockedReminder.scheduleDailyReminder).not.toHaveBeenCalled();
       expect(mocked.saveSettings).not.toHaveBeenCalled();
     });
 
-    it('leaves a disabled reminder untouched even if it points at the deleted routine', async () => {
+    it('persists the fallback for a disabled reminder pointed at the deleted routine, but does not reschedule', async () => {
       useSettings.setState({
         settings: {
           ...DEFAULT_SETTINGS,
@@ -243,13 +243,14 @@ describe('deleting', () => {
       });
       mocked.getUserRoutine.mockResolvedValue(routine);
       mocked.deleteUserRoutine.mockResolvedValue(undefined);
+      mocked.saveSettings.mockResolvedValue(undefined);
       await render(<RoutinePreviewScreen />);
       await fireEvent.press(await screen.findByRole('button', { name: '지우기' }));
-      await fireEvent.press(screen.getByRole('button', { name: '삭제' }));
+      await fireEvent.press(screen.getByTestId('confirm-delete-button'));
 
-      await waitFor(() => expect(router.dismissTo).toHaveBeenCalledWith('/mine'));
+      const fallenBack = { enabled: false, hour: 15, minute: 0, routine: { kind: 'symptom', id: 'eye_fatigue' } };
+      await waitFor(() => expect(mocked.saveSettings).toHaveBeenCalledWith({}, expect.objectContaining({ reminder: fallenBack }), expect.any(Date)));
       expect(mockedReminder.scheduleDailyReminder).not.toHaveBeenCalled();
-      expect(mocked.saveSettings).not.toHaveBeenCalled();
     });
   });
 });

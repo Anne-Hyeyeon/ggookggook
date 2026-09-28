@@ -20,7 +20,12 @@ jest.mock('expo-router', () => ({
   },
 }));
 jest.mock('expo-constants', () => ({ expoConfig: { version: '0.1.0' } }));
-jest.mock('@ggookggook/store', () => ({ loadSettings: jest.fn(), saveSettings: jest.fn(), listUserRoutines: jest.fn() }));
+jest.mock('@ggookggook/store', () => ({
+  loadSettings: jest.fn(),
+  saveSettings: jest.fn(),
+  listUserRoutines: jest.fn(),
+  getUserRoutine: jest.fn(),
+}));
 jest.mock('@/notifications/reminder', () => ({
   isReminderSupported: jest.fn(() => true),
   ensurePermission: jest.fn(),
@@ -51,6 +56,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   mocked.saveSettings.mockResolvedValue(undefined);
   mocked.listUserRoutines.mockResolvedValue([]);
+  mocked.getUserRoutine.mockResolvedValue(null);
   mockedReminder.isReminderSupported.mockReturnValue(true);
   mockedReminder.ensurePermission.mockResolvedValue(true);
   mockedReminder.scheduleDailyReminder.mockResolvedValue(undefined);
@@ -242,7 +248,7 @@ describe('daily reminder', () => {
     });
     await render(<SettingsScreen />);
 
-    await fireEvent.press(screen.getByRole('button', { name: '시간 시 늘리기' }));
+    await fireEvent.press(screen.getByRole('button', { name: '알림 시각 늘리기' }));
     expect(update).toHaveBeenCalledWith(
       {},
       { reminder: { enabled: true, hour: 0, minute: 0, routine: { kind: 'symptom', id: 'eye_fatigue' } } },
@@ -252,7 +258,7 @@ describe('daily reminder', () => {
       '눈이 뻑뻑할 때',
     ));
 
-    await fireEvent.press(screen.getByRole('button', { name: '시간 분 줄이기' }));
+    await fireEvent.press(screen.getByRole('button', { name: '알림 분 줄이기' }));
     expect(update).toHaveBeenCalledWith(
       {},
       { reminder: { enabled: true, hour: 23, minute: 50, routine: { kind: 'symptom', id: 'eye_fatigue' } } },
@@ -261,6 +267,7 @@ describe('daily reminder', () => {
 
   it('lists symptoms and my routines in the routine picker, selects one, and collapses the list', async () => {
     mocked.listUserRoutines.mockResolvedValue([userRoutine()]);
+    mocked.getUserRoutine.mockResolvedValue(userRoutine());
     useSettings.setState({
       settings: {
         ...DEFAULT_SETTINGS,
@@ -296,6 +303,26 @@ describe('daily reminder', () => {
     await render(<SettingsScreen />);
 
     await waitFor(() => expect(screen.getByText('눈이 뻑뻑할 때')).toBeTruthy());
+  });
+
+  it('schedules with the correct routine name even while the my-routines list is still loading', async () => {
+    // Never resolves during this test: simulates the focus-effect list load still being in
+    // flight when the toggle is pressed, right after the screen mounts.
+    mocked.listUserRoutines.mockReturnValue(new Promise(() => {}));
+    mocked.getUserRoutine.mockResolvedValue(userRoutine());
+    useSettings.setState({
+      settings: {
+        ...DEFAULT_SETTINGS,
+        reminder: { enabled: false, hour: 15, minute: 0, routine: { kind: 'user', id: 'r1' } },
+      },
+    });
+    await render(<SettingsScreen />);
+    await fireEvent(screen.getByRole('switch', { name: '매일 알려 주기' }), 'valueChange', true);
+
+    await waitFor(() => expect(mockedReminder.scheduleDailyReminder).toHaveBeenCalledWith(
+      { enabled: true, hour: 15, minute: 0, routine: { kind: 'user', id: 'r1' } },
+      '아침 루틴',
+    ));
   });
 
   it('rolls the reminder back and shows the save error when scheduling fails after the write succeeds', async () => {

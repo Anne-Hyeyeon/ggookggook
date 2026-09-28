@@ -27,11 +27,13 @@ export default function RoutinePreviewScreen() {
   const [deleteError, setDeleteError] = useState(false);
 
   // Reload on every focus, not just mount: coming back from 편집 (or from deleting and
-  // returning) must never show the stale routine that was loaded before that trip.
+  // returning) must never show the stale routine that was loaded before that trip. Doesn't
+  // reset to undefined first, though: that would blank the screen for a frame on every
+  // refocus even when nothing changed, instead of just swapping the routine in place once
+  // the reload resolves.
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      setRoutine(undefined);
       getUserRoutine(db, id)
         .then((loaded) => {
           if (active) setRoutine(loaded);
@@ -53,14 +55,19 @@ export default function RoutinePreviewScreen() {
       .then(() => {
         router.dismissTo('/mine');
         // If the reminder pointed at this now-deleted routine, fall it back to the default
-        // symptom instead of leaving it pointed at a routine that no longer exists.
+        // symptom (whether or not the reminder is currently enabled, so a later re-enable
+        // never targets a routine that's gone) and reschedule only when it's enabled: no
+        // point touching the OS-level schedule for a reminder that isn't active.
         const previousReminder = useSettings.getState().settings.reminder;
         const nextReminder = reminderRoutineFallback(previousReminder, id);
         if (!nextReminder || nextReminder === previousReminder) return;
         useSettings
           .getState()
           .update(db, { reminder: nextReminder })
-          .then(() => scheduleDailyReminder(nextReminder, content.symptom(nextReminder.routine.id)?.name ?? ''))
+          .then(() => {
+            if (!nextReminder.enabled) return undefined;
+            return scheduleDailyReminder(nextReminder, content.symptom(nextReminder.routine.id)?.name ?? '');
+          })
           .catch((error: unknown) => {
             console.error('Failed to fall back the reminder after deleting its routine', error);
           });
@@ -193,14 +200,16 @@ export default function RoutinePreviewScreen() {
             <Txt variant="body" style={styles.confirmText}>이 루틴을 지울까요?</Txt>
             <View style={styles.confirmButtons}>
               <Pressable
+                testID="confirm-delete-button"
                 accessibilityRole="button"
-                accessibilityLabel="삭제"
+                accessibilityLabel="지우기"
+                accessibilityHint="이 루틴을 완전히 지워요"
                 accessibilityState={{ disabled: deleting }}
                 disabled={deleting}
                 onPress={handleDelete}
                 style={styles.confirmButton}
               >
-                <Txt style={[styles.confirmButtonLabel, styles.deleteLabel]}>삭제</Txt>
+                <Txt style={[styles.confirmButtonLabel, styles.deleteLabel]}>지우기</Txt>
               </Pressable>
               <Pressable
                 accessibilityRole="button"
@@ -236,7 +245,7 @@ const styles = StyleSheet.create({
   error: { color: colors.accent },
   footer: { padding: space(5), paddingTop: space(2), gap: space(3) },
   footerLinks: { flexDirection: 'row', justifyContent: 'center', gap: space(6) },
-  footerLink: { minHeight: space(10), alignItems: 'center', justifyContent: 'center' },
+  footerLink: { minHeight: space(11), alignItems: 'center', justifyContent: 'center' },
   deleteLabel: { color: colors.accent },
   confirmOverlay: {
     position: 'absolute',
