@@ -64,7 +64,8 @@ export async function saveUserRoutine(db: SqlDatabase, routine: UserRoutine, now
        steps = excluded.steps,
        source_symptom_id = excluded.source_symptom_id,
        updated_at = excluded.updated_at,
-       deleted_at = excluded.deleted_at`,
+       deleted_at = excluded.deleted_at
+     WHERE user_routines.deleted_at IS NULL`,
     [routine.id, routine.name, JSON.stringify(routine.steps), routine.sourceSymptomId, routine.createdAt, updatedAt, routine.deletedAt],
   );
 }

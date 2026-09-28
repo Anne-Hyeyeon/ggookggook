@@ -48,6 +48,24 @@ describe('saveUserRoutine / getUserRoutine', () => {
     expect(saved?.updatedAt).toBe('2026-09-29T00:00:00.000Z');
   });
 
+  it('does not resurrect a soft-deleted row: a later save while deleted stays deleted', async () => {
+    await saveUserRoutine(db, routine('r1'), new Date('2026-09-28T00:00:00.000Z'));
+    await deleteUserRoutine(db, 'r1', new Date('2026-09-29T00:00:00.000Z'));
+
+    // A stale save (e.g. an in-flight edit that lands after the routine was deleted
+    // elsewhere) must not bring the row back with deleted_at cleared.
+    await saveUserRoutine(
+      db,
+      { ...routine('r1'), name: '저녁 루틴' },
+      new Date('2026-09-30T00:00:00.000Z'),
+    );
+
+    const saved = await getUserRoutine(db, 'r1');
+    expect(saved?.deletedAt).toBe('2026-09-29T00:00:00.000Z');
+    expect(saved?.name).toBe('아침 루틴');
+    expect(saved?.updatedAt).toBe('2026-09-29T00:00:00.000Z');
+  });
+
   it('parses steps JSON defensively, logging and returning an empty array on bad data', async () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     await db.runAsync(
