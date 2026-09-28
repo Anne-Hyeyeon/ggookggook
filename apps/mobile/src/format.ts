@@ -28,13 +28,15 @@ export function formatDayHeader(iso: string, now: Date): string {
   return formatDateLine(date);
 }
 
+export function formatHourMinute(hour: number, minute: number): string {
+  const period = hour < 12 ? '오전' : '오후';
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${period} ${hour12}:${String(minute).padStart(2, '0')}`;
+}
+
 export function formatTimeOfDay(iso: string): string {
   const date = new Date(iso);
-  const hours = date.getHours();
-  const period = hours < 12 ? '오전' : '오후';
-  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${period} ${hour12}:${minutes}`;
+  return formatHourMinute(date.getHours(), date.getMinutes());
 }
 
 export function localDayKey(iso: string): string {

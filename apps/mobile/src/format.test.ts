@@ -1,4 +1,4 @@
-import { formatDateLine, formatDayHeader, formatDuration, formatRelativeDay, formatTimeOfDay, localDayKey } from '@/format';
+import { formatDateLine, formatDayHeader, formatDuration, formatHourMinute, formatRelativeDay, formatTimeOfDay, localDayKey } from '@/format';
 
 it('formats the date line in Korean', () => {
   expect(formatDateLine(new Date(2026, 8, 28))).toBe('9월 28일 월요일');
@@ -29,6 +29,13 @@ it('formats the time of day in 12-hour Korean 오전/오후', () => {
   expect(formatTimeOfDay(new Date(2026, 8, 28, 0, 5).toISOString())).toBe('오전 12:05');
   expect(formatTimeOfDay(new Date(2026, 8, 28, 12, 0).toISOString())).toBe('오후 12:00');
   expect(formatTimeOfDay(new Date(2026, 8, 28, 9, 30).toISOString())).toBe('오전 9:30');
+});
+
+it('formats an hour and minute in 12-hour Korean 오전/오후', () => {
+  expect(formatHourMinute(15, 0)).toBe('오후 3:00');
+  expect(formatHourMinute(0, 10)).toBe('오전 12:10');
+  expect(formatHourMinute(12, 0)).toBe('오후 12:00');
+  expect(formatHourMinute(9, 30)).toBe('오전 9:30');
 });
 
 it('keys sessions by local calendar day', () => {

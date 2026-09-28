@@ -1,12 +1,26 @@
-import { PRESS_SECONDS_MAX, PRESS_SECONDS_MIN, REST_SECONDS_MAX, REST_SECONDS_MIN } from '@ggookggook/shared';
+import {
+  DEFAULT_REMINDER_HOUR,
+  DEFAULT_REMINDER_MINUTE,
+  DEFAULT_REMINDER_ROUTINE,
+  PRESS_SECONDS_MAX,
+  PRESS_SECONDS_MIN,
+  REMINDER_MINUTE_STEP,
+  REST_SECONDS_MAX,
+  REST_SECONDS_MIN,
+  type Reminder,
+  type UserRoutine,
+} from '@ggookggook/shared';
+import { listUserRoutines } from '@ggookggook/store';
 import Constants from 'expo-constants';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
 import { DISCLAIMER_NOTICES } from '@/disclaimers';
+import { cancelReminder, ensurePermission, isReminderSupported, scheduleDailyReminder } from '@/notifications/reminder';
+import type { RoutineRef } from '@/routines';
 import { useSettings } from '@/state/settings';
 import { colors, fonts, space } from '@/theme';
 import { BackLink } from '@/ui/BackLink';
@@ -14,11 +28,60 @@ import { Rule } from '@/ui/Rule';
 import { Toggle } from '@/ui/Toggle';
 import { Txt } from '@/ui/Txt';
 
+const DEFAULT_REMINDER: Reminder = {
+  enabled: false,
+  hour: DEFAULT_REMINDER_HOUR,
+  minute: DEFAULT_REMINDER_MINUTE,
+  routine: DEFAULT_REMINDER_ROUTINE,
+};
+
+function reminderHourLabel(hour: number): string {
+  const period = hour < 12 ? '오전' : '오후';
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${period} ${hour12}시`;
+}
+
+function reminderMinuteLabel(minute: number): string {
+  return `${String(minute).padStart(2, '0')}분`;
+}
+
+function reminderRoutineTitle(routine: RoutineRef, myRoutines: UserRoutine[]): string {
+  if (routine.kind === 'symptom') {
+    return content.symptom(routine.id)?.name ?? content.symptom(DEFAULT_REMINDER_ROUTINE.id)?.name ?? '';
+  }
+  // A deleted (or not-yet-loaded) user routine falls back to the default symptom's name,
+  // both for display here and for whatever gets scheduled next: never a broken/empty body.
+  const found = myRoutines.find((routineCandidate) => routineCandidate.id === routine.id);
+  return found?.name ?? content.symptom(DEFAULT_REMINDER_ROUTINE.id)?.name ?? '';
+}
+
 export default function SettingsScreen() {
   const db = useDb();
   const { settings, update } = useSettings();
   const [noticesOpen, setNoticesOpen] = useState(false);
+  const [routinePickerOpen, setRoutinePickerOpen] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false);
+  const [myRoutines, setMyRoutines] = useState<UserRoutine[]>([]);
+
+  // Reloaded on every focus: a routine renamed or deleted on another screen (편집, 지우기)
+  // must show up here the next time the reminder's routine picker or label is shown.
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      listUserRoutines(db)
+        .then((routines) => {
+          if (active) setMyRoutines(routines);
+        })
+        .catch((error: unknown) => {
+          console.error('Failed to load my routines for the reminder picker', error);
+          if (active) setMyRoutines([]);
+        });
+      return () => {
+        active = false;
+      };
+    }, [db]),
+  );
 
   const apply = useCallback(
     (patch: Partial<typeof settings>) => {
@@ -50,6 +113,76 @@ export default function SettingsScreen() {
     },
     [apply],
   );
+
+  // The single place that both persists a reminder change and keeps the OS-level schedule in
+  // sync with it (cancel and reschedule on any change), so every caller below just describes
+  // what changed instead of repeating the schedule/cancel dance.
+  const commitReminder = useCallback(
+    (patch: Partial<Reminder>) => {
+      const current = useSettings.getState().settings.reminder ?? DEFAULT_REMINDER;
+      const next: Reminder = { ...current, ...patch };
+      apply({ reminder: next });
+      if (next.enabled) {
+        scheduleDailyReminder(next, reminderRoutineTitle(next.routine, myRoutines)).catch((error: unknown) => {
+          console.error('Failed to schedule the daily reminder', error);
+        });
+      } else {
+        cancelReminder().catch((error: unknown) => {
+          console.error('Failed to cancel the daily reminder', error);
+        });
+      }
+    },
+    [apply, myRoutines],
+  );
+
+  const handleReminderToggle = useCallback(
+    (value: boolean) => {
+      setPermissionDenied(false);
+      if (!value) {
+        commitReminder({ enabled: false });
+        return;
+      }
+      ensurePermission()
+        .then((granted) => {
+          if (granted) commitReminder({ enabled: true });
+          else setPermissionDenied(true);
+        })
+        .catch((error: unknown) => {
+          console.error('Failed to request notification permission', error);
+          setPermissionDenied(true);
+        });
+    },
+    [commitReminder],
+  );
+
+  // Hour and minute cover the whole clock (0-23, 0-50 in 10-minute steps), so stepping wraps
+  // around at either end instead of disabling like the bounded press/rest-second steppers.
+  const stepReminderHour = useCallback(
+    (direction: 1 | -1) => {
+      const current = (useSettings.getState().settings.reminder ?? DEFAULT_REMINDER).hour;
+      commitReminder({ hour: (current + direction + 24) % 24 });
+    },
+    [commitReminder],
+  );
+
+  const stepReminderMinute = useCallback(
+    (direction: 1 | -1) => {
+      const current = (useSettings.getState().settings.reminder ?? DEFAULT_REMINDER).minute;
+      commitReminder({ minute: (current + direction * REMINDER_MINUTE_STEP + 60) % 60 });
+    },
+    [commitReminder],
+  );
+
+  const pickReminderRoutine = useCallback(
+    (routine: RoutineRef) => {
+      commitReminder({ routine });
+      setRoutinePickerOpen(false);
+    },
+    [commitReminder],
+  );
+
+  const reminder = settings.reminder ?? DEFAULT_REMINDER;
+  const reminderRoutineName = reminderRoutineTitle(reminder.routine, myRoutines);
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -96,6 +229,66 @@ export default function SettingsScreen() {
             onValueChange={(value) => apply({ pregnancyMode: value })}
             style={styles.row}
           />
+          <Rule />
+          <Txt variant="sub" style={styles.sectionLabel}>알림</Txt>
+          <Toggle
+            label="매일 알려 주기"
+            sub={isReminderSupported() ? undefined : '이 기기에서는 알림을 쓸 수 없어요.'}
+            value={reminder.enabled}
+            onValueChange={handleReminderToggle}
+            style={styles.row}
+          />
+          {permissionDenied && (
+            <Txt variant="sub" style={styles.error}>
+              알림 권한이 꺼져 있어요. 기기 설정에서 켜 주세요.
+            </Txt>
+          )}
+          <WrapStepperRow
+            label="시"
+            valueLabel={reminderHourLabel(reminder.hour)}
+            decrementLabel="시간 시 줄이기"
+            incrementLabel="시간 시 늘리기"
+            onDecrement={() => stepReminderHour(-1)}
+            onIncrement={() => stepReminderHour(1)}
+          />
+          <WrapStepperRow
+            label="분"
+            valueLabel={reminderMinuteLabel(reminder.minute)}
+            decrementLabel="시간 분 줄이기"
+            incrementLabel="시간 분 늘리기"
+            onDecrement={() => stepReminderMinute(-1)}
+            onIncrement={() => stepReminderMinute(1)}
+          />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="루틴 선택"
+            accessibilityState={{ expanded: routinePickerOpen }}
+            onPress={() => setRoutinePickerOpen((open) => !open)}
+            style={styles.row}
+          >
+            <Txt variant="body">루틴</Txt>
+            <Txt variant="sub">{reminderRoutineName}</Txt>
+          </Pressable>
+          {routinePickerOpen && (
+            <View style={styles.notices}>
+              {content.symptoms.map((symptom) => (
+                <ReminderRoutineOption
+                  key={`symptom-${symptom.id}`}
+                  label={symptom.name}
+                  selected={reminder.routine.kind === 'symptom' && reminder.routine.id === symptom.id}
+                  onPress={() => pickReminderRoutine({ kind: 'symptom', id: symptom.id })}
+                />
+              ))}
+              {myRoutines.map((routine) => (
+                <ReminderRoutineOption
+                  key={`user-${routine.id}`}
+                  label={routine.name}
+                  selected={reminder.routine.kind === 'user' && reminder.routine.id === routine.id}
+                  onPress={() => pickReminderRoutine({ kind: 'user', id: routine.id })}
+                />
+              ))}
+            </View>
+          )}
           <Rule />
           <Pressable
             accessibilityRole="button"
@@ -170,11 +363,68 @@ function StepperRow({ label, value, min, max, onDecrement, onIncrement }: Steppe
   );
 }
 
+interface WrapStepperRowProps {
+  label: string;
+  valueLabel: string;
+  decrementLabel: string;
+  incrementLabel: string;
+  onDecrement: () => void;
+  onIncrement: () => void;
+}
+
+// Like StepperRow, but for a value that wraps around a full cycle (a clock's hour or minute)
+// instead of clamping at a min/max, so neither button is ever disabled.
+function WrapStepperRow({ label, valueLabel, decrementLabel, incrementLabel, onDecrement, onIncrement }: WrapStepperRowProps) {
+  return (
+    <View style={styles.row}>
+      <Txt variant="body">{label}</Txt>
+      <View style={styles.stepper}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={decrementLabel}
+          hitSlop={8}
+          onPress={onDecrement}
+          style={({ pressed }) => [styles.stepButton, pressed && styles.stepButtonDim]}
+        >
+          <Txt style={styles.stepSymbol}>−</Txt>
+        </Pressable>
+        <Txt variant="body" style={styles.timeValue}>{valueLabel}</Txt>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={incrementLabel}
+          hitSlop={8}
+          onPress={onIncrement}
+          style={({ pressed }) => [styles.stepButton, pressed && styles.stepButtonDim]}
+        >
+          <Txt style={styles.stepSymbol}>+</Txt>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function ReminderRoutineOption({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={styles.routineOption}
+    >
+      <Txt variant="body" style={selected ? styles.routineOptionSelected : undefined}>
+        {selected ? `✓ ${label}` : label}
+      </Txt>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   body: { padding: space(5), gap: space(4), paddingBottom: space(10) },
   error: { color: colors.accent },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: space(4), gap: space(3) },
+  sectionLabel: { paddingTop: space(3) },
   notices: { gap: space(3), paddingBottom: space(3) },
   notice: { paddingLeft: space(1) },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: space(3) },
@@ -190,4 +440,7 @@ const styles = StyleSheet.create({
   stepButtonDim: { opacity: 0.3 },
   stepSymbol: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
   stepValue: { minWidth: 34, textAlign: 'center' },
+  timeValue: { minWidth: 64, textAlign: 'center' },
+  routineOption: { paddingVertical: space(2), paddingLeft: space(1) },
+  routineOptionSelected: { fontFamily: fonts.semibold, color: colors.accent },
 });

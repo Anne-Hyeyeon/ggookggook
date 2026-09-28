@@ -248,6 +248,17 @@ async function runFlow(page) {
   await page.getByText('합곡', { exact: true }).waitFor();
   await page.getByText('나아졌어요', { exact: true }).waitFor();
   await shoot(page, '20-mine-full.png');
+
+  // 21. Settings, scrolled to the 알림 section: the daily-reminder switch (off, with its
+  // web-unsupported note since local notifications don't work in this harness), the default
+  // time (오후 3시 / 00분), and the routine picker open, listing symptoms plus the 아침 루틴
+  // created in steps 15-18.
+  await page.goto(`http://127.0.0.1:${PORT}/settings`, { waitUntil: 'load' });
+  await page.getByText('이 기기에서는 알림을 쓸 수 없어요.').waitFor();
+  await page.getByRole('button', { name: '루틴 선택' }).click();
+  await page.getByText('아침 루틴').waitFor();
+  await page.getByText('이 기기에서는 알림을 쓸 수 없어요.').scrollIntoViewIfNeeded();
+  await shoot(page, '21-settings-reminder.png');
 }
 
 async function main() {

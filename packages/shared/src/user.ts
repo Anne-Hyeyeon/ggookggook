@@ -32,11 +32,23 @@ export interface SessionLog {
   feedback: SessionFeedback | null;
 }
 
+// Same shape as apps/mobile's `RoutineRef` (src/routines.ts): kept here, independent of the
+// mobile layer, so `Settings` doesn't need to import a route-facing type from `apps/mobile`.
+export type ReminderRoutineRef = { kind: 'symptom'; id: string } | { kind: 'user'; id: string };
+
+export interface Reminder {
+  enabled: boolean;
+  hour: number;
+  minute: number;
+  routine: ReminderRoutineRef;
+}
+
 export interface Settings {
   rhythmHaptics: boolean;
   pressSeconds: number;
   restSeconds: number;
   pregnancyMode: boolean;
+  reminder: Reminder | null;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -44,9 +56,20 @@ export const DEFAULT_SETTINGS: Settings = {
   pressSeconds: 5,
   restSeconds: 2,
   pregnancyMode: false,
+  reminder: null,
 };
 
 export const PRESS_SECONDS_MIN = 3;
 export const PRESS_SECONDS_MAX = 10;
 export const REST_SECONDS_MIN = 1;
 export const REST_SECONDS_MAX = 5;
+
+export const REMINDER_HOUR_MIN = 0;
+export const REMINDER_HOUR_MAX = 23;
+export const REMINDER_MINUTE_MIN = 0;
+export const REMINDER_MINUTE_MAX = 50;
+export const REMINDER_MINUTE_STEP = 10;
+
+export const DEFAULT_REMINDER_HOUR = 15;
+export const DEFAULT_REMINDER_MINUTE = 0;
+export const DEFAULT_REMINDER_ROUTINE: ReminderRoutineRef = { kind: 'symptom', id: 'eye_fatigue' };

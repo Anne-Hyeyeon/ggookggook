@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS } from '@ggookggook/shared';
+import { DEFAULT_REMINDER_ROUTINE, DEFAULT_SETTINGS, type Reminder } from '@ggookggook/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { SqlDatabase } from './db';
 import { setValue } from './kv';
@@ -46,6 +46,70 @@ describe('settings', () => {
   it('rounds a fractional pressSeconds and restSeconds to the nearest integer', async () => {
     await setValue(db, 'settings', JSON.stringify({ ...DEFAULT_SETTINGS, pressSeconds: 6.6, restSeconds: 2.4 }), new Date());
     expect(await loadSettings(db)).toEqual({ ...DEFAULT_SETTINGS, pressSeconds: 7, restSeconds: 2 });
+  });
+
+  describe('reminder', () => {
+    const reminder: Reminder = { enabled: true, hour: 15, minute: 0, routine: { kind: 'symptom', id: 'eye_fatigue' } };
+
+    it('round-trips a saved reminder', async () => {
+      const settings = { ...DEFAULT_SETTINGS, reminder };
+      await saveSettings(db, settings, new Date('2026-09-28T00:00:00Z'));
+      expect(await loadSettings(db)).toEqual(settings);
+    });
+
+    it('round-trips a reminder pointing at a user routine', async () => {
+      const userReminder: Reminder = { ...reminder, routine: { kind: 'user', id: 'r1' } };
+      await saveSettings(db, { ...DEFAULT_SETTINGS, reminder: userReminder }, new Date());
+      expect(await loadSettings(db)).toEqual({ ...DEFAULT_SETTINGS, reminder: userReminder });
+    });
+
+    it('clamps an out-of-range hour and minute, and snaps minute to the nearest 10-minute step', async () => {
+      await setValue(
+        db,
+        'settings',
+        JSON.stringify({ ...DEFAULT_SETTINGS, reminder: { ...reminder, hour: 30, minute: -5 } }),
+        new Date(),
+      );
+      expect(await loadSettings(db)).toEqual({ ...DEFAULT_SETTINGS, reminder: { ...reminder, hour: 23, minute: 0 } });
+    });
+
+    it('rounds a minute between two 10-minute steps to the nearest one', async () => {
+      await setValue(
+        db,
+        'settings',
+        JSON.stringify({ ...DEFAULT_SETTINGS, reminder: { ...reminder, minute: 24 } }),
+        new Date(),
+      );
+      expect(await loadSettings(db)).toEqual({ ...DEFAULT_SETTINGS, reminder: { ...reminder, minute: 20 } });
+    });
+
+    it('falls back to the default symptom routine when the stored routine has a bad shape', async () => {
+      await setValue(
+        db,
+        'settings',
+        JSON.stringify({ ...DEFAULT_SETTINGS, reminder: { ...reminder, routine: { kind: 'nope', id: 'x' } } }),
+        new Date(),
+      );
+      expect(await loadSettings(db)).toEqual({ ...DEFAULT_SETTINGS, reminder: { ...reminder, routine: DEFAULT_REMINDER_ROUTINE } });
+    });
+
+    it('falls back to no reminder when enabled, hour, or minute is missing or mistyped', async () => {
+      await setValue(db, 'settings', JSON.stringify({ ...DEFAULT_SETTINGS, reminder: { hour: 15, minute: 0 } }), new Date());
+      expect(await loadSettings(db)).toEqual(DEFAULT_SETTINGS);
+
+      await setValue(
+        db,
+        'settings',
+        JSON.stringify({ ...DEFAULT_SETTINGS, reminder: { ...reminder, hour: '15' } }),
+        new Date(),
+      );
+      expect(await loadSettings(db)).toEqual(DEFAULT_SETTINGS);
+    });
+
+    it('falls back to no reminder when the stored reminder is not an object', async () => {
+      await setValue(db, 'settings', JSON.stringify({ ...DEFAULT_SETTINGS, reminder: 'on' }), new Date());
+      expect(await loadSettings(db)).toEqual(DEFAULT_SETTINGS);
+    });
   });
 });
 

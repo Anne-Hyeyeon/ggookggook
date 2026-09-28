@@ -1,10 +1,11 @@
 import { NotoSerifKR_700Bold } from '@expo-google-fonts/noto-serif-kr';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DbProvider, useDb } from '@/db/DbProvider';
+import { addReminderResponseListener, getLastNotificationRoute } from '@/notifications/reminder';
 import { useFavorites } from '@/state/favorites';
 import { useOnboarding } from '@/state/onboarding';
 import { useSettings } from '@/state/settings';
@@ -32,7 +33,9 @@ export default function RootLayout() {
   );
 }
 
-function Routes() {
+// Exported so tests can render this directly, bypassing RootLayout's useFonts() (which
+// `require()`s .otf files jest-expo has no transform for).
+export function Routes() {
   const db = useDb();
   const settingsLoaded = useSettings((state) => state.loaded);
   const loadSettings = useSettings((state) => state.load);
@@ -47,6 +50,18 @@ function Routes() {
     void loadOnboarding(db);
     void loadFavorites(db);
   }, [db, loadSettings, loadOnboarding, loadFavorites]);
+
+  // Tapping the daily reminder opens the routine's preview, whether the tap launched the app
+  // cold (getLastNotificationRoute, a snapshot rather than an event) or arrived while it was
+  // already running (the listener). Gated on `accepted`: before the disclaimer, none of the
+  // routes a reminder points at are even mounted.
+  useEffect(() => {
+    if (!accepted) return;
+    const initialRoute = getLastNotificationRoute();
+    if (initialRoute) router.push(initialRoute);
+    const subscription = addReminderResponseListener((route) => router.push(route));
+    return () => subscription.remove();
+  }, [accepted]);
 
   if (!settingsLoaded || !onboardingLoaded || !favoritesLoaded) return null;
   return (
