@@ -10,14 +10,21 @@ export default function NewRoutineScreen() {
   const { prefillAcupointId } = useLocalSearchParams<{ prefillAcupointId?: string }>();
   const startNew = useRoutineDraft((state) => state.startNew);
   const addAcupoint = useRoutineDraft((state) => state.addAcupoint);
+  const commitBaseline = useRoutineDraft((state) => state.commitBaseline);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     startNew();
     const acupoint = prefillAcupointId ? content.acupoints.get(prefillAcupointId) : undefined;
-    if (acupoint) addAcupoint({ acupointId: acupoint.id, seconds: acupoint.defaultSeconds });
+    if (acupoint) {
+      addAcupoint({ acupointId: acupoint.id, seconds: acupoint.defaultSeconds });
+      // The prefill itself isn't an unsaved change: commit it as the dirty-check baseline,
+      // so no name error (or leave-confirmation) shows up before the user actually edits
+      // something or taps 저장.
+      commitBaseline();
+    }
     setReady(true);
-  }, [startNew, addAcupoint, prefillAcupointId]);
+  }, [startNew, addAcupoint, commitBaseline, prefillAcupointId]);
 
   // Show nothing until the draft is reset: otherwise a leftover draft from an earlier,
   // abandoned /routine/new visit would flash before this effect clears it.

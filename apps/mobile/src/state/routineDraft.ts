@@ -35,8 +35,14 @@ export function toRoutineSteps(steps: readonly DraftStep[]): RoutineStep[] {
 interface RoutineDraftState {
   original: UserRoutine | null;
   draft: RoutineDraft;
+  // What `draft` is compared against for dirtiness. Usually the same shape `original`
+  // would produce, but a fresh draft prefilled from an acupoint (routine/new's
+  // prefillAcupointId) commits that prefill as its own baseline via `commitBaseline`, so
+  // arriving with one step already in it doesn't itself count as an unsaved change.
+  baseline: RoutineDraft;
   startNew(): void;
   startEdit(routine: UserRoutine): void;
+  commitBaseline(): void;
   setName(name: string): void;
   addAcupoint(step: RoutineStep): void;
   removeStep(index: number): void;
@@ -44,14 +50,19 @@ interface RoutineDraftState {
   setStepSeconds(index: number, seconds: number): void;
 }
 
-export const useRoutineDraft = create<RoutineDraftState>((set) => ({
+export const useRoutineDraft = create<RoutineDraftState>((set, get) => ({
   original: null,
   draft: EMPTY_DRAFT,
+  baseline: EMPTY_DRAFT,
   startNew() {
-    set({ original: null, draft: EMPTY_DRAFT });
+    set({ original: null, draft: EMPTY_DRAFT, baseline: EMPTY_DRAFT });
   },
   startEdit(routine) {
-    set({ original: routine, draft: toDraft(routine) });
+    const draft = toDraft(routine);
+    set({ original: routine, draft, baseline: draft });
+  },
+  commitBaseline() {
+    set({ baseline: get().draft });
   },
   setName(name) {
     set((state) => ({ draft: { ...state.draft, name } }));
@@ -75,7 +86,6 @@ function stepsEqual(a: readonly RoutineStep[], b: readonly RoutineStep[]): boole
   return a.every((step, i) => step.acupointId === b[i]?.acupointId && step.seconds === b[i]?.seconds);
 }
 
-export function isRoutineDraftDirty(draft: RoutineDraft, original: UserRoutine | null): boolean {
-  const originalDraft = original ? toDraft(original) : EMPTY_DRAFT;
-  return draft.name !== originalDraft.name || !stepsEqual(draft.steps, originalDraft.steps);
+export function isRoutineDraftDirty(draft: RoutineDraft, baseline: RoutineDraft): boolean {
+  return draft.name !== baseline.name || !stepsEqual(draft.steps, baseline.steps);
 }

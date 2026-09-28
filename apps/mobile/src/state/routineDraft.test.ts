@@ -17,20 +17,36 @@ beforeEach(() => {
   useRoutineDraft.getState().startNew();
 });
 
-it('starts new with an empty draft and no original', () => {
+it('starts new with an empty draft, no original, and a matching empty baseline', () => {
   useRoutineDraft.getState().startEdit(routine);
   useRoutineDraft.getState().startNew();
-  expect(useRoutineDraft.getState()).toMatchObject({ original: null, draft: { name: '', steps: [], sourceSymptomId: null } });
+  expect(useRoutineDraft.getState()).toMatchObject({
+    original: null,
+    draft: { name: '', steps: [], sourceSymptomId: null },
+    baseline: { name: '', steps: [], sourceSymptomId: null },
+  });
 });
 
-it('starts edit with the routine loaded into both draft and original, assigning each step a fresh key', () => {
+it('starts edit with the routine loaded into draft, original, and baseline, assigning each step a fresh key', () => {
   useRoutineDraft.getState().startEdit(routine);
   expect(useRoutineDraft.getState().original).toEqual(routine);
-  const { draft } = useRoutineDraft.getState();
+  const { draft, baseline } = useRoutineDraft.getState();
   expect(draft.name).toBe('아침 루틴');
   expect(toRoutineSteps(draft.steps)).toEqual(routine.steps);
   expect(draft.steps.map((step) => step.key).every((key) => typeof key === 'string' && key.length > 0)).toBe(true);
   expect(new Set(draft.steps.map((step) => step.key)).size).toBe(draft.steps.length);
+  expect(baseline).toBe(draft);
+});
+
+it('commits the current draft as the new baseline, so it no longer counts as dirty', () => {
+  useRoutineDraft.getState().addAcupoint({ acupointId: 'LI4', seconds: 60 });
+  expect(isRoutineDraftDirty(useRoutineDraft.getState().draft, useRoutineDraft.getState().baseline)).toBe(true);
+
+  useRoutineDraft.getState().commitBaseline();
+  expect(isRoutineDraftDirty(useRoutineDraft.getState().draft, useRoutineDraft.getState().baseline)).toBe(false);
+
+  useRoutineDraft.getState().setName('아침 루틴');
+  expect(isRoutineDraftDirty(useRoutineDraft.getState().draft, useRoutineDraft.getState().baseline)).toBe(true);
 });
 
 it('sets the name', () => {
@@ -85,31 +101,40 @@ describe('toRoutineSteps', () => {
 });
 
 describe('isRoutineDraftDirty', () => {
-  it('is false for a fresh new draft', () => {
-    expect(isRoutineDraftDirty({ name: '', steps: [], sourceSymptomId: null }, null)).toBe(false);
+  const emptyBaseline = { name: '', steps: [], sourceSymptomId: null };
+  const originalBaseline = { name: routine.name, steps: routine.steps.map((step, i) => draftStep(step.acupointId, step.seconds, `orig-${i}`)), sourceSymptomId: null };
+
+  it('is false for a fresh new draft against an empty baseline', () => {
+    expect(isRoutineDraftDirty(emptyBaseline, emptyBaseline)).toBe(false);
   });
 
-  it('is true once a new draft has a name or steps', () => {
-    expect(isRoutineDraftDirty({ name: '루틴', steps: [], sourceSymptomId: null }, null)).toBe(true);
-    expect(isRoutineDraftDirty({ name: '', steps: [draftStep('LI4')], sourceSymptomId: null }, null)).toBe(true);
+  it('is true once a new draft has a name or steps the empty baseline does not', () => {
+    expect(isRoutineDraftDirty({ name: '루틴', steps: [], sourceSymptomId: null }, emptyBaseline)).toBe(true);
+    expect(isRoutineDraftDirty({ name: '', steps: [draftStep('LI4')], sourceSymptomId: null }, emptyBaseline)).toBe(true);
   });
 
-  it('is false when an edited draft matches its original, regardless of the draft keys', () => {
+  it('is false for a prefilled baseline compared against itself, regardless of the draft keys', () => {
+    const prefilled = { name: '', steps: [draftStep('LI4', 60, 'a')], sourceSymptomId: null };
+    const sameStepsDifferentKeys = { name: '', steps: [draftStep('LI4', 60, 'b')], sourceSymptomId: null };
+    expect(isRoutineDraftDirty(sameStepsDifferentKeys, prefilled)).toBe(false);
+  });
+
+  it('is false when an edited draft matches its original baseline, regardless of the draft keys', () => {
     const steps = routine.steps.map((step, i) => draftStep(step.acupointId, step.seconds, `key-${i}`));
-    expect(isRoutineDraftDirty({ name: routine.name, steps, sourceSymptomId: null }, routine)).toBe(false);
+    expect(isRoutineDraftDirty({ name: routine.name, steps, sourceSymptomId: null }, originalBaseline)).toBe(false);
   });
 
   it('is true once an edited draft changes the name', () => {
     const steps = routine.steps.map((step) => draftStep(step.acupointId, step.seconds));
-    expect(isRoutineDraftDirty({ name: '다른 이름', steps, sourceSymptomId: null }, routine)).toBe(true);
+    expect(isRoutineDraftDirty({ name: '다른 이름', steps, sourceSymptomId: null }, originalBaseline)).toBe(true);
   });
 
   it('is true once an edited draft changes a step', () => {
     const changed = [draftStep('LI4', 70), draftStep('ST36', 90)];
-    expect(isRoutineDraftDirty({ name: routine.name, steps: changed, sourceSymptomId: null }, routine)).toBe(true);
+    expect(isRoutineDraftDirty({ name: routine.name, steps: changed, sourceSymptomId: null }, originalBaseline)).toBe(true);
   });
 
   it('is true once an edited draft changes the step count', () => {
-    expect(isRoutineDraftDirty({ name: routine.name, steps: [draftStep('LI4', 60)], sourceSymptomId: null }, routine)).toBe(true);
+    expect(isRoutineDraftDirty({ name: routine.name, steps: [draftStep('LI4', 60)], sourceSymptomId: null }, originalBaseline)).toBe(true);
   });
 });
