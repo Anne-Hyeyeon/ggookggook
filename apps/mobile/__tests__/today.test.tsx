@@ -14,6 +14,7 @@ jest.mock('@ggookggook/store', () => ({
   latestCompletedSession: jest.fn(),
   countSessionsByFeedback: jest.fn(),
   countSessionsBySymptom: jest.fn(),
+  getUserRoutine: jest.fn(),
 }));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn() },
@@ -107,6 +108,55 @@ it('starts the recent routine again from its 다시 하기 affordance', async ()
   await render(<TodayScreen />);
   await fireEvent.press(await screen.findByText('다시 하기'));
   expect(router.push).toHaveBeenCalledWith('/symptom/headache');
+});
+
+it('shows a recent user routine by name and starts it again from /routine/<id>', async () => {
+  mocked.latestCompletedSession.mockResolvedValue({
+    id: 's1',
+    routine: { kind: 'user', routineId: 'r1' },
+    startedAt: new Date().toISOString(),
+    completedAt: new Date().toISOString(),
+    durationSeconds: 120,
+    feedback: null,
+  });
+  mocked.getUserRoutine.mockResolvedValue({
+    id: 'r1',
+    name: '아침 루틴',
+    steps: [{ acupointId: 'LI4', seconds: 60 }],
+    sourceSymptomId: null,
+    createdAt: '2026-09-01T00:00:00.000Z',
+    updatedAt: '2026-09-01T00:00:00.000Z',
+    deletedAt: null,
+  });
+  await render(<TodayScreen />);
+
+  expect(await screen.findByText('최근 · 아침 루틴 · 오늘')).toBeTruthy();
+  await fireEvent.press(screen.getByText('다시 하기'));
+  expect(router.push).toHaveBeenCalledWith('/routine/r1');
+});
+
+it('hides the recent row when the recent user routine was deleted', async () => {
+  mocked.latestCompletedSession.mockResolvedValue({
+    id: 's1',
+    routine: { kind: 'user', routineId: 'r1' },
+    startedAt: new Date().toISOString(),
+    completedAt: new Date().toISOString(),
+    durationSeconds: 120,
+    feedback: null,
+  });
+  mocked.getUserRoutine.mockResolvedValue({
+    id: 'r1',
+    name: '아침 루틴',
+    steps: [{ acupointId: 'LI4', seconds: 60 }],
+    sourceSymptomId: null,
+    createdAt: '2026-09-01T00:00:00.000Z',
+    updatedAt: '2026-09-01T00:00:00.000Z',
+    deletedAt: '2026-09-20T00:00:00.000Z',
+  });
+  await render(<TodayScreen />);
+
+  await waitFor(() => expect(mocked.getUserRoutine).toHaveBeenCalledWith({}, 'r1'));
+  expect(screen.queryByText('다시 하기')).toBeNull();
 });
 
 it('shows the better-feedback count only when it is at least one', async () => {

@@ -1,5 +1,5 @@
 import { searchSymptoms, type SessionLog, type Settings, type Symptom } from '@ggookggook/shared';
-import { countSessionsByFeedback, countSessionsBySymptom, latestCompletedSession } from '@ggookggook/store';
+import { countSessionsByFeedback, countSessionsBySymptom, getUserRoutine, latestCompletedSession, type SqlDatabase } from '@ggookggook/store';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -8,6 +8,7 @@ import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
 import { formatDateLine, formatRelativeDay } from '@/format';
 import { routineSummary, visibleSteps } from '@/routine';
+import { isUserRoutineUsable } from '@/routines';
 import { useSettings } from '@/state/settings';
 import { colors, fonts, space } from '@/theme';
 import { Rule } from '@/ui/Rule';
@@ -17,11 +18,33 @@ import { Txt } from '@/ui/Txt';
 // letting React bail out via Object.is instead of looping on a fresh {} each time.
 const NO_USAGE: Record<string, number> = {};
 
+interface RecentRoutine {
+  session: SessionLog;
+  title: string;
+  href: `/symptom/${string}` | `/routine/${string}`;
+}
+
+// Resolves what the "최근" row shows for a completed session: a symptom's name is always
+// known from content, but a user routine's name (and whether the row shows at all) depends
+// on that routine still existing, so it's looked up fresh rather than assumed.
+async function resolveRecentRoutine(db: SqlDatabase, session: SessionLog | null): Promise<RecentRoutine | null> {
+  if (!session) return null;
+  if (session.routine.kind === 'symptom') {
+    const symptom = content.symptom(session.routine.symptomId);
+    return symptom ? { session, title: symptom.name, href: `/symptom/${symptom.id}` } : null;
+  }
+  const routine = await getUserRoutine(db, session.routine.routineId).catch((error: unknown) => {
+    console.error('Failed to load the recent user routine', error);
+    return null;
+  });
+  return isUserRoutineUsable(routine) ? { session, title: routine.name, href: `/routine/${routine.id}` } : null;
+}
+
 export default function TodayScreen() {
   const db = useDb();
   const settings = useSettings((state) => state.settings);
   const [query, setQuery] = useState('');
-  const [recent, setRecent] = useState<SessionLog | null>(null);
+  const [recent, setRecent] = useState<RecentRoutine | null>(null);
   const [betterCount, setBetterCount] = useState(0);
   const [usageCounts, setUsageCounts] = useState<Record<string, number>>(NO_USAGE);
 
@@ -29,11 +52,13 @@ export default function TodayScreen() {
     useCallback(() => {
       let active = true;
       latestCompletedSession(db)
-        .then((session) => {
-          if (active) setRecent(session);
+        .then((session) => resolveRecentRoutine(db, session))
+        .then((resolved) => {
+          if (active) setRecent(resolved);
         })
         .catch((error) => {
           console.error('Failed to load the most recent session', error);
+          if (active) setRecent(null);
         });
       countSessionsByFeedback(db, 'better')
         .then((count) => {
@@ -67,8 +92,6 @@ export default function TodayScreen() {
     () => (query.trim() === '' ? sortedSymptoms : searchSymptoms(content.symptoms, content.acupoints, query)),
     [query, sortedSymptoms],
   );
-  const recentSymptom = recent?.routine.kind === 'symptom' ? content.symptom(recent.routine.symptomId) : undefined;
-
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <FlatList
@@ -96,17 +119,17 @@ export default function TodayScreen() {
               returnKeyType="search"
               style={styles.search}
             />
-            {recent && recentSymptom && query.trim() === '' && (
+            {recent && query.trim() === '' && (
               <View style={styles.recentBlock}>
                 <Rule />
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`${recentSymptom.name} 다시 하기`}
-                  onPress={() => router.push(`/symptom/${recentSymptom.id}`)}
+                  accessibilityLabel={`${recent.title} 다시 하기`}
+                  onPress={() => router.push(recent.href)}
                   style={styles.recent}
                 >
                   <Txt variant="sub" style={styles.recentLabel}>
-                    {`최근 · ${recentSymptom.name} · ${formatRelativeDay(recent.completedAt ?? recent.startedAt, new Date())}`}
+                    {`최근 · ${recent.title} · ${formatRelativeDay(recent.session.completedAt ?? recent.session.startedAt, new Date())}`}
                   </Txt>
                   <Txt maxFontSizeMultiplier={1.4} style={styles.recentAction}>다시 하기</Txt>
                 </Pressable>
