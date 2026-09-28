@@ -1,0 +1,37 @@
+appId: kr.ggookggook.app
+---
+- clearState
+- launchApp
+- tapOn: "다음"
+- assertVisible: "시작하기 전에 확인해 주세요"
+- tapOn: "확인했어요"
+- assertVisible: "증상이나 혈자리 이름"
+- tapOn: "내 루틴"
+- assertVisible: "새 루틴 만들기"
+- tapOn: "새 루틴 만들기"
+- tapOn:
+    text: "루틴 이름"
+    isKeyboardKey: false
+- inputText: "테스트 루틴"
+- tapOn: "혈자리 추가"
+- tapOn:
+    text: "혈자리 이름, 한자, 영문"
+    isKeyboardKey: false
+- inputText: "합곡"
+- tapOn: "합곡"
+- tapOn: "혈자리 추가"
+- tapOn:
+    text: "혈자리 이름, 한자, 영문"
+    isKeyboardKey: false
+- inputText: "내관"
+- tapOn: "내관"
+- tapOn: "저장"
+- tapOn: "시작"
+- extendedWaitUntil:
+    visible: "루틴을 마쳤어요"
+    timeout: 60000
+- assertVisible: "루틴을 마쳤어요"
+- tapOn: "나아졌어요"
+- tapOn: "처음으로"
+- tapOn: "내 루틴"
+- assertVisible: "테스트 루틴"

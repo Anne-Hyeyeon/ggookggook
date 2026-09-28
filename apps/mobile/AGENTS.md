@@ -45,6 +45,7 @@ in about 24s at that speed instead of 240s). This env var is only honored in dev
 
 ```bash
 EXPO_PUBLIC_GUIDE_SPEED=10 maestro test e2e/core-flow.yaml
+EXPO_PUBLIC_GUIDE_SPEED=10 maestro test e2e/my-routine.yaml
 ```
 
 ## Web preview harness (visual QA)
