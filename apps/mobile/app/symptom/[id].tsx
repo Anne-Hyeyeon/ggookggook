@@ -34,6 +34,9 @@ export default function SymptomScreen() {
     const routineId = newId();
     saveUserRoutine(db, copySymptomToUserRoutine(symptom, routineId, now.toISOString()), now)
       .then(() => {
+        // Push the preview first so the editor has one underneath it: its own 뒤로/저장
+        // then lands back on this new routine's preview instead of this symptom screen.
+        router.push(`/routine/${routineId}`);
         router.push(`/routine/${routineId}/edit`);
       })
       .catch((error: unknown) => {

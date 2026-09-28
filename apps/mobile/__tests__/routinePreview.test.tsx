@@ -2,6 +2,7 @@ import { DEFAULT_SETTINGS, type UserRoutine } from '@ggookggook/shared';
 import * as store from '@ggookggook/store';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
+import { BackHandler } from 'react-native';
 import RoutinePreviewScreen from '../app/routine/[id]/index';
 import { useSettings } from '@/state/settings';
 
@@ -14,7 +15,20 @@ jest.mock('@ggookggook/store', () => ({ getUserRoutine: jest.fn(), deleteUserRou
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn(), dismissTo: jest.fn() },
   useLocalSearchParams: () => mockParams,
+  useFocusEffect: (effect: () => void | (() => void)) => {
+    const { useEffect } = jest.requireActual('react');
+    useEffect(effect, [effect]);
+  },
 }));
+
+async function pressHardwareBack() {
+  const call = (BackHandler.addEventListener as jest.Mock).mock.calls.findLast(([name]) => name === 'hardwareBackPress');
+  let handled: boolean | undefined;
+  await act(async () => {
+    handled = call?.[1]();
+  });
+  return handled;
+}
 
 const mocked = store as jest.Mocked<typeof store>;
 
@@ -30,6 +44,7 @@ const routine: UserRoutine = {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.spyOn(BackHandler, 'addEventListener');
   mockParams = { id: 'r1' };
   useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS } });
 });
@@ -52,6 +67,15 @@ it('shows nothing while loading, then the routine once it resolves', async () =>
   expect(screen.getByText('합곡')).toBeTruthy();
   expect(screen.getByText('족삼리')).toBeTruthy();
   expect(screen.getByText('임신 중이면 합곡은 누르지 마세요.')).toBeTruthy();
+});
+
+it('de-duplicates a repeated acupoint name in the pregnancy caution', async () => {
+  mocked.getUserRoutine.mockResolvedValue({
+    ...routine,
+    steps: [{ acupointId: 'LI4', seconds: 60 }, { acupointId: 'ST36', seconds: 60 }, { acupointId: 'LI4', seconds: 30 }],
+  });
+  await render(<RoutinePreviewScreen />);
+  expect(await screen.findByText('임신 중이면 합곡은 누르지 마세요.')).toBeTruthy();
 });
 
 it('leaves out contraindicated points in pregnancy mode and says so', async () => {
@@ -117,6 +141,28 @@ describe('deleting', () => {
     await fireEvent.press(screen.getByRole('button', { name: '취소' }));
     expect(screen.queryByText('이 루틴을 지울까요?')).toBeNull();
     expect(mocked.deleteUserRoutine).not.toHaveBeenCalled();
+  });
+
+  it('closes the confirm overlay on Android hardware back, without popping the screen', async () => {
+    mocked.getUserRoutine.mockResolvedValue(routine);
+    await render(<RoutinePreviewScreen />);
+    await fireEvent.press(await screen.findByRole('button', { name: '지우기' }));
+    expect(screen.getByText('이 루틴을 지울까요?')).toBeTruthy();
+
+    const handled = await pressHardwareBack();
+    expect(handled).toBe(true);
+    expect(screen.queryByText('이 루틴을 지울까요?')).toBeNull();
+    expect(router.back).not.toHaveBeenCalled();
+    expect(mocked.deleteUserRoutine).not.toHaveBeenCalled();
+  });
+
+  it('leaves hardware back unhandled (lets the screen pop) when the overlay is closed', async () => {
+    mocked.getUserRoutine.mockResolvedValue(routine);
+    await render(<RoutinePreviewScreen />);
+    await screen.findByText('아침 루틴');
+
+    const handled = await pressHardwareBack();
+    expect(handled).toBe(false);
   });
 
   it('soft deletes and returns to 내 루틴 on confirm', async () => {

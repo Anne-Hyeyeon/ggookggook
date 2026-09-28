@@ -1,8 +1,8 @@
 import type { UserRoutine } from '@ggookggook/shared';
 import { deleteUserRoutine, getUserRoutine } from '@ggookggook/store';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
@@ -25,21 +25,25 @@ export default function RoutinePreviewScreen() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    setRoutine(undefined);
-    getUserRoutine(db, id)
-      .then((loaded) => {
-        if (!cancelled) setRoutine(loaded);
-      })
-      .catch((error: unknown) => {
-        console.error('Failed to load the routine', error);
-        if (!cancelled) setRoutine(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [db, id]);
+  // Reload on every focus, not just mount: coming back from 편집 (or from deleting and
+  // returning) must never show the stale routine that was loaded before that trip.
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      setRoutine(undefined);
+      getUserRoutine(db, id)
+        .then((loaded) => {
+          if (active) setRoutine(loaded);
+        })
+        .catch((error: unknown) => {
+          console.error('Failed to load the routine', error);
+          if (active) setRoutine(null);
+        });
+      return () => {
+        active = false;
+      };
+    }, [db, id]),
+  );
 
   const handleDelete = useCallback(() => {
     setDeleteError(false);
@@ -58,6 +62,21 @@ export default function RoutinePreviewScreen() {
       });
   }, [db, id]);
 
+  // Android hardware back while the delete confirmation is open must close it, not pop
+  // this screen out from under it (same pattern as GuideView/RoutineEditorView).
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS === 'web') return;
+      const onBackPress = () => {
+        if (!confirmDelete) return false;
+        setConfirmDelete(false);
+        return true;
+      };
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [confirmDelete]),
+  );
+
   if (routine === undefined) return null;
 
   if (!isUserRoutineUsable(routine)) {
@@ -73,9 +92,15 @@ export default function RoutinePreviewScreen() {
 
   const steps = visibleStepsFor(routine.steps, settings);
   const { count, minutes } = routineSummary(steps);
-  const contraindicated = routine.steps
-    .filter((step) => content.acupoints.get(step.acupointId)?.cautions.includes('pregnancy'))
-    .map((step) => content.acupoints.get(step.acupointId)?.name.ko ?? step.acupointId);
+  // A user routine can repeat the same acupoint across steps (unlike a symptom's fixed
+  // list), so the caution names need deduping or a repeated point would read twice.
+  const contraindicated = [
+    ...new Set(
+      routine.steps
+        .filter((step) => content.acupoints.get(step.acupointId)?.cautions.includes('pregnancy'))
+        .map((step) => content.acupoints.get(step.acupointId)?.name.ko ?? step.acupointId),
+    ),
+  ];
   const cautionText =
     contraindicated.length === 0
       ? null

@@ -1,4 +1,12 @@
-import { USER_ROUTINE_LIMITS, type RoutineStep, type SessionRoutineRef, type Settings, type Symptom, type UserRoutine } from '@ggookggook/shared';
+import {
+  addStep,
+  USER_ROUTINE_LIMITS,
+  type RoutineStep,
+  type SessionRoutineRef,
+  type Settings,
+  type Symptom,
+  type UserRoutine,
+} from '@ggookggook/shared';
 import { content } from '@/content';
 import { visibleStepsFor } from '@/routine';
 
@@ -47,10 +55,16 @@ export function symptomRoutineName(name: string): string {
 }
 
 export function copySymptomToUserRoutine(symptom: Symptom, id: string, now: string): UserRoutine {
+  // Defensive: content is already within these bounds (a symptom has at most 3 steps,
+  // each 10-300s), but go through the same shared limits/clamp a hand-built routine
+  // would, rather than trusting content to stay that way forever.
+  const steps = symptom.steps
+    .slice(0, USER_ROUTINE_LIMITS.stepsMax)
+    .reduce<RoutineStep[]>((acc, step) => addStep(acc, step), []);
   return {
     id,
     name: symptomRoutineName(symptom.name),
-    steps: symptom.steps,
+    steps,
     sourceSymptomId: symptom.id,
     createdAt: now,
     updatedAt: now,

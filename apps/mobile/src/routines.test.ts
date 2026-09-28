@@ -109,4 +109,12 @@ describe('copySymptomToUserRoutine', () => {
     const copy = copySymptomToUserRoutine(longSymptom, 'new-id', '2026-09-29T00:00:00.000Z');
     expect(copy.name).toHaveLength(20);
   });
+
+  it('clamps to at most 10 steps and snaps seconds into range, via the shared limits', () => {
+    const manySteps = Array.from({ length: 12 }, () => ({ acupointId: 'LI4', seconds: 605 }));
+    const bigSymptom: Symptom = { ...symptom, steps: manySteps };
+    const copy = copySymptomToUserRoutine(bigSymptom, 'new-id', '2026-09-29T00:00:00.000Z');
+    expect(copy.steps).toHaveLength(10);
+    expect(copy.steps.every((step) => step.seconds === 600)).toBe(true);
+  });
 });

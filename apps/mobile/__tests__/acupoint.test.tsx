@@ -1,7 +1,8 @@
 import { DEFAULT_SETTINGS, type UserRoutine } from '@ggookggook/shared';
 import * as store from '@ggookggook/store';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
+import { BackHandler } from 'react-native';
 import AcupointScreen from '../app/acupoint/[id]';
 import { useFavorites } from '@/state/favorites';
 import { useSettings } from '@/state/settings';
@@ -10,12 +11,25 @@ let mockParams: { id: string } = { id: 'LI4' };
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn() },
   useLocalSearchParams: () => mockParams,
+  useFocusEffect: (effect: () => void | (() => void)) => {
+    const { useEffect } = jest.requireActual('react');
+    useEffect(effect, [effect]);
+  },
 }));
 jest.mock('@/db/DbProvider', () => {
   const db = {};
   return { useDb: () => db };
 });
 jest.mock('@ggookggook/store', () => ({ listUserRoutines: jest.fn(), saveUserRoutine: jest.fn() }));
+
+async function pressHardwareBack() {
+  const call = (BackHandler.addEventListener as jest.Mock).mock.calls.findLast(([name]) => name === 'hardwareBackPress');
+  let handled: boolean | undefined;
+  await act(async () => {
+    handled = call?.[1]();
+  });
+  return handled;
+}
 
 const mocked = store as jest.Mocked<typeof store>;
 const toggle = jest.fn().mockResolvedValue(undefined);
@@ -33,6 +47,7 @@ const routine = (id: string, overrides: Partial<UserRoutine> = {}): UserRoutine 
 
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.spyOn(BackHandler, 'addEventListener');
   toggle.mockResolvedValue(undefined);
   mockParams = { id: 'LI4' };
   useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS } });
@@ -171,6 +186,25 @@ describe('루틴에 추가', () => {
     await screen.findByRole('button', { name: '새 루틴 만들기' });
     await fireEvent.press(screen.getByRole('button', { name: '닫기' }));
     expect(screen.queryByText('새 루틴 만들기')).toBeNull();
+  });
+
+  it('closes the sheet on Android hardware back, without popping the screen', async () => {
+    await render(<AcupointScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: '루틴에 추가' }));
+    await screen.findByRole('button', { name: '새 루틴 만들기' });
+
+    const handled = await pressHardwareBack();
+    expect(handled).toBe(true);
+    expect(screen.queryByText('새 루틴 만들기')).toBeNull();
+    expect(router.back).not.toHaveBeenCalled();
+  });
+
+  it('leaves hardware back unhandled (lets the screen pop) when the sheet is closed', async () => {
+    await render(<AcupointScreen />);
+    await screen.findByText('합곡');
+
+    const handled = await pressHardwareBack();
+    expect(handled).toBe(false);
   });
 
   it('shows an error when the routine list fails to load', async () => {

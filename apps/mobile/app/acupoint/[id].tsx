@@ -1,8 +1,8 @@
 import { addStep, USER_ROUTINE_LIMITS, type UserRoutine } from '@ggookggook/shared';
 import { listUserRoutines, saveUserRoutine } from '@ggookggook/store';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
@@ -85,6 +85,21 @@ export default function AcupointScreen() {
     setSheetOpen(false);
     router.push({ pathname: '/routine/new', params: { prefillAcupointId: id } });
   }, [id]);
+
+  // Android hardware back while the 루틴에 추가 sheet is open must close it, not pop this
+  // screen out from under it (same pattern as GuideView/RoutineEditorView).
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS === 'web') return;
+      const onBackPress = () => {
+        if (!sheetOpen) return false;
+        closeSheet();
+        return true;
+      };
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [sheetOpen, closeSheet]),
+  );
 
   if (!acupoint) {
     return (

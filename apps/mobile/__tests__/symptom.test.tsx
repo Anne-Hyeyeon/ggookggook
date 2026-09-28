@@ -74,7 +74,10 @@ describe('내 루틴으로 복사', () => {
       expect.any(Date),
     );
     const savedId = (mocked.saveUserRoutine.mock.calls[0]?.[1] as { id: string }).id;
-    expect(router.push).toHaveBeenCalledWith(`/routine/${savedId}/edit`);
+    // The preview is pushed first so the editor has one underneath it: its own 뒤로/저장
+    // then lands back on this new routine's preview, never on this symptom screen.
+    expect(router.push).toHaveBeenNthCalledWith(1, `/routine/${savedId}`);
+    expect(router.push).toHaveBeenNthCalledWith(2, `/routine/${savedId}/edit`);
   });
 
   it('shows an error and stays on the symptom when the copy fails', async () => {
