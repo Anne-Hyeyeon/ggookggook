@@ -18,15 +18,22 @@ export interface ResolveRoutineDeps {
 // fresh [] every render.
 export const NO_STEPS: RoutineStep[] = [];
 
+export const DELETED_ROUTINE_LABEL = '지운 루틴';
+
+// getUserRoutine returns a soft-deleted row rather than null (its deleted_at is set): that
+// reads the same as one that no longer exists at all, everywhere a user routine is displayed.
+export function isUserRoutineUsable(routine: UserRoutine | null | undefined): routine is UserRoutine {
+  return routine !== null && routine !== undefined && routine.deletedAt === null;
+}
+
 export function resolveRoutine(ref: RoutineRef, deps: ResolveRoutineDeps): ResolvedRoutine | null {
   if (ref.kind === 'symptom') {
     const symptom = content.symptom(ref.id);
     if (!symptom) return null;
     return { title: symptom.name, steps: visibleStepsFor(symptom.steps, deps.settings) };
   }
-  const routine = deps.userRoutine;
-  if (!routine || routine.deletedAt !== null) return null;
-  return { title: routine.name, steps: visibleStepsFor(routine.steps, deps.settings) };
+  if (!isUserRoutineUsable(deps.userRoutine)) return null;
+  return { title: deps.userRoutine.name, steps: visibleStepsFor(deps.userRoutine.steps, deps.settings) };
 }
 
 export function toSessionRoutineRef(ref: RoutineRef): SessionRoutineRef {

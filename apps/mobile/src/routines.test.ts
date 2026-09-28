@@ -1,5 +1,5 @@
 import { DEFAULT_SETTINGS, type UserRoutine } from '@ggookggook/shared';
-import { NO_STEPS, resolveRoutine, toSessionRoutineRef } from '@/routines';
+import { isUserRoutineUsable, NO_STEPS, resolveRoutine, toSessionRoutineRef } from '@/routines';
 
 const userRoutine: UserRoutine = {
   id: 'r1',
@@ -60,4 +60,11 @@ it('maps a routine ref to the session log ref shape', () => {
 
 it('exposes a stable empty-steps constant', () => {
   expect(NO_STEPS).toEqual([]);
+});
+
+it('treats a soft-deleted row the same as a missing one', () => {
+  expect(isUserRoutineUsable(userRoutine)).toBe(true);
+  expect(isUserRoutineUsable({ ...userRoutine, deletedAt: '2026-09-29T00:00:00.000Z' })).toBe(false);
+  expect(isUserRoutineUsable(null)).toBe(false);
+  expect(isUserRoutineUsable(undefined)).toBe(false);
 });

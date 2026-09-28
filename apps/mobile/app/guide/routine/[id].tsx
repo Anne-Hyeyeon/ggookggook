@@ -4,7 +4,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { useDb } from '@/db/DbProvider';
 import { GuideView } from '@/guide/GuideView';
-import { NO_STEPS, resolveRoutine } from '@/routines';
+import { NO_STEPS, resolveRoutine, type RoutineRef } from '@/routines';
 import { useSettings } from '@/state/settings';
 
 export default function GuideRoutineScreen() {
@@ -12,6 +12,8 @@ export default function GuideRoutineScreen() {
   const db = useDb();
   const settings = useSettings((state) => state.settings);
   const [userRoutine, setUserRoutine] = useState<UserRoutine | null | undefined>(undefined);
+
+  const routineRef = useMemo<RoutineRef>(() => ({ kind: 'user', id }), [id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,14 +32,14 @@ export default function GuideRoutineScreen() {
   }, [db, id]);
 
   const resolved = useMemo(
-    () => (userRoutine === undefined ? undefined : resolveRoutine({ kind: 'user', id }, { settings, userRoutine })),
+    () => (userRoutine === undefined ? undefined : resolveRoutine(routineRef, { settings, userRoutine })),
     // Resolved once the routine has loaded: a settings change mid-routine must not rebuild the plan.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [id, userRoutine],
+    [routineRef, userRoutine],
   );
 
   // Still loading: show nothing rather than a flash of the empty state.
   if (resolved === undefined) return null;
 
-  return <GuideView routineRef={{ kind: 'user', id }} title={resolved?.title ?? ''} steps={resolved?.steps ?? NO_STEPS} />;
+  return <GuideView routineRef={routineRef} title={resolved?.title ?? ''} steps={resolved?.steps ?? NO_STEPS} />;
 }

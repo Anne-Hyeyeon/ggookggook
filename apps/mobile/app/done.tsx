@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
 import { formatDuration } from '@/format';
-import { resolveRoutine, type ResolvedRoutine } from '@/routines';
+import { DELETED_ROUTINE_LABEL, isUserRoutineUsable, resolveRoutine, type ResolvedRoutine } from '@/routines';
 import { useSettings } from '@/state/settings';
 import { colors, fonts, space } from '@/theme';
 import { Txt } from '@/ui/Txt';
@@ -27,7 +27,7 @@ function resolveDoneRoutine(
   if (!session) return null;
   if (session.routine.kind === 'symptom') return resolveRoutine({ kind: 'symptom', id: session.routine.symptomId }, { settings });
   if (userRoutine === undefined) return null;
-  if (userRoutine === null) return { title: '지운 루틴', steps: [] };
+  if (!isUserRoutineUsable(userRoutine)) return { title: DELETED_ROUTINE_LABEL, steps: [] };
   return resolveRoutine({ kind: 'user', id: session.routine.routineId }, { settings, userRoutine });
 }
 
@@ -42,6 +42,7 @@ export default function DoneScreen() {
 
   useEffect(() => {
     let cancelled = false;
+    setUserRoutine(undefined);
     getSession(db, sessionId)
       .then((loaded) => {
         if (cancelled) return;

@@ -137,10 +137,27 @@ it('shows a user routine session with its stored name, not navigable to a sympto
   expect(router.push).not.toHaveBeenCalled();
 });
 
-it('shows 지운 루틴 for a user routine session whose routine was deleted or is missing', async () => {
+it('shows 지운 루틴 for a user routine session whose routine no longer exists', async () => {
   mocked.listCompletedSessions.mockResolvedValue([log('s1', today(10, 0), { routine: { kind: 'user', routineId: 'gone' } })]);
   mocked.getUserRoutine.mockResolvedValue(null);
 
   await render(<MineScreen />);
   expect(await screen.findByText('지운 루틴')).toBeTruthy();
+});
+
+it('shows 지운 루틴, not the old name, for a soft-deleted user routine session', async () => {
+  mocked.listCompletedSessions.mockResolvedValue([log('s1', today(10, 0), { routine: { kind: 'user', routineId: 'r1' } })]);
+  mocked.getUserRoutine.mockResolvedValue({
+    id: 'r1',
+    name: '내 아침 루틴',
+    steps: [],
+    sourceSymptomId: null,
+    createdAt: '2026-09-28T00:00:00.000Z',
+    updatedAt: '2026-09-28T00:00:00.000Z',
+    deletedAt: '2026-09-29T00:00:00.000Z',
+  });
+
+  await render(<MineScreen />);
+  expect(await screen.findByText('지운 루틴')).toBeTruthy();
+  expect(screen.queryByText('내 아침 루틴')).toBeNull();
 });

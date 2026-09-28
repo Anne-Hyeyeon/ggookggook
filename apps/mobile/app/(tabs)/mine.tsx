@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
 import { formatDayHeader, formatDuration, formatTimeOfDay, localDayKey } from '@/format';
+import { DELETED_ROUTINE_LABEL, isUserRoutineUsable } from '@/routines';
 import { colors, fonts, space } from '@/theme';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
@@ -52,7 +53,7 @@ function toRows(sessions: SessionLog[], userRoutines: Map<string, UserRoutine | 
       continue;
     }
     const routine = userRoutines.get(session.routine.routineId);
-    rows.push({ session, title: routine ? routine.name : '지운 루틴', symptomId: null });
+    rows.push({ session, title: isUserRoutineUsable(routine) ? routine.name : DELETED_ROUTINE_LABEL, symptomId: null });
   }
   return rows;
 }

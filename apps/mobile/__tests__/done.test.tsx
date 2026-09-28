@@ -159,7 +159,7 @@ it('shows a user routine name and its step names once the routine loads', async 
   expect(screen.getByText('합곡 · 내관')).toBeTruthy();
 });
 
-it('shows 지운 루틴 when the user routine is missing or deleted', async () => {
+it('shows 지운 루틴 when the user routine no longer exists', async () => {
   mocked.getSession.mockResolvedValue({
     id: 's1',
     routine: { kind: 'user', routineId: 'gone' },
@@ -172,4 +172,28 @@ it('shows 지운 루틴 when the user routine is missing or deleted', async () =
 
   await render(<DoneScreen />);
   expect(await screen.findByText('지운 루틴')).toBeTruthy();
+});
+
+it('shows 지운 루틴 when the user routine row is soft-deleted, not blank', async () => {
+  mocked.getSession.mockResolvedValue({
+    id: 's1',
+    routine: { kind: 'user', routineId: 'r1' },
+    startedAt: '2026-09-28T00:00:00.000Z',
+    completedAt: '2026-09-28T00:04:00.000Z',
+    durationSeconds: 240,
+    feedback: null,
+  });
+  mocked.getUserRoutine.mockResolvedValue({
+    id: 'r1',
+    name: '내 아침 루틴',
+    steps: [{ acupointId: 'LI4', seconds: 60 }],
+    sourceSymptomId: null,
+    createdAt: '2026-09-28T00:00:00.000Z',
+    updatedAt: '2026-09-28T00:00:00.000Z',
+    deletedAt: '2026-09-29T00:00:00.000Z',
+  });
+
+  await render(<DoneScreen />);
+  expect(await screen.findByText('지운 루틴')).toBeTruthy();
+  expect(screen.queryByText('내 아침 루틴')).toBeNull();
 });
