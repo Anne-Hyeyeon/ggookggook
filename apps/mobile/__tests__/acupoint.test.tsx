@@ -2,7 +2,7 @@ import { DEFAULT_SETTINGS, type UserRoutine } from '@ggookggook/shared';
 import * as store from '@ggookggook/store';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
-import { BackHandler } from 'react-native';
+import { AccessibilityInfo, BackHandler, Platform } from 'react-native';
 import AcupointScreen from '../app/acupoint/[id]';
 import { useFavorites } from '@/state/favorites';
 import { useSettings } from '@/state/settings';
@@ -156,6 +156,36 @@ describe('루틴에 추가', () => {
     );
     expect(await screen.findByText('추가했어요')).toBeTruthy();
     expect(screen.getByText('2개')).toBeTruthy();
+  });
+
+  it('announces 추가했어요 to screen readers on native, but not on web', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockImplementation(() => {});
+    mocked.listUserRoutines.mockResolvedValue([routine('r1', { name: '아침 루틴', steps: [{ acupointId: 'ST36', seconds: 60 }] })]);
+    await render(<AcupointScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: '루틴에 추가' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /아침 루틴/ }));
+    await screen.findByText('추가했어요');
+
+    expect(announce).toHaveBeenCalledWith('추가했어요');
+    announce.mockRestore();
+  });
+
+  it('does not announce on web', async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = 'web';
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockImplementation(() => {});
+    try {
+      mocked.listUserRoutines.mockResolvedValue([routine('r1', { name: '아침 루틴', steps: [{ acupointId: 'ST36', seconds: 60 }] })]);
+      await render(<AcupointScreen />);
+      await fireEvent.press(screen.getByRole('button', { name: '루틴에 추가' }));
+      await fireEvent.press(await screen.findByRole('button', { name: /아침 루틴/ }));
+      await screen.findByText('추가했어요');
+
+      expect(announce).not.toHaveBeenCalled();
+    } finally {
+      Platform.OS = originalOS;
+      announce.mockRestore();
+    }
   });
 
   it('disables a full routine and shows the 10-step limit message', async () => {

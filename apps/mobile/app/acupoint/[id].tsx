@@ -2,7 +2,7 @@ import { addStep, USER_ROUTINE_LIMITS, type UserRoutine } from '@ggookggook/shar
 import { listUserRoutines, saveUserRoutine } from '@ggookggook/store';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { AccessibilityInfo, BackHandler, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
@@ -71,6 +71,9 @@ export default function AcupointScreen() {
         .then(() => {
           setRoutines((prev) => prev?.map((r) => (r.id === target.id ? { ...r, steps } : r)) ?? prev);
           setAddedId(target.id);
+          // The live region alone doesn't fire reliably on every platform; the imperative
+          // announce is the one that actually reaches VoiceOver/TalkBack on native.
+          if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility('추가했어요');
         })
         .catch((error: unknown) => {
           console.error('Failed to add the acupoint to the routine', error);
@@ -240,7 +243,11 @@ export default function AcupointScreen() {
                         <Txt variant="caption">{`${target.steps.length}개`}</Txt>
                       </View>
                       {atMax && <Txt variant="sub" style={styles.limit}>혈자리는 10개까지 넣을 수 있어요.</Txt>}
-                      {justAdded && <Txt variant="sub" style={styles.added}>추가했어요</Txt>}
+                      {justAdded && (
+                        <Txt variant="sub" style={styles.added} accessibilityLiveRegion="polite">
+                          추가했어요
+                        </Txt>
+                      )}
                     </Pressable>
                   </View>
                 );
