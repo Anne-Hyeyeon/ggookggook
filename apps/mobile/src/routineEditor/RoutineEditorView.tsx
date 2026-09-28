@@ -1,13 +1,15 @@
 import { USER_ROUTINE_LIMITS, validateUserRoutine } from '@ggookggook/shared';
 import { saveUserRoutine } from '@ggookggook/store';
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
 import { newId } from '@/id';
+import { scheduleDailyReminder } from '@/notifications/reminder';
 import { isRoutineDraftDirty, toRoutineSteps, useRoutineDraft } from '@/state/routineDraft';
+import { useSettings } from '@/state/settings';
 import { colors, fonts, space } from '@/theme';
 import { BackLink } from '@/ui/BackLink';
 import { Button } from '@/ui/Button';
@@ -22,11 +24,15 @@ export function RoutineEditorView() {
   const removeStep = useRoutineDraft((state) => state.removeStep);
   const moveStep = useRoutineDraft((state) => state.moveStep);
   const setStepSeconds = useRoutineDraft((state) => state.setStepSeconds);
-  const dirty = useRoutineDraft((state) => isRoutineDraftDirty(state.draft, state.original));
+  const dirty = useRoutineDraft((state) => isRoutineDraftDirty(state.draft, state.baseline));
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  // Guards against two synchronous 저장 presses (fired before the `saving` state's own
+  // re-render lands, so the `disabled` prop hasn't taken effect yet): a plain state check
+  // inside the handler would still read `false` for both.
+  const savingRef = useRef(false);
 
   const validation = validateUserRoutine({ name: draft.name, steps: toRoutineSteps(draft.steps), sourceSymptomId: draft.sourceSymptomId });
   const showErrors = dirty && !validation.ok;
@@ -98,10 +104,12 @@ export function RoutineEditorView() {
   );
 
   const handleSave = useCallback(() => {
+    if (savingRef.current) return;
     const state = useRoutineDraft.getState();
     const steps = toRoutineSteps(state.draft.steps);
     const result = validateUserRoutine({ name: state.draft.name, steps, sourceSymptomId: state.draft.sourceSymptomId });
     if (!result.ok) return;
+    savingRef.current = true;
     setSaving(true);
     setSaveError(false);
     const now = new Date();
@@ -121,6 +129,14 @@ export function RoutineEditorView() {
       now,
     )
       .then(() => {
+        // If the reminder is enabled and points at this exact routine, its scheduled body
+        // still names the pre-edit title until this reschedules it with the new one.
+        const reminder = useSettings.getState().settings.reminder;
+        if (reminder?.enabled && reminder.routine.kind === 'user' && reminder.routine.id === id) {
+          scheduleDailyReminder(reminder, result.value.name).catch((error: unknown) => {
+            console.error('Failed to reschedule the reminder after editing its routine', error);
+          });
+        }
         // A new routine has no preview to go back to yet, so it opens its own; editing
         // an existing one always started from that preview, so 뒤로 returns to it directly
         // instead of pushing a second copy onto the stack.
@@ -131,6 +147,7 @@ export function RoutineEditorView() {
         console.error('Failed to save the routine', error);
         setSaveError(true);
         setSaving(false);
+        savingRef.current = false;
       });
   }, [db]);
 

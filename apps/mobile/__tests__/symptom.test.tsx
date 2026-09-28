@@ -1,6 +1,6 @@
 import { DEFAULT_SETTINGS } from '@ggookggook/shared';
 import * as store from '@ggookggook/store';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import SymptomScreen from '../app/symptom/[id]';
 import { useSettings } from '@/state/settings';
@@ -78,6 +78,28 @@ describe('내 루틴으로 복사', () => {
     // then lands back on this new routine's preview, never on this symptom screen.
     expect(router.push).toHaveBeenNthCalledWith(1, `/routine/${savedId}`);
     expect(router.push).toHaveBeenNthCalledWith(2, `/routine/${savedId}/edit`);
+  });
+
+  it('copies only once when double-tapped before the first copy settles', async () => {
+    let resolveSave: (() => void) | undefined;
+    mocked.saveUserRoutine.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveSave = () => resolve(undefined);
+      }),
+    );
+    await render(<SymptomScreen />);
+
+    const copyButton = screen.getByRole('button', { name: '내 루틴으로 복사' });
+    await act(async () => {
+      copyButton.props.onClick();
+      copyButton.props.onClick();
+    });
+    await act(async () => {
+      resolveSave?.();
+    });
+
+    expect(mocked.saveUserRoutine).toHaveBeenCalledTimes(1);
+    expect(router.push).toHaveBeenCalledTimes(2);
   });
 
   it('shows an error and stays on the symptom when the copy fails', async () => {

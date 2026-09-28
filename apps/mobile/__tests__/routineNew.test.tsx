@@ -71,6 +71,26 @@ it('prefills the draft with an acupoint passed via the route params', async () =
   expect(screen.getByText('60초')).toBeTruthy();
 });
 
+it('treats the prefill as the dirty baseline: no name error and no leave-confirmation until something is actually edited', async () => {
+  mockParams = { prefillAcupointId: 'LI4' };
+  await render(<NewRoutineScreen />);
+  expect(screen.queryByText('이름을 적어 주세요.')).toBeNull();
+
+  await fireEvent.press(screen.getByRole('button', { name: '뒤로' }));
+  expect(router.back).toHaveBeenCalledTimes(1);
+  expect(screen.queryByText('저장하지 않고 나갈까요?')).toBeNull();
+
+  jest.clearAllMocks();
+  await fireEvent.changeText(screen.getByLabelText('루틴 이름'), '아침 루틴');
+  expect(screen.queryByText('이름을 적어 주세요.')).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: '합곡 빼기' }));
+  expect(screen.getByText('혈자리를 하나 이상 넣어 주세요.')).toBeTruthy();
+
+  await fireEvent.press(screen.getByRole('button', { name: '뒤로' }));
+  expect(screen.getByText('저장하지 않고 나갈까요?')).toBeTruthy();
+  expect(router.back).not.toHaveBeenCalled();
+});
+
 it('ignores an unknown prefill acupoint id and starts empty', async () => {
   mockParams = { prefillAcupointId: 'not-a-real-id' };
   await render(<NewRoutineScreen />);
@@ -243,6 +263,32 @@ it('saves the routine and opens its new preview', async () => {
   const savedId = (mocked.saveUserRoutine.mock.calls[0]?.[1] as { id: string }).id;
   expect(router.replace).toHaveBeenCalledWith(`/routine/${savedId}`);
   expect(router.back).not.toHaveBeenCalled();
+});
+
+it('saves only once when 저장 is double-tapped before the first save settles', async () => {
+  let resolveSave: (() => void) | undefined;
+  mocked.saveUserRoutine.mockReturnValueOnce(
+    new Promise((resolve) => {
+      resolveSave = () => resolve(undefined);
+    }),
+  );
+  await render(<NewRoutineScreen />);
+  await fireEvent.changeText(screen.getByLabelText('루틴 이름'), '아침 루틴');
+  await withStore(() => {
+    useRoutineDraft.getState().addAcupoint({ acupointId: 'LI4', seconds: 60 });
+  });
+
+  const saveButton = screen.getByRole('button', { name: '저장' });
+  await act(async () => {
+    saveButton.props.onClick();
+    saveButton.props.onClick();
+  });
+  await act(async () => {
+    resolveSave?.();
+  });
+
+  expect(mocked.saveUserRoutine).toHaveBeenCalledTimes(1);
+  expect(router.replace).toHaveBeenCalledTimes(1);
 });
 
 it('shows an error and stays editable when saving fails', async () => {

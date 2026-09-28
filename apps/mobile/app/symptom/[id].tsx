@@ -1,6 +1,6 @@
 import { saveUserRoutine } from '@ggookggook/store';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
@@ -25,9 +25,13 @@ export default function SymptomScreen() {
   const symptom = content.symptom(id);
   const [copying, setCopying] = useState(false);
   const [copyError, setCopyError] = useState(false);
+  // Guards against two synchronous presses of 내 루틴으로 복사 (fired before the `copying`
+  // state's own re-render lands, so the button's `disabled` prop hasn't taken effect yet).
+  const copyingRef = useRef(false);
 
   const handleCopy = useCallback(() => {
-    if (!symptom) return;
+    if (!symptom || copyingRef.current) return;
+    copyingRef.current = true;
     setCopyError(false);
     setCopying(true);
     const now = new Date();
@@ -43,7 +47,10 @@ export default function SymptomScreen() {
         console.error('Failed to copy the symptom into a routine', error);
         setCopyError(true);
       })
-      .finally(() => setCopying(false));
+      .finally(() => {
+        setCopying(false);
+        copyingRef.current = false;
+      });
   }, [db, symptom]);
 
   if (!symptom) {

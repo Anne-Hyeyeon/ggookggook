@@ -3,7 +3,9 @@ import * as store from '@ggookggook/store';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import EditRoutineScreen from '../app/routine/[id]/edit';
+import * as reminderModule from '@/notifications/reminder';
 import { useRoutineDraft } from '@/state/routineDraft';
+import { useSettings } from '@/state/settings';
 
 let mockParams: { id: string } = { id: 'r1' };
 jest.mock('@/db/DbProvider', () => {
@@ -11,6 +13,7 @@ jest.mock('@/db/DbProvider', () => {
   return { useDb: () => db };
 });
 jest.mock('@ggookggook/store', () => ({ getUserRoutine: jest.fn(), saveUserRoutine: jest.fn() }));
+jest.mock('@/notifications/reminder', () => ({ scheduleDailyReminder: jest.fn() }));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn() },
   useLocalSearchParams: () => mockParams,
@@ -21,6 +24,7 @@ jest.mock('expo-router', () => ({
 }));
 
 const mocked = store as jest.Mocked<typeof store>;
+const mockedReminder = reminderModule as jest.Mocked<typeof reminderModule>;
 
 const routine: UserRoutine = {
   id: 'r1',
@@ -36,6 +40,8 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockParams = { id: 'r1' };
   useRoutineDraft.getState().startNew();
+  useSettings.setState({ settings: { ...useSettings.getState().settings, reminder: null } });
+  mockedReminder.scheduleDailyReminder.mockResolvedValue(undefined);
 });
 
 it('shows nothing while the routine loads, then the editor once it resolves', async () => {
@@ -107,6 +113,69 @@ it('saves an edited routine, keeping its id and created date, and goes back', as
     }),
     expect.any(Date),
   );
+  expect(router.back).toHaveBeenCalledTimes(1);
+});
+
+it('reschedules the enabled reminder with the new name when it points at the edited routine', async () => {
+  useSettings.setState({
+    settings: {
+      ...useSettings.getState().settings,
+      reminder: { enabled: true, hour: 15, minute: 0, routine: { kind: 'user', id: 'r1' } },
+    },
+  });
+  mocked.getUserRoutine.mockResolvedValue(routine);
+  mocked.saveUserRoutine.mockResolvedValue(undefined);
+  await render(<EditRoutineScreen />);
+  await screen.findByText('루틴 편집');
+
+  await fireEvent.changeText(screen.getByLabelText('루틴 이름'), '저녁 루틴');
+  await fireEvent.press(screen.getByRole('button', { name: '저장' }));
+
+  expect(mockedReminder.scheduleDailyReminder).toHaveBeenCalledWith(
+    { enabled: true, hour: 15, minute: 0, routine: { kind: 'user', id: 'r1' } },
+    '저녁 루틴',
+  );
+});
+
+it('does not reschedule when the enabled reminder points at a different routine', async () => {
+  useSettings.setState({
+    settings: {
+      ...useSettings.getState().settings,
+      reminder: { enabled: true, hour: 15, minute: 0, routine: { kind: 'user', id: 'other' } },
+    },
+  });
+  mocked.getUserRoutine.mockResolvedValue(routine);
+  mocked.saveUserRoutine.mockResolvedValue(undefined);
+  await render(<EditRoutineScreen />);
+  await screen.findByText('루틴 편집');
+
+  await fireEvent.changeText(screen.getByLabelText('루틴 이름'), '저녁 루틴');
+  await fireEvent.press(screen.getByRole('button', { name: '저장' }));
+
+  expect(mockedReminder.scheduleDailyReminder).not.toHaveBeenCalled();
+});
+
+it('saves only once when 저장 is double-tapped before the first save settles', async () => {
+  mocked.getUserRoutine.mockResolvedValue(routine);
+  let resolveSave: (() => void) | undefined;
+  mocked.saveUserRoutine.mockReturnValueOnce(
+    new Promise((resolve) => {
+      resolveSave = () => resolve(undefined);
+    }),
+  );
+  await render(<EditRoutineScreen />);
+  await screen.findByText('루틴 편집');
+
+  const saveButton = screen.getByRole('button', { name: '저장' });
+  await act(async () => {
+    saveButton.props.onClick();
+    saveButton.props.onClick();
+  });
+  await act(async () => {
+    resolveSave?.();
+  });
+
+  expect(mocked.saveUserRoutine).toHaveBeenCalledTimes(1);
   expect(router.back).toHaveBeenCalledTimes(1);
 });
 
