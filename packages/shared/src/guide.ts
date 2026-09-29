@@ -95,7 +95,8 @@ export function guideElapsedTotal(progress: GuideProgress, segments: readonly Gu
 }
 
 export function seekSegment(progress: GuideProgress, segments: readonly GuideSegment[], index: number): GuideProgress {
-  const clamped = Math.min(Math.max(index, 0), Math.max(segments.length - 1, 0));
+  if (segments.length === 0) return { index: 0, elapsed: 0, finished: true };
+  const clamped = Math.min(Math.max(index, 0), segments.length - 1);
   return { index: clamped, elapsed: 0, finished: false };
 }
 

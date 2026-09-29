@@ -1,4 +1,4 @@
-import { routineStepSchema, type RoutineStep, type UserRoutine } from '@ggookggook/shared';
+import { routineStepSchema, USER_ROUTINE_LIMITS, type RoutineStep, type UserRoutine } from '@ggookggook/shared';
 import type { SqlDatabase } from './db';
 
 interface UserRoutineRow {
@@ -30,13 +30,21 @@ function parseSteps(raw: string): RoutineStep[] {
   return result.data;
 }
 
+function parseRepeat(raw: number): number {
+  if (!Number.isInteger(raw) || raw < USER_ROUTINE_LIMITS.repeatMin || raw > USER_ROUTINE_LIMITS.repeatMax) {
+    console.error('Invalid user routine repeat, falling back to 1', raw);
+    return 1;
+  }
+  return raw;
+}
+
 function toRoutine(row: UserRoutineRow): UserRoutine {
   return {
     id: row.id,
     name: row.name,
     steps: parseSteps(row.steps),
     sourceSymptomId: row.source_symptom_id,
-    repeat: row.repeat,
+    repeat: parseRepeat(row.repeat),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     deletedAt: row.deleted_at,

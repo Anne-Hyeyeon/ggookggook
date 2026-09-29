@@ -117,6 +117,22 @@ it('saves an edited routine, keeping its id and created date, and goes back', as
   expect(router.back).toHaveBeenCalledTimes(1);
 });
 
+it('keeps the loaded routine\'s repeat count on save, since its stepper lives in a later task', async () => {
+  mocked.getUserRoutine.mockResolvedValue({ ...routine, repeat: 3 });
+  mocked.saveUserRoutine.mockResolvedValue(undefined);
+  await render(<EditRoutineScreen />);
+  await screen.findByText('루틴 편집');
+
+  await fireEvent.changeText(screen.getByLabelText('루틴 이름'), '저녁 루틴');
+  await fireEvent.press(screen.getByRole('button', { name: '저장' }));
+
+  expect(mocked.saveUserRoutine).toHaveBeenCalledWith(
+    {},
+    expect.objectContaining({ id: 'r1', repeat: 3 }),
+    expect.any(Date),
+  );
+});
+
 it('reschedules the enabled reminder with the new name when it points at the edited routine', async () => {
   useSettings.setState({
     settings: {

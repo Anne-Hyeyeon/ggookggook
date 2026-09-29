@@ -26,6 +26,11 @@ export async function getSymptomRepeat(db: SqlDatabase, symptomId: string): Prom
   return parsed;
 }
 
+function clampRepeat(repeat: number): number {
+  const rounded = Number.isFinite(repeat) ? Math.round(repeat) : DEFAULT_SYMPTOM_REPEAT;
+  return Math.min(USER_ROUTINE_LIMITS.repeatMax, Math.max(USER_ROUTINE_LIMITS.repeatMin, rounded));
+}
+
 export async function setSymptomRepeat(db: SqlDatabase, symptomId: string, repeat: number, now: Date): Promise<void> {
-  await setValue(db, `${SYMPTOM_REPEAT_KEY_PREFIX}${symptomId}`, String(repeat), now);
+  await setValue(db, `${SYMPTOM_REPEAT_KEY_PREFIX}${symptomId}`, String(clampRepeat(repeat)), now);
 }

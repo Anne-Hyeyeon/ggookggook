@@ -76,6 +76,10 @@ describe('seekSegment', () => {
   it('clamps an index past the end to the last segment', () => {
     expect(seekSegment({ index: 0, elapsed: 0, finished: false }, segments, 99)).toEqual({ index: segments.length - 1, elapsed: 0, finished: false });
   });
+
+  it('returns a finished progress for an empty segment list, rather than a phantom first segment', () => {
+    expect(seekSegment({ index: 0, elapsed: 0, finished: false }, [], 0)).toEqual({ index: 0, elapsed: 0, finished: true });
+  });
 });
 
 describe('nextSegmentIndex / previousSegmentIndex', () => {
@@ -102,7 +106,7 @@ describe('nextSegmentIndex / previousSegmentIndex', () => {
     expect(nextSegmentIndex({ index: 7, elapsed: 0, finished: false }, segments)).toBeNull();
   });
 
-  it('returns null for an empty segment list', () => {
+  it('nextSegmentIndex returns null for an empty segment list', () => {
     expect(nextSegmentIndex({ index: 0, elapsed: 0, finished: false }, [])).toBeNull();
   });
 
@@ -131,7 +135,7 @@ describe('nextSegmentIndex / previousSegmentIndex', () => {
     expect(previousSegmentIndex({ index: 0, elapsed: 5, finished: false }, segments)).toBe(0);
   });
 
-  it('returns null for an empty segment list', () => {
+  it('previousSegmentIndex returns null for an empty segment list', () => {
     expect(previousSegmentIndex({ index: 0, elapsed: 0, finished: false }, [])).toBeNull();
   });
 });

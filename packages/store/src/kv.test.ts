@@ -53,4 +53,19 @@ describe('getSymptomRepeat / setSymptomRepeat', () => {
     await setValue(db, 'repeat:headache', 'not a number', new Date('2026-09-28T00:00:00.000Z'));
     expect(await getSymptomRepeat(db, 'headache')).toBe(1);
   });
+
+  it('clamps a repeat above 5 down to 5 on write', async () => {
+    await setSymptomRepeat(db, 'headache', 9, new Date('2026-09-28T00:00:00.000Z'));
+    expect(await getSymptomRepeat(db, 'headache')).toBe(5);
+  });
+
+  it('clamps a repeat below 1 up to 1 on write', async () => {
+    await setSymptomRepeat(db, 'headache', 0, new Date('2026-09-28T00:00:00.000Z'));
+    expect(await getSymptomRepeat(db, 'headache')).toBe(1);
+  });
+
+  it('rounds a non-integer repeat to the nearest whole number on write', async () => {
+    await setSymptomRepeat(db, 'headache', 2.6, new Date('2026-09-28T00:00:00.000Z'));
+    expect(await getSymptomRepeat(db, 'headache')).toBe(3);
+  });
 });

@@ -102,6 +102,30 @@ describe('saveUserRoutine / getUserRoutine', () => {
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
   });
+
+  it('falls back a repeat outside 1-5 to 1, logging once', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    await db.runAsync(
+      'INSERT INTO user_routines (id, name, steps, source_symptom_id, repeat, created_at, updated_at, deleted_at) VALUES (?, ?, ?, NULL, ?, ?, ?, NULL)',
+      ['bad-repeat-high', 'name', '[]', 9, '2026-09-28T00:00:00.000Z', '2026-09-28T00:00:00.000Z'],
+    );
+    const saved = await getUserRoutine(db, 'bad-repeat-high');
+    expect(saved?.repeat).toBe(1);
+    expect(spy).toHaveBeenCalledTimes(1);
+    spy.mockRestore();
+  });
+
+  it('falls back a non-integer repeat to 1, logging once', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    await db.runAsync(
+      'INSERT INTO user_routines (id, name, steps, source_symptom_id, repeat, created_at, updated_at, deleted_at) VALUES (?, ?, ?, NULL, ?, ?, ?, NULL)',
+      ['bad-repeat-fraction', 'name', '[]', 2.5, '2026-09-28T00:00:00.000Z', '2026-09-28T00:00:00.000Z'],
+    );
+    const saved = await getUserRoutine(db, 'bad-repeat-fraction');
+    expect(saved?.repeat).toBe(1);
+    expect(spy).toHaveBeenCalledTimes(1);
+    spy.mockRestore();
+  });
 });
 
 describe('listUserRoutines', () => {
