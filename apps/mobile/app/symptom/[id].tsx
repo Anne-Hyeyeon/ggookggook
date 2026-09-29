@@ -1,18 +1,20 @@
-import { saveUserRoutine } from '@ggookggook/store';
+import { USER_ROUTINE_LIMITS } from '@ggookggook/shared';
+import { getSymptomRepeat, saveUserRoutine, setSymptomRepeat } from '@ggookggook/store';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
 import { ROUTINE_DISCLAIMER } from '@/disclaimers';
 import { newId } from '@/id';
-import { routineSummary, sideLabel, topic, visibleSteps } from '@/routine';
+import { routineSummary, sideLabel, summaryLine, topic, visibleSteps } from '@/routine';
 import { copySymptomToUserRoutine } from '@/routines';
 import { useSettings } from '@/state/settings';
 import { colors, fonts, space } from '@/theme';
 import { BackLink } from '@/ui/BackLink';
 import { Button } from '@/ui/Button';
+import { RepeatStepper } from '@/ui/RepeatStepper';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
 
@@ -28,6 +30,56 @@ export default function SymptomScreen() {
   // Guards against two synchronous presses of 내 루틴으로 복사 (fired before the `copying`
   // state's own re-render lands, so the button's `disabled` prop hasn't taken effect yet).
   const copyingRef = useRef(false);
+
+  const [repeat, setRepeatState] = useState(1);
+  const [repeatError, setRepeatError] = useState(false);
+  // Mirrors `repeat` synchronously (unlike the state, which only lands on the next render),
+  // so a second stepper tap fired before that render lands still steps from the true current
+  // value instead of the one the first tap's render closed over.
+  const repeatRef = useRef(1);
+
+  // Reload whenever the symptom changes, not just on mount: each symptom remembers its own
+  // repeat, so navigating from one symptom's preview to another's must not carry the first
+  // symptom's count over.
+  useEffect(() => {
+    if (!symptom) return;
+    let active = true;
+    getSymptomRepeat(db, symptom.id)
+      .then((loaded) => {
+        if (!active) return;
+        repeatRef.current = loaded;
+        setRepeatState(loaded);
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to load the symptom repeat', error);
+      });
+    return () => {
+      active = false;
+    };
+  }, [db, symptom]);
+
+  const stepRepeat = useCallback(
+    (direction: 1 | -1) => {
+      if (!symptom) return;
+      const current = repeatRef.current;
+      const next = Math.min(USER_ROUTINE_LIMITS.repeatMax, Math.max(USER_ROUTINE_LIMITS.repeatMin, current + direction));
+      if (next === current) return;
+      repeatRef.current = next;
+      setRepeatState(next);
+      setRepeatError(false);
+      setSymptomRepeat(db, symptom.id, next, new Date()).catch((error: unknown) => {
+        console.error('Failed to save the symptom repeat', error);
+        // Only roll back if nothing newer has landed since this call's optimistic set:
+        // a concurrent step that already applied must not be clobbered by this one's failure.
+        if (repeatRef.current === next) {
+          repeatRef.current = current;
+          setRepeatState(current);
+        }
+        setRepeatError(true);
+      });
+    },
+    [db, symptom],
+  );
 
   const handleCopy = useCallback(() => {
     if (!symptom || copyingRef.current) return;
@@ -65,7 +117,7 @@ export default function SymptomScreen() {
   }
 
   const steps = visibleSteps(symptom, settings);
-  const { count, minutes } = routineSummary(steps);
+  const { count, minutes } = routineSummary(steps, repeat);
   const contraindicated = symptom.steps
     .filter((step) => content.acupoints.get(step.acupointId)?.cautions.includes('pregnancy'))
     .map((step) => nameOf(step.acupointId));
@@ -82,7 +134,7 @@ export default function SymptomScreen() {
         <BackLink onPress={() => router.back()} />
         <View style={styles.head}>
           <Txt variant="title" numberOfLines={2}>{symptom.name}</Txt>
-          <Txt style={styles.summary}>{`${count}곳 · 약 ${minutes}분`}</Txt>
+          <Txt style={styles.summary}>{summaryLine(count, minutes, repeat)}</Txt>
         </View>
 
         <View>
@@ -127,7 +179,13 @@ export default function SymptomScreen() {
         <Txt variant="caption">{ROUTINE_DISCLAIMER}</Txt>
       </ScrollView>
       <View style={styles.footer}>
-        <Button label="시작" onPress={() => router.push(`/guide/${symptom.id}`)} disabled={steps.length === 0} />
+        <RepeatStepper value={repeat} onDecrement={() => stepRepeat(-1)} onIncrement={() => stepRepeat(1)} />
+        {repeatError && (
+          <Txt variant="sub" style={styles.error}>
+            반복 횟수를 저장하지 못했어요. 다시 눌러 주세요.
+          </Txt>
+        )}
+        <Button label="시작" onPress={() => router.push(`/guide/${symptom.id}?rounds=${repeat}`)} disabled={steps.length === 0} />
         <Button
           label={copying ? '복사하는 중…' : '내 루틴으로 복사'}
           kind="secondary"

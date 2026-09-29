@@ -12,7 +12,12 @@ jest.mock('@/db/DbProvider', () => {
   const db = {};
   return { useDb: () => db };
 });
-jest.mock('@ggookggook/store', () => ({ getUserRoutine: jest.fn(), deleteUserRoutine: jest.fn(), saveSettings: jest.fn() }));
+jest.mock('@ggookggook/store', () => ({
+  getUserRoutine: jest.fn(),
+  deleteUserRoutine: jest.fn(),
+  saveUserRoutine: jest.fn(),
+  saveSettings: jest.fn(),
+}));
 jest.mock('@/notifications/reminder', () => {
   const actual = jest.requireActual('@/notifications/reminder');
   // Only the Notifications-touching call is mocked; reminderRoutineFallback stays real (it's
@@ -124,7 +129,64 @@ it('starts the routine', async () => {
   mocked.getUserRoutine.mockResolvedValue(routine);
   await render(<RoutinePreviewScreen />);
   await fireEvent.press(await screen.findByRole('button', { name: '시작' }));
-  expect(router.push).toHaveBeenCalledWith('/guide/routine/r1');
+  expect(router.push).toHaveBeenCalledWith('/guide/routine/r1?rounds=1');
+});
+
+describe('반복', () => {
+  it('shows the stored repeat and disables 반복 줄이기 at 1', async () => {
+    mocked.getUserRoutine.mockResolvedValue(routine);
+    await render(<RoutinePreviewScreen />);
+    expect(await screen.findByText('1회')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '반복 줄이기' }).props.accessibilityState.disabled).toBe(true);
+  });
+
+  it('steps the repeat, updates the summary, saves the routine, and passes it to the guide', async () => {
+    mocked.getUserRoutine.mockResolvedValue(routine);
+    mocked.saveUserRoutine.mockResolvedValue(undefined);
+    await render(<RoutinePreviewScreen />);
+    await screen.findByText('1회');
+
+    await fireEvent.press(screen.getByRole('button', { name: '반복 늘리기' }));
+    expect(screen.getByText('2회')).toBeTruthy();
+    expect(screen.getByText('2곳 · 2회 · 약 10분')).toBeTruthy();
+    expect(mocked.saveUserRoutine).toHaveBeenCalledWith({}, expect.objectContaining({ id: 'r1', repeat: 2 }), expect.any(Date));
+
+    await fireEvent.press(screen.getByRole('button', { name: '시작' }));
+    expect(router.push).toHaveBeenCalledWith('/guide/routine/r1?rounds=2');
+  });
+
+  it('disables 반복 늘리기 at 5', async () => {
+    mocked.getUserRoutine.mockResolvedValue({ ...routine, repeat: 5 });
+    await render(<RoutinePreviewScreen />);
+    expect(await screen.findByText('5회')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '반복 늘리기' }).props.accessibilityState.disabled).toBe(true);
+  });
+
+  it('does not lose an increment when 반복 늘리기 is pressed twice before either settles', async () => {
+    mocked.getUserRoutine.mockResolvedValue(routine);
+    mocked.saveUserRoutine.mockResolvedValue(undefined);
+    await render(<RoutinePreviewScreen />);
+    await screen.findByText('1회');
+    const button = screen.getByRole('button', { name: '반복 늘리기' });
+    await act(async () => {
+      button.props.onClick();
+      button.props.onClick();
+    });
+    expect(screen.getByText('3회')).toBeTruthy();
+  });
+
+  it('shows an error and rolls back the repeat when saving fails', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mocked.getUserRoutine.mockResolvedValue(routine);
+    mocked.saveUserRoutine.mockRejectedValueOnce(new Error('write failed'));
+    await render(<RoutinePreviewScreen />);
+    await screen.findByText('1회');
+    await fireEvent.press(screen.getByRole('button', { name: '반복 늘리기' }));
+
+    expect(await screen.findByText('반복 횟수를 저장하지 못했어요. 다시 눌러 주세요.')).toBeTruthy();
+    expect(screen.getByText('1회')).toBeTruthy();
+    consoleError.mockRestore();
+  });
 });
 
 it('opens the editor', async () => {

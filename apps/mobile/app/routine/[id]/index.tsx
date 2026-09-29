@@ -1,19 +1,20 @@
-import type { UserRoutine } from '@ggookggook/shared';
-import { deleteUserRoutine, getUserRoutine } from '@ggookggook/store';
+import { USER_ROUTINE_LIMITS, type UserRoutine } from '@ggookggook/shared';
+import { deleteUserRoutine, getUserRoutine, saveUserRoutine } from '@ggookggook/store';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
 import { ROUTINE_DISCLAIMER } from '@/disclaimers';
 import { reminderRoutineFallback, scheduleDailyReminder } from '@/notifications/reminder';
-import { routineSummary, sideLabel, topic, visibleStepsFor } from '@/routine';
+import { routineSummary, sideLabel, summaryLine, topic, visibleStepsFor } from '@/routine';
 import { isUserRoutineUsable } from '@/routines';
 import { useSettings } from '@/state/settings';
 import { colors, fonts, space } from '@/theme';
 import { BackLink } from '@/ui/BackLink';
 import { Button } from '@/ui/Button';
+import { RepeatStepper } from '@/ui/RepeatStepper';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
 
@@ -25,6 +26,11 @@ export default function RoutinePreviewScreen() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState(false);
+  const [repeatError, setRepeatError] = useState(false);
+  // Mirrors `routine` synchronously (unlike the state, which only lands on the next render),
+  // so a second stepper tap fired before that render lands still steps from the true current
+  // repeat instead of the one the first tap's render closed over.
+  const routineRef = useRef<UserRoutine | null>(null);
 
   // Reload on every focus, not just mount: coming back from 편집 (or from deleting and
   // returning) must never show the stale routine that was loaded before that trip. Doesn't
@@ -36,16 +42,47 @@ export default function RoutinePreviewScreen() {
       let active = true;
       getUserRoutine(db, id)
         .then((loaded) => {
-          if (active) setRoutine(loaded);
+          if (active) {
+            routineRef.current = loaded;
+            setRoutine(loaded);
+          }
         })
         .catch((error: unknown) => {
           console.error('Failed to load the routine', error);
-          if (active) setRoutine(null);
+          if (active) {
+            routineRef.current = null;
+            setRoutine(null);
+          }
         });
       return () => {
         active = false;
       };
     }, [db, id]),
+  );
+
+  const stepRepeat = useCallback(
+    (direction: 1 | -1) => {
+      const current = routineRef.current;
+      if (!isUserRoutineUsable(current)) return;
+      const next = Math.min(USER_ROUTINE_LIMITS.repeatMax, Math.max(USER_ROUTINE_LIMITS.repeatMin, current.repeat + direction));
+      if (next === current.repeat) return;
+      const now = new Date();
+      const updated: UserRoutine = { ...current, repeat: next, updatedAt: now.toISOString() };
+      routineRef.current = updated;
+      setRoutine(updated);
+      setRepeatError(false);
+      saveUserRoutine(db, updated, now).catch((error: unknown) => {
+        console.error('Failed to save the routine repeat', error);
+        // Only roll back if nothing newer has landed since this call's optimistic set:
+        // a concurrent step that already applied must not be clobbered by this one's failure.
+        if (routineRef.current === updated) {
+          routineRef.current = current;
+          setRoutine(current);
+        }
+        setRepeatError(true);
+      });
+    },
+    [db],
   );
 
   const handleDelete = useCallback(() => {
@@ -111,7 +148,7 @@ export default function RoutinePreviewScreen() {
   }
 
   const steps = visibleStepsFor(routine.steps, settings);
-  const { count, minutes } = routineSummary(steps);
+  const { count, minutes } = routineSummary(steps, routine.repeat);
   // A user routine can repeat the same acupoint across steps (unlike a symptom's fixed
   // list), so the caution names need deduping or a repeated point would read twice.
   const contraindicated = [
@@ -135,7 +172,7 @@ export default function RoutinePreviewScreen() {
           <BackLink onPress={() => router.back()} />
           <View style={styles.head}>
             <Txt variant="title" numberOfLines={2}>{routine.name}</Txt>
-            <Txt style={styles.summary}>{`${count}곳 · 약 ${minutes}분`}</Txt>
+            <Txt style={styles.summary}>{summaryLine(count, minutes, routine.repeat)}</Txt>
           </View>
 
           <View>
@@ -170,7 +207,17 @@ export default function RoutinePreviewScreen() {
           <Txt variant="caption">{ROUTINE_DISCLAIMER}</Txt>
         </ScrollView>
         <View style={styles.footer}>
-          <Button label="시작" onPress={() => router.push(`/guide/routine/${routine.id}`)} disabled={steps.length === 0} />
+          <RepeatStepper value={routine.repeat} onDecrement={() => stepRepeat(-1)} onIncrement={() => stepRepeat(1)} />
+          {repeatError && (
+            <Txt variant="sub" style={styles.error}>
+              반복 횟수를 저장하지 못했어요. 다시 눌러 주세요.
+            </Txt>
+          )}
+          <Button
+            label="시작"
+            onPress={() => router.push(`/guide/routine/${routine.id}?rounds=${routine.repeat}`)}
+            disabled={steps.length === 0}
+          />
           <View style={styles.footerLinks}>
             <Pressable
               accessibilityRole="button"

@@ -19,8 +19,15 @@ export function visibleSteps(symptom: Symptom, settings: Settings): RoutineStep[
   return visibleStepsFor(symptom.steps, settings);
 }
 
-export function routineSummary(steps: RoutineStep[]): { count: number; minutes: number } {
-  return { count: steps.length, minutes: routineMinutes(routineDurationSeconds(steps, content.acupoints)) };
+export function routineSummary(steps: RoutineStep[], repeat = 1): { count: number; minutes: number } {
+  return {
+    count: steps.length,
+    minutes: routineMinutes(routineDurationSeconds(steps, content.acupoints) * repeat),
+  };
+}
+
+export function summaryLine(count: number, minutes: number, repeat: number): string {
+  return repeat > 1 ? `${count}곳 · ${repeat}회 · 약 ${minutes}분` : `${count}곳 · 약 ${minutes}분`;
 }
 
 export function sideLabel(sides: Sides): string {

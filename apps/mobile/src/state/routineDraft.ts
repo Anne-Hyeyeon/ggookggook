@@ -20,12 +20,18 @@ export interface RoutineDraft {
   name: string;
   steps: DraftStep[];
   sourceSymptomId: string | null;
+  repeat: number;
 }
 
-const EMPTY_DRAFT: RoutineDraft = { name: '', steps: [], sourceSymptomId: null };
+const EMPTY_DRAFT: RoutineDraft = { name: '', steps: [], sourceSymptomId: null, repeat: 1 };
 
 function toDraft(routine: UserRoutine): RoutineDraft {
-  return { name: routine.name, steps: routine.steps.map((step) => ({ ...step, key: newId() })), sourceSymptomId: routine.sourceSymptomId };
+  return {
+    name: routine.name,
+    steps: routine.steps.map((step) => ({ ...step, key: newId() })),
+    sourceSymptomId: routine.sourceSymptomId,
+    repeat: routine.repeat,
+  };
 }
 
 export function toRoutineSteps(steps: readonly DraftStep[]): RoutineStep[] {
@@ -44,6 +50,7 @@ interface RoutineDraftState {
   startEdit(routine: UserRoutine): void;
   commitBaseline(): void;
   setName(name: string): void;
+  setRepeat(repeat: number): void;
   addAcupoint(step: RoutineStep): void;
   removeStep(index: number): void;
   moveStep(from: number, to: number): void;
@@ -67,6 +74,9 @@ export const useRoutineDraft = create<RoutineDraftState>((set, get) => ({
   setName(name) {
     set((state) => ({ draft: { ...state.draft, name } }));
   },
+  setRepeat(repeat) {
+    set((state) => ({ draft: { ...state.draft, repeat } }));
+  },
   addAcupoint(step) {
     set((state) => ({ draft: { ...state.draft, steps: addStepPure(state.draft.steps, { ...step, key: newId() }) } }));
   },
@@ -87,5 +97,5 @@ function stepsEqual(a: readonly RoutineStep[], b: readonly RoutineStep[]): boole
 }
 
 export function isRoutineDraftDirty(draft: RoutineDraft, baseline: RoutineDraft): boolean {
-  return draft.name !== baseline.name || !stepsEqual(draft.steps, baseline.steps);
+  return draft.name !== baseline.name || draft.repeat !== baseline.repeat || !stepsEqual(draft.steps, baseline.steps);
 }

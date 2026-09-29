@@ -13,6 +13,7 @@ import { useSettings } from '@/state/settings';
 import { colors, fonts, space } from '@/theme';
 import { BackLink } from '@/ui/BackLink';
 import { Button } from '@/ui/Button';
+import { RepeatStepper } from '@/ui/RepeatStepper';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
 
@@ -21,6 +22,7 @@ export function RoutineEditorView() {
   const original = useRoutineDraft((state) => state.original);
   const draft = useRoutineDraft((state) => state.draft);
   const setName = useRoutineDraft((state) => state.setName);
+  const setRepeat = useRoutineDraft((state) => state.setRepeat);
   const removeStep = useRoutineDraft((state) => state.removeStep);
   const moveStep = useRoutineDraft((state) => state.moveStep);
   const setStepSeconds = useRoutineDraft((state) => state.setStepSeconds);
@@ -34,13 +36,11 @@ export function RoutineEditorView() {
   // inside the handler would still read `false` for both.
   const savingRef = useRef(false);
 
-  // The repeat stepper lands in a later task; until then this screen only preserves an
-  // existing routine's repeat count (falling back to 1 for a new one) rather than exposing it.
   const validation = validateUserRoutine({
     name: draft.name,
     steps: toRoutineSteps(draft.steps),
     sourceSymptomId: draft.sourceSymptomId,
-    repeat: original?.repeat ?? 1,
+    repeat: draft.repeat,
   });
   const showErrors = dirty && !validation.ok;
   const atStepsMax = draft.steps.length >= USER_ROUTINE_LIMITS.stepsMax;
@@ -59,6 +59,15 @@ export function RoutineEditorView() {
       setStepSeconds(index, current + direction * USER_ROUTINE_LIMITS.secondsStep);
     },
     [setStepSeconds],
+  );
+
+  const stepRepeat = useCallback(
+    (direction: 1 | -1) => {
+      const current = useRoutineDraft.getState().draft.repeat;
+      const next = Math.min(USER_ROUTINE_LIMITS.repeatMax, Math.max(USER_ROUTINE_LIMITS.repeatMin, current + direction));
+      setRepeat(next);
+    },
+    [setRepeat],
   );
 
   const moveByKey = useCallback(
@@ -118,7 +127,7 @@ export function RoutineEditorView() {
       name: state.draft.name,
       steps,
       sourceSymptomId: state.draft.sourceSymptomId,
-      repeat: state.original?.repeat ?? 1,
+      repeat: state.draft.repeat,
     });
     if (!result.ok) return;
     savingRef.current = true;
@@ -200,6 +209,10 @@ export function RoutineEditorView() {
           )}
 
           <Rule strong />
+
+          <RepeatStepper value={draft.repeat} onDecrement={() => stepRepeat(-1)} onIncrement={() => stepRepeat(1)} />
+
+          <Rule />
 
           <View>
             {draft.steps.map((step, index) => {

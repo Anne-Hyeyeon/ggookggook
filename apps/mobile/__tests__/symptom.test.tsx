@@ -10,7 +10,11 @@ jest.mock('@/db/DbProvider', () => {
   const db = {};
   return { useDb: () => db };
 });
-jest.mock('@ggookggook/store', () => ({ saveUserRoutine: jest.fn() }));
+jest.mock('@ggookggook/store', () => ({
+  saveUserRoutine: jest.fn(),
+  getSymptomRepeat: jest.fn(),
+  setSymptomRepeat: jest.fn(),
+}));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn() },
   useLocalSearchParams: () => mockParams,
@@ -22,6 +26,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockParams = { id: 'headache' };
   useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS } });
+  mocked.getSymptomRepeat.mockResolvedValue(1);
 });
 
 it('shows the routine, the pregnancy caution, and when to see a doctor', async () => {
@@ -33,7 +38,7 @@ it('shows the routine, the pregnancy caution, and when to see a doctor', async (
   expect(screen.getByText('임신 중이면 합곡은 누르지 마세요.')).toBeTruthy();
   expect(screen.getByText('이럴 땐 병원에 가세요')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: '시작' }));
-  expect(router.push).toHaveBeenCalledWith('/guide/headache');
+  expect(router.push).toHaveBeenCalledWith('/guide/headache?rounds=1');
 });
 
 it('leaves out contraindicated points in pregnancy mode and says so', async () => {
@@ -48,6 +53,61 @@ it('handles an unknown symptom', async () => {
   mockParams = { id: 'nope' };
   await render(<SymptomScreen />);
   expect(screen.getByText('찾을 수 없는 증상이에요.')).toBeTruthy();
+});
+
+describe('반복', () => {
+  it('loads the last saved repeat for this symptom, keyed per symptom id', async () => {
+    mocked.getSymptomRepeat.mockResolvedValue(3);
+    await render(<SymptomScreen />);
+    expect(await screen.findByText('3회')).toBeTruthy();
+    expect(mocked.getSymptomRepeat).toHaveBeenCalledWith({}, 'headache');
+  });
+
+  it('steps the repeat within 1 to 5, disabling at each bound, updates the summary, and persists', async () => {
+    mocked.setSymptomRepeat.mockResolvedValue(undefined);
+    await render(<SymptomScreen />);
+    await screen.findByText('1회');
+    expect(screen.getByRole('button', { name: '반복 줄이기' }).props.accessibilityState.disabled).toBe(true);
+
+    await fireEvent.press(screen.getByRole('button', { name: '반복 늘리기' }));
+    expect(screen.getByText('2회')).toBeTruthy();
+    expect(screen.getByText('3곳 · 2회 · 약 8분')).toBeTruthy();
+    expect(mocked.setSymptomRepeat).toHaveBeenCalledWith({}, 'headache', 2, expect.any(Date));
+
+    await fireEvent.press(screen.getByRole('button', { name: '시작' }));
+    expect(router.push).toHaveBeenCalledWith('/guide/headache?rounds=2');
+  });
+
+  it('disables 반복 늘리기 at 5', async () => {
+    mocked.getSymptomRepeat.mockResolvedValue(5);
+    await render(<SymptomScreen />);
+    expect(await screen.findByText('5회')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '반복 늘리기' }).props.accessibilityState.disabled).toBe(true);
+  });
+
+  it('does not lose an increment when 반복 늘리기 is pressed twice before either settles', async () => {
+    mocked.setSymptomRepeat.mockResolvedValue(undefined);
+    await render(<SymptomScreen />);
+    await screen.findByText('1회');
+    const button = screen.getByRole('button', { name: '반복 늘리기' });
+    await act(async () => {
+      button.props.onClick();
+      button.props.onClick();
+    });
+    expect(screen.getByText('3회')).toBeTruthy();
+  });
+
+  it('shows an error and rolls back to the previous value when saving the repeat fails', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mocked.setSymptomRepeat.mockRejectedValueOnce(new Error('write failed'));
+    await render(<SymptomScreen />);
+    await screen.findByText('1회');
+    await fireEvent.press(screen.getByRole('button', { name: '반복 늘리기' }));
+
+    expect(await screen.findByText('반복 횟수를 저장하지 못했어요. 다시 눌러 주세요.')).toBeTruthy();
+    expect(screen.getByText('1회')).toBeTruthy();
+    consoleError.mockRestore();
+  });
 });
 
 describe('내 루틴으로 복사', () => {

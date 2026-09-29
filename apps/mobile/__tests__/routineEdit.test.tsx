@@ -117,12 +117,13 @@ it('saves an edited routine, keeping its id and created date, and goes back', as
   expect(router.back).toHaveBeenCalledTimes(1);
 });
 
-it('keeps the loaded routine\'s repeat count on save, since its stepper lives in a later task', async () => {
+it('keeps the loaded routine\'s repeat count on save when the stepper is untouched', async () => {
   mocked.getUserRoutine.mockResolvedValue({ ...routine, repeat: 3 });
   mocked.saveUserRoutine.mockResolvedValue(undefined);
   await render(<EditRoutineScreen />);
   await screen.findByText('루틴 편집');
 
+  expect(screen.getByText('3회')).toBeTruthy();
   await fireEvent.changeText(screen.getByLabelText('루틴 이름'), '저녁 루틴');
   await fireEvent.press(screen.getByRole('button', { name: '저장' }));
 
@@ -131,6 +132,45 @@ it('keeps the loaded routine\'s repeat count on save, since its stepper lives in
     expect.objectContaining({ id: 'r1', repeat: 3 }),
     expect.any(Date),
   );
+});
+
+it('steps the repeat count within 1 to 5, disabling at each bound, and saves the new value', async () => {
+  mocked.getUserRoutine.mockResolvedValue(routine);
+  mocked.saveUserRoutine.mockResolvedValue(undefined);
+  await render(<EditRoutineScreen />);
+  await screen.findByText('루틴 편집');
+
+  expect(screen.getByRole('button', { name: '반복 줄이기' }).props.accessibilityState.disabled).toBe(true);
+  await fireEvent.press(screen.getByRole('button', { name: '반복 늘리기' }));
+  expect(screen.getByText('2회')).toBeTruthy();
+  expect(screen.getByRole('button', { name: '반복 줄이기' }).props.accessibilityState.disabled).toBe(false);
+
+  await fireEvent.press(screen.getByRole('button', { name: '저장' }));
+  expect(mocked.saveUserRoutine).toHaveBeenCalledWith({}, expect.objectContaining({ id: 'r1', repeat: 2 }), expect.any(Date));
+});
+
+it('does not lose an increment when 반복 늘리기 is pressed twice before either settles', async () => {
+  mocked.getUserRoutine.mockResolvedValue(routine);
+  await render(<EditRoutineScreen />);
+  await screen.findByText('루틴 편집');
+
+  const button = screen.getByRole('button', { name: '반복 늘리기' });
+  await act(async () => {
+    button.props.onClick();
+    button.props.onClick();
+  });
+  expect(screen.getByText('3회')).toBeTruthy();
+});
+
+it('asks for confirmation before leaving once only the repeat count has changed', async () => {
+  mocked.getUserRoutine.mockResolvedValue(routine);
+  await render(<EditRoutineScreen />);
+  await screen.findByText('루틴 편집');
+
+  await fireEvent.press(screen.getByRole('button', { name: '반복 늘리기' }));
+  await fireEvent.press(screen.getByRole('button', { name: '뒤로' }));
+  expect(screen.getByText('저장하지 않고 나갈까요?')).toBeTruthy();
+  expect(router.back).not.toHaveBeenCalled();
 });
 
 it('reschedules the enabled reminder with the new name when it points at the edited routine', async () => {

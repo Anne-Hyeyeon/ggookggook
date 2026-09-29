@@ -1,6 +1,6 @@
 import { DEFAULT_SETTINGS } from '@ggookggook/shared';
 import { content } from '@/content';
-import { firstSentence, routineSummary, sideLabel, topic, visibleSteps } from '@/routine';
+import { firstSentence, routineSummary, sideLabel, summaryLine, topic, visibleSteps } from '@/routine';
 
 const headache = content.symptom('headache')!;
 
@@ -14,6 +14,20 @@ it('drops contraindicated steps in pregnancy mode', () => {
 
 it('summarizes count and minutes, counting both sides of sequential points', () => {
   expect(routineSummary(visibleSteps(headache, DEFAULT_SETTINGS))).toEqual({ count: 3, minutes: 4 });
+});
+
+it('multiplies minutes by the repeat count, rounding up', () => {
+  expect(routineSummary(visibleSteps(headache, DEFAULT_SETTINGS), 2)).toEqual({ count: 3, minutes: 8 });
+});
+
+describe('summaryLine', () => {
+  it('leaves out the repeat count when it is 1', () => {
+    expect(summaryLine(3, 4, 1)).toBe('3곳 · 약 4분');
+  });
+
+  it('shows the repeat count when it is above 1', () => {
+    expect(summaryLine(3, 8, 2)).toBe('3곳 · 2회 · 약 8분');
+  });
 });
 
 it('labels sides', () => {
