@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
 import { formatDayHeader, formatDuration, formatTimeOfDay, localDayKey } from '@/format';
-import { firstSentence, routineSummary, visibleStepsFor } from '@/routine';
+import { firstSentence, routineSummary, summaryLine, visibleStepsFor } from '@/routine';
 import { DELETED_ROUTINE_LABEL, isUserRoutineUsable } from '@/routines';
 import { useFavorites } from '@/state/favorites';
 import { useSettings } from '@/state/settings';
@@ -238,16 +238,17 @@ function FavoriteRowView({ acupoint }: { acupoint: Acupoint }) {
 }
 
 function RoutineRowView({ routine, settings }: { routine: UserRoutine; settings: ReturnType<typeof useSettings.getState>['settings'] }) {
-  const { count, minutes } = routineSummary(visibleStepsFor(routine.steps, settings));
+  const { count, minutes } = routineSummary(visibleStepsFor(routine.steps, settings), routine.repeat);
+  const summary = summaryLine(count, minutes, routine.repeat);
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${routine.name}, ${count}곳, 약 ${minutes}분`}
+      accessibilityLabel={`${routine.name}, ${summary}`}
       onPress={() => router.push(`/routine/${routine.id}`)}
       style={styles.row}
     >
       <Txt maxFontSizeMultiplier={1.4} style={styles.rowName}>{routine.name}</Txt>
-      <Txt variant="sub">{`${count}곳 · 약 ${minutes}분`}</Txt>
+      <Txt variant="sub">{summary}</Txt>
     </Pressable>
   );
 }

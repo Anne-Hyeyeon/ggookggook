@@ -139,6 +139,14 @@ describe('내 루틴', () => {
     expect(await screen.findByText('1곳 · 약 1분')).toBeTruthy();
   });
 
+  it('includes the stored repeat count in the summary line when it is more than 1', async () => {
+    mocked.listUserRoutines.mockResolvedValue([
+      userRoutine('r1', { steps: [{ acupointId: 'LI4', seconds: 60 }, { acupointId: 'GV29', seconds: 60 }], repeat: 2 }),
+    ]);
+    await render(<MineScreen />);
+    expect(await screen.findByText('2곳 · 2회 · 약 6분')).toBeTruthy();
+  });
+
   it('always shows a 새 루틴 만들기 row that navigates to /routine/new', async () => {
     mocked.listUserRoutines.mockResolvedValue([userRoutine('r1')]);
     await render(<MineScreen />);

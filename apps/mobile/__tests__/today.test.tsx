@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS } from '@ggookggook/shared';
+import { DEFAULT_SETTINGS, type UserRoutine } from '@ggookggook/shared';
 import * as store from '@ggookggook/store';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
@@ -15,6 +15,8 @@ jest.mock('@ggookggook/store', () => ({
   countSessionsByFeedback: jest.fn(),
   countSessionsBySymptom: jest.fn(),
   getUserRoutine: jest.fn(),
+  getSymptomRepeat: jest.fn(),
+  listUserRoutines: jest.fn(),
 }));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn() },
@@ -26,12 +28,24 @@ jest.mock('expo-router', () => ({
 
 const mocked = store as jest.Mocked<typeof store>;
 
+const at = (hour: number, minute = 0) => new Date(2026, 8, 29, hour, minute, 0);
+
 beforeEach(() => {
   jest.clearAllMocks();
+  // A fixed default time (05:00-10:00 window: 기운이 없을 때/목이 뻐근할 때), so tests that
+  // don't care about the suggestion block aren't at the mercy of the real wall clock landing
+  // on a window whose symptom collides with a name a test asserts elsewhere on screen.
+  jest.useFakeTimers().setSystemTime(at(7));
   useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS } });
   mocked.latestCompletedSession.mockResolvedValue(null);
   mocked.countSessionsByFeedback.mockResolvedValue(0);
   mocked.countSessionsBySymptom.mockResolvedValue({});
+  mocked.getSymptomRepeat.mockResolvedValue(1);
+  mocked.listUserRoutines.mockResolvedValue([]);
+});
+
+afterEach(() => {
+  jest.useRealTimers();
 });
 
 it('lists every symptom with its minutes and opens one', async () => {
@@ -190,14 +204,6 @@ it('hides the better-feedback line when there is no positive feedback yet', asyn
   expect(screen.queryByText(/나아졌어요/)).toBeNull();
 });
 
-it('sorts the default list by usage, keeping ties and untouched symptoms in content order', async () => {
-  mocked.countSessionsBySymptom.mockResolvedValue({ neck_pain: 3, stress: 1, shoulder_pain: 1 });
-  await render(<TodayScreen />);
-  const order = (await screen.findAllByTestId(/^minutes-/)).map((node) => node.props.testID);
-  expect(order.slice(0, 3)).toEqual(['minutes-neck_pain', 'minutes-stress', 'minutes-shoulder_pain']);
-  expect(order[3]).toBe('minutes-headache');
-});
-
 it('keeps search order instead of re-sorting by usage while searching', async () => {
   mocked.countSessionsBySymptom.mockResolvedValue({ neck_pain: 5, shoulder_pain: 1 });
   await render(<TodayScreen />);
@@ -223,4 +229,133 @@ it('falls back to no history when the store rejects', async () => {
   await waitFor(() => expect(consoleError).toHaveBeenCalled());
   expect(screen.getByText('머리가 아플 때')).toBeTruthy();
   consoleError.mockRestore();
+});
+
+describe('greeting', () => {
+  it('greets by time of day', async () => {
+    jest.useFakeTimers().setSystemTime(at(7));
+    await render(<TodayScreen />);
+    expect(screen.getByText('좋은 아침이에요')).toBeTruthy();
+  });
+
+  it('greets differently in the afternoon', async () => {
+    jest.useFakeTimers().setSystemTime(at(15));
+    await render(<TodayScreen />);
+    expect(screen.getByText('오후도 잠깐 쉬어 가요')).toBeTruthy();
+  });
+
+  it('greets differently at night', async () => {
+    jest.useFakeTimers().setSystemTime(at(22));
+    await render(<TodayScreen />);
+    expect(screen.getByText('편안한 밤 되세요')).toBeTruthy();
+  });
+});
+
+describe('지금 해 보기', () => {
+  it('suggests up to two symptoms for the time of day, with their acupoint names and minutes', async () => {
+    jest.useFakeTimers().setSystemTime(at(7));
+    await render(<TodayScreen />);
+    expect(screen.getByText('지금 해 보기')).toBeTruthy();
+    // Suggested symptoms also appear in their own group section further down the same
+    // screen, so their row is found by its unique preview accessibility label instead of
+    // its plain (and elsewhere-duplicated) name text.
+    expect(screen.getByRole('button', { name: '기운이 없을 때 미리보기' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '목이 뻐근할 때 미리보기' })).toBeTruthy();
+  });
+
+  it('opens the symptom preview when a suggestion row is tapped', async () => {
+    jest.useFakeTimers().setSystemTime(at(7));
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: '기운이 없을 때 미리보기' }));
+    expect(router.push).toHaveBeenCalledWith('/symptom/fatigue');
+  });
+
+  it('starts a suggestion at its remembered repeat count, not always 1', async () => {
+    jest.useFakeTimers().setSystemTime(at(7));
+    mocked.getSymptomRepeat.mockImplementation(async (_db, symptomId: string) => (symptomId === 'fatigue' ? 3 : 1));
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: '기운이 없을 때 시작' }));
+    await waitFor(() => expect(router.push).toHaveBeenCalledWith('/guide/fatigue?rounds=3'));
+  });
+
+  it('hides the suggestion block while searching', async () => {
+    jest.useFakeTimers().setSystemTime(at(7));
+    await render(<TodayScreen />);
+    const input = screen.getByPlaceholderText('증상이나 혈자리 이름');
+    await fireEvent.changeText(input, '두통');
+    expect(screen.queryByText('지금 해 보기')).toBeNull();
+  });
+});
+
+describe('내 루틴 quick row', () => {
+  const routine = (overrides: Partial<UserRoutine> = {}): UserRoutine => ({
+    id: 'r1',
+    name: '아침 루틴',
+    steps: [{ acupointId: 'LI4', seconds: 60 }, { acupointId: 'GV29', seconds: 60 }],
+    sourceSymptomId: null,
+    repeat: 2,
+    createdAt: '2026-09-01T00:00:00.000Z',
+    updatedAt: '2026-09-01T00:00:00.000Z',
+    deletedAt: null,
+    ...overrides,
+  });
+
+  it('shows my routines as chips with minutes including the stored repeat, navigable to their preview', async () => {
+    mocked.listUserRoutines.mockResolvedValue([routine()]);
+    await render(<TodayScreen />);
+    expect(await screen.findByText('아침 루틴')).toBeTruthy();
+    expect(screen.getByText('2곳 · 2회 · 약 6분')).toBeTruthy();
+
+    await fireEvent.press(screen.getByText('아침 루틴'));
+    expect(router.push).toHaveBeenCalledWith('/routine/r1');
+  });
+
+  it('shows nothing when the user has no routines', async () => {
+    mocked.listUserRoutines.mockResolvedValue([]);
+    await render(<TodayScreen />);
+    await waitFor(() => expect(mocked.listUserRoutines).toHaveBeenCalled());
+    expect(screen.queryByText('내 루틴')).toBeNull();
+  });
+});
+
+describe('group chips and sections', () => {
+  it('groups the full list under caption section headers in 전체', async () => {
+    await render(<TodayScreen />);
+    // Each group label appears twice in 전체: once as its chip, once as its section header.
+    expect(screen.getAllByText('머리·눈')).toHaveLength(2);
+    expect(screen.getAllByText('목·어깨·허리')).toHaveLength(2);
+    expect(screen.getByText('머리가 아플 때')).toBeTruthy();
+  });
+
+  it('filters to a flat, usage-sorted list of one group when its chip is selected', async () => {
+    mocked.countSessionsBySymptom.mockResolvedValue({ neck_pain: 3, shoulder_pain: 1 });
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: '목·어깨·허리' }));
+
+    expect(screen.queryByText('머리가 아플 때')).toBeNull();
+    // Only the chip's own label remains; its section header (and every other group's) is
+    // gone, but the chip row itself, including other groups' chips, stays on screen.
+    expect(screen.getAllByText('목·어깨·허리')).toHaveLength(1);
+    expect(screen.getAllByText('머리·눈')).toHaveLength(1);
+    const order = (await screen.findAllByTestId(/^minutes-/)).map((node) => node.props.testID);
+    expect(order).toEqual(['minutes-neck_pain', 'minutes-shoulder_pain', 'minutes-back_pain']);
+  });
+
+  it('returns to sections when 전체 is selected again', async () => {
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: '목·어깨·허리' }));
+    expect(screen.queryByText('머리가 아플 때')).toBeNull();
+
+    await fireEvent.press(screen.getByRole('button', { name: '전체' }));
+    expect(screen.getByText('머리가 아플 때')).toBeTruthy();
+    expect(screen.getAllByText('머리·눈')).toHaveLength(2);
+  });
+
+  it('search overrides grouping: a selected chip has no effect while searching', async () => {
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: '목·어깨·허리' }));
+    const input = screen.getByPlaceholderText('증상이나 혈자리 이름');
+    await fireEvent.changeText(input, '두통');
+    expect(screen.getByText('머리가 아플 때')).toBeTruthy();
+  });
 });

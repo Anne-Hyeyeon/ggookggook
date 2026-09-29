@@ -118,6 +118,18 @@ async function runFlow(page) {
   await search.waitFor();
   await shoot(page, '03-today.png');
 
+  // 22. Today, with a group chip selected (목·어깨·허리): a flat, usage-sorted list of just
+  // that group, no section headers. Waits on 속이 울렁거릴 때 (digestion, and never one of
+  // suggestFor's windowed symptoms) disappearing, rather than on a neck-back symptom
+  // appearing: a filtered-in symptom can also be showing in the time-of-day "지금 해 보기"
+  // card above (which the chip doesn't affect), so its real-clock-dependent presence isn't
+  // a safe wait condition here.
+  await page.getByRole('button', { name: '목·어깨·허리' }).click();
+  await page.waitForFunction(() => !document.body.innerText.includes('속이 울렁거릴 때'));
+  await shoot(page, '22-today-filter.png');
+  await page.getByRole('button', { name: '전체' }).click();
+  await page.getByText('속이 울렁거릴 때', { exact: true }).waitFor();
+
   // 15. 내 루틴 (mine) tab, completely fresh: no favorites, no user routines beyond the
   // 새 루틴 만들기 affordance, and no history yet, so the big empty-state cat shows once
   // instead of three separate per-section empty lines (see mine.tsx's `allEmpty`).

@@ -39,6 +39,12 @@ export function formatTimeOfDay(iso: string): string {
   return formatHourMinute(date.getHours(), date.getMinutes());
 }
 
+export function greetingFor(hour: number): string {
+  if (hour >= 5 && hour < 12) return '좋은 아침이에요';
+  if (hour >= 12 && hour < 18) return '오후도 잠깐 쉬어 가요';
+  return '편안한 밤 되세요';
+}
+
 export function localDayKey(iso: string): string {
   const date = new Date(iso);
   return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
