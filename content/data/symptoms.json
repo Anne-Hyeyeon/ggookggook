@@ -244,7 +244,7 @@
       { "acupointId": "ST36", "seconds": 60 }
     ],
     "seeDoctor": "심한 복통이나 반복되는 구토가 있으면 병원 진료를 받으세요. 의식이 흐려지면 바로 119에 연락하세요. 피를 토하거나 명치 통증이 등으로 번지면 바로 병원에 가세요.",
-    "group": "digestion"
+    "group": "daily"
   },
   {
     "id": "nasal_congestion",
@@ -267,7 +267,7 @@
       { "acupointId": "CV17", "seconds": 60 }
     ],
     "seeDoctor": "가슴 통증이나 호흡곤란이 함께 오면 바로 119에 연락하세요. 딸꾹질이 48시간 넘게 이어지면 병원 진료를 받으세요.",
-    "group": "digestion"
+    "group": "daily"
   },
   {
     "id": "toothache_temporary",
