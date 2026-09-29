@@ -2,45 +2,52 @@ import { describe, expect, it } from 'vitest';
 import { USER_ROUTINE_LIMITS, addStep, moveStep, removeStep, setStepSeconds, validateUserRoutine } from './user-routine';
 
 const step = (acupointId: string, seconds = 60) => ({ acupointId, seconds });
+const input = (overrides: Partial<{ name: string; steps: ReturnType<typeof step>[]; sourceSymptomId: string | null; repeat: number }> = {}) => ({
+  name: '루틴',
+  steps: [step('LI4')],
+  sourceSymptomId: null,
+  repeat: 1,
+  ...overrides,
+});
 
 describe('USER_ROUTINE_LIMITS', () => {
   it('matches the spec', () => {
-    expect(USER_ROUTINE_LIMITS).toEqual({ nameMaxLength: 20, stepsMax: 10, secondsMin: 10, secondsMax: 600, secondsStep: 10 });
+    expect(USER_ROUTINE_LIMITS).toEqual({ nameMaxLength: 20, stepsMax: 10, secondsMin: 10, secondsMax: 600, secondsStep: 10, repeatMin: 1, repeatMax: 5 });
   });
 });
 
 describe('validateUserRoutine', () => {
   it('accepts a valid routine and trims the name', () => {
-    const result = validateUserRoutine({ name: '  아침 루틴  ', steps: [step('LI4')], sourceSymptomId: null });
-    expect(result).toEqual({ ok: true, value: { name: '아침 루틴', steps: [step('LI4')], sourceSymptomId: null } });
+    const result = validateUserRoutine(input({ name: '  아침 루틴  ' }));
+    expect(result).toEqual({ ok: true, value: { name: '아침 루틴', steps: [step('LI4')], sourceSymptomId: null, repeat: 1 } });
   });
 
   it('rejects an empty name', () => {
-    expect(validateUserRoutine({ name: '', steps: [step('LI4')], sourceSymptomId: null })).toEqual({
+    expect(validateUserRoutine(input({ name: '' }))).toEqual({
       ok: false,
       errors: ['이름을 적어 주세요.'],
     });
   });
 
   it('rejects a name that is only whitespace', () => {
-    expect(validateUserRoutine({ name: '   ', steps: [step('LI4')], sourceSymptomId: null })).toEqual({
+    expect(validateUserRoutine(input({ name: '   ' }))).toEqual({
       ok: false,
       errors: ['이름을 적어 주세요.'],
     });
   });
 
   it('rejects a name over 20 characters', () => {
-    const result = validateUserRoutine({ name: 'a'.repeat(21), steps: [step('LI4')], sourceSymptomId: null });
+    const result = validateUserRoutine(input({ name: 'a'.repeat(21) }));
     expect(result).toEqual({ ok: false, errors: ['이름은 20자까지 적을 수 있어요.'] });
   });
 
   it('accepts a name at exactly 20 characters', () => {
-    const result = validateUserRoutine({ name: 'a'.repeat(20), steps: [step('LI4')], sourceSymptomId: null });
+    const result = validateUserRoutine(input({ name: 'a'.repeat(20) }));
     expect(result.ok).toBe(true);
   });
 
   it('rejects zero steps', () => {
-    expect(validateUserRoutine({ name: '루틴', steps: [], sourceSymptomId: null })).toEqual({
+    expect(validateUserRoutine(input({ steps: [] }))).toEqual({
       ok: false,
       errors: ['혈자리를 하나 이상 넣어 주세요.'],
     });
@@ -48,7 +55,7 @@ describe('validateUserRoutine', () => {
 
   it('rejects more than 10 steps', () => {
     const steps = Array.from({ length: 11 }, (_, i) => step(`LI${(i % 9) + 1}`));
-    expect(validateUserRoutine({ name: '루틴', steps, sourceSymptomId: null })).toEqual({
+    expect(validateUserRoutine(input({ steps }))).toEqual({
       ok: false,
       errors: ['혈자리는 10개까지 넣을 수 있어요.'],
     });
@@ -56,24 +63,51 @@ describe('validateUserRoutine', () => {
 
   it('accepts exactly 10 steps', () => {
     const steps = Array.from({ length: 10 }, (_, i) => step(`LI${(i % 9) + 1}`));
-    expect(validateUserRoutine({ name: '루틴', steps, sourceSymptomId: null }).ok).toBe(true);
+    expect(validateUserRoutine(input({ steps })).ok).toBe(true);
   });
 
   it('allows the same acupoint to repeat', () => {
     const steps = [step('LI4'), step('LI4')];
-    expect(validateUserRoutine({ name: '루틴', steps, sourceSymptomId: null }).ok).toBe(true);
+    expect(validateUserRoutine(input({ steps })).ok).toBe(true);
   });
 
   it('collects every error at once', () => {
-    expect(validateUserRoutine({ name: '', steps: [], sourceSymptomId: null })).toEqual({
+    expect(validateUserRoutine(input({ name: '', steps: [] }))).toEqual({
       ok: false,
       errors: ['이름을 적어 주세요.', '혈자리를 하나 이상 넣어 주세요.'],
     });
   });
 
   it('keeps a valid sourceSymptomId', () => {
-    const result = validateUserRoutine({ name: '루틴', steps: [step('LI4')], sourceSymptomId: 'headache' });
-    expect(result).toEqual({ ok: true, value: { name: '루틴', steps: [step('LI4')], sourceSymptomId: 'headache' } });
+    const result = validateUserRoutine(input({ sourceSymptomId: 'headache' }));
+    expect(result).toEqual({ ok: true, value: { name: '루틴', steps: [step('LI4')], sourceSymptomId: 'headache', repeat: 1 } });
+  });
+
+  it('accepts every repeat count from 1 to 5', () => {
+    for (let repeat = 1; repeat <= 5; repeat++) {
+      expect(validateUserRoutine(input({ repeat })).ok).toBe(true);
+    }
+  });
+
+  it('rejects a repeat below 1', () => {
+    expect(validateUserRoutine(input({ repeat: 0 }))).toEqual({
+      ok: false,
+      errors: ['반복 횟수는 1~5회 사이여야 해요.'],
+    });
+  });
+
+  it('rejects a repeat above 5', () => {
+    expect(validateUserRoutine(input({ repeat: 6 }))).toEqual({
+      ok: false,
+      errors: ['반복 횟수는 1~5회 사이여야 해요.'],
+    });
+  });
+
+  it('rejects a non-integer repeat', () => {
+    expect(validateUserRoutine(input({ repeat: 2.5 }))).toEqual({
+      ok: false,
+      errors: ['반복 횟수는 1~5회 사이여야 해요.'],
+    });
   });
 });
 

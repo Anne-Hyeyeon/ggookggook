@@ -6,12 +6,15 @@ export const USER_ROUTINE_LIMITS = {
   secondsMin: 10,
   secondsMax: 600,
   secondsStep: 10,
+  repeatMin: 1,
+  repeatMax: 5,
 } as const;
 
 export interface UserRoutineInput {
   name: string;
   steps: RoutineStep[];
   sourceSymptomId: string | null;
+  repeat: number;
 }
 
 export type ValidateUserRoutineResult =
@@ -28,8 +31,12 @@ export function validateUserRoutine(input: UserRoutineInput): ValidateUserRoutin
   if (input.steps.length === 0) errors.push('혈자리를 하나 이상 넣어 주세요.');
   else if (input.steps.length > USER_ROUTINE_LIMITS.stepsMax) errors.push(`혈자리는 ${USER_ROUTINE_LIMITS.stepsMax}개까지 넣을 수 있어요.`);
 
+  if (!Number.isInteger(input.repeat) || input.repeat < USER_ROUTINE_LIMITS.repeatMin || input.repeat > USER_ROUTINE_LIMITS.repeatMax) {
+    errors.push(`반복 횟수는 ${USER_ROUTINE_LIMITS.repeatMin}~${USER_ROUTINE_LIMITS.repeatMax}회 사이여야 해요.`);
+  }
+
   if (errors.length > 0) return { ok: false, errors };
-  return { ok: true, value: { name, steps: input.steps, sourceSymptomId: input.sourceSymptomId } };
+  return { ok: true, value: { name, steps: input.steps, sourceSymptomId: input.sourceSymptomId, repeat: input.repeat } };
 }
 
 function clampSeconds(seconds: number): number {

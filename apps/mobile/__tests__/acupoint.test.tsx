@@ -39,6 +39,7 @@ const routine = (id: string, overrides: Partial<UserRoutine> = {}): UserRoutine 
   name: `루틴 ${id}`,
   steps: [{ acupointId: 'ST36', seconds: 60 }],
   sourceSymptomId: null,
+  repeat: 1,
   createdAt: '2026-09-20T00:00:00.000Z',
   updatedAt: '2026-09-20T00:00:00.000Z',
   deletedAt: null,

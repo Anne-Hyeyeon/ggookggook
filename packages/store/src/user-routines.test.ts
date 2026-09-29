@@ -16,6 +16,7 @@ const routine = (id: string, overrides: Partial<UserRoutine> = {}): UserRoutine 
   name: '아침 루틴',
   steps: [{ acupointId: 'LI4', seconds: 60 }],
   sourceSymptomId: null,
+  repeat: 1,
   createdAt: '2026-09-28T00:00:00.000Z',
   updatedAt: '2026-09-28T00:00:00.000Z',
   deletedAt: null,
@@ -32,6 +33,17 @@ describe('saveUserRoutine / getUserRoutine', () => {
   it('round-trips a routine sourced from a symptom', async () => {
     await saveUserRoutine(db, routine('r1', { sourceSymptomId: 'headache' }), new Date('2026-09-28T00:00:00.000Z'));
     expect((await getUserRoutine(db, 'r1'))?.sourceSymptomId).toBe('headache');
+  });
+
+  it('round-trips a routine with a repeat count above 1', async () => {
+    await saveUserRoutine(db, routine('r1', { repeat: 3 }), new Date('2026-09-28T00:00:00.000Z'));
+    expect((await getUserRoutine(db, 'r1'))?.repeat).toBe(3);
+  });
+
+  it('updates the repeat count on a later save', async () => {
+    await saveUserRoutine(db, routine('r1'), new Date('2026-09-28T00:00:00.000Z'));
+    await saveUserRoutine(db, { ...routine('r1'), repeat: 4 }, new Date('2026-09-29T00:00:00.000Z'));
+    expect((await getUserRoutine(db, 'r1'))?.repeat).toBe(4);
   });
 
   it('upserts and bumps updated_at while keeping created_at', async () => {

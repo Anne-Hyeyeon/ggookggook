@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import type { Acupoint } from './content';
-import { advanceGuide, buildGuideSegments, guideElapsedTotal, resolveSteps, rhythmAt, type GuideProgress } from './guide';
+import {
+  advanceGuide,
+  buildGuideSegments,
+  guideElapsedTotal,
+  nextSegmentIndex,
+  previousSegmentIndex,
+  resolveSteps,
+  rhythmAt,
+  seekSegment,
+  type GuideProgress,
+} from './guide';
 import type { AcupointLookup } from './routine';
 
 const lookup: AcupointLookup = new Map<string, Pick<Acupoint, 'sides' | 'cautions'>>([
@@ -20,18 +30,109 @@ describe('resolveSteps', () => {
 });
 
 describe('buildGuideSegments', () => {
-  it('splits sequential points into left then right and keeps others whole', () => {
+  it('splits sequential points into left then right and keeps others whole, defaulting to a single round', () => {
     const steps = [
       { acupointId: 'LI4', seconds: 60 },
       { acupointId: 'EX-HN5', seconds: 30 },
       { acupointId: 'GV29', seconds: 40 },
     ];
     expect(buildGuideSegments(steps, lookup)).toEqual([
-      { stepIndex: 0, acupointId: 'LI4', side: 'left', seconds: 60 },
-      { stepIndex: 0, acupointId: 'LI4', side: 'right', seconds: 60 },
-      { stepIndex: 1, acupointId: 'EX-HN5', side: 'both', seconds: 30 },
-      { stepIndex: 2, acupointId: 'GV29', side: 'center', seconds: 40 },
+      { stepIndex: 0, round: 1, acupointId: 'LI4', side: 'left', seconds: 60 },
+      { stepIndex: 0, round: 1, acupointId: 'LI4', side: 'right', seconds: 60 },
+      { stepIndex: 1, round: 1, acupointId: 'EX-HN5', side: 'both', seconds: 30 },
+      { stepIndex: 2, round: 1, acupointId: 'GV29', side: 'center', seconds: 40 },
     ]);
+  });
+
+  it('repeats the full step list for each round, tagging each segment with its 1-based round', () => {
+    const steps = [{ acupointId: 'GV29', seconds: 40 }];
+    expect(buildGuideSegments(steps, lookup, 3)).toEqual([
+      { stepIndex: 0, round: 1, acupointId: 'GV29', side: 'center', seconds: 40 },
+      { stepIndex: 0, round: 2, acupointId: 'GV29', side: 'center', seconds: 40 },
+      { stepIndex: 0, round: 3, acupointId: 'GV29', side: 'center', seconds: 40 },
+    ]);
+  });
+
+  it('produces no segments for zero rounds', () => {
+    expect(buildGuideSegments([{ acupointId: 'GV29', seconds: 40 }], lookup, 0)).toEqual([]);
+  });
+});
+
+describe('seekSegment', () => {
+  const steps = [
+    { acupointId: 'LI4', seconds: 60 },
+    { acupointId: 'GV29', seconds: 40 },
+  ];
+  const segments = buildGuideSegments(steps, lookup, 2);
+
+  it('jumps to the given index, resetting elapsed and finished', () => {
+    expect(seekSegment({ index: 0, elapsed: 20, finished: false }, segments, 3)).toEqual({ index: 3, elapsed: 0, finished: false });
+  });
+
+  it('clamps an index below zero to the first segment', () => {
+    expect(seekSegment({ index: 2, elapsed: 5, finished: true }, segments, -1)).toEqual({ index: 0, elapsed: 0, finished: false });
+  });
+
+  it('clamps an index past the end to the last segment', () => {
+    expect(seekSegment({ index: 0, elapsed: 0, finished: false }, segments, 99)).toEqual({ index: segments.length - 1, elapsed: 0, finished: false });
+  });
+});
+
+describe('nextSegmentIndex / previousSegmentIndex', () => {
+  // LI4 is sequential (left/right), GV29 and EX-HN5 are single-segment steps.
+  const steps = [
+    { acupointId: 'LI4', seconds: 60 },
+    { acupointId: 'GV29', seconds: 40 },
+    { acupointId: 'EX-HN5', seconds: 30 },
+  ];
+  const segments = buildGuideSegments(steps, lookup, 2);
+  // index: 0 LI4 left r1, 1 LI4 right r1, 2 GV29 r1, 3 EX-HN5 r1,
+  //        4 LI4 left r2, 5 LI4 right r2, 6 GV29 r2, 7 EX-HN5 r2
+
+  it('moves from either side of a sequential point to the first segment of the next step', () => {
+    expect(nextSegmentIndex({ index: 0, elapsed: 0, finished: false }, segments)).toBe(2);
+    expect(nextSegmentIndex({ index: 1, elapsed: 0, finished: false }, segments)).toBe(2);
+  });
+
+  it('crosses into the next round from the last step of the current round', () => {
+    expect(nextSegmentIndex({ index: 3, elapsed: 0, finished: false }, segments)).toBe(4);
+  });
+
+  it('returns null when already on the last step of the last round', () => {
+    expect(nextSegmentIndex({ index: 7, elapsed: 0, finished: false }, segments)).toBeNull();
+  });
+
+  it('returns null for an empty segment list', () => {
+    expect(nextSegmentIndex({ index: 0, elapsed: 0, finished: false }, [])).toBeNull();
+  });
+
+  it('restarts the current step when elapsed time has passed', () => {
+    expect(previousSegmentIndex({ index: 2, elapsed: 5, finished: false }, segments)).toBe(2);
+  });
+
+  it('restarts the current step from its right side even at elapsed 0', () => {
+    expect(previousSegmentIndex({ index: 1, elapsed: 0, finished: false }, segments)).toBe(0);
+  });
+
+  it('moves to the first segment of the previous step at elapsed 0 on the step\'s first segment', () => {
+    expect(previousSegmentIndex({ index: 2, elapsed: 0, finished: false }, segments)).toBe(0);
+    expect(previousSegmentIndex({ index: 3, elapsed: 0, finished: false }, segments)).toBe(2);
+  });
+
+  it('crosses back into the previous round from the first step of the current round', () => {
+    expect(previousSegmentIndex({ index: 4, elapsed: 0, finished: false }, segments)).toBe(3);
+  });
+
+  it('returns null when already on the first segment of the first step of the first round, at zero elapsed', () => {
+    expect(previousSegmentIndex({ index: 0, elapsed: 0, finished: false }, segments)).toBeNull();
+  });
+
+  it('restarts the first step in place, rather than returning null, once elapsed time has passed', () => {
+    expect(previousSegmentIndex({ index: 0, elapsed: 5, finished: false }, segments)).toBe(0);
+  });
+
+  it('returns null for an empty segment list', () => {
+    expect(previousSegmentIndex({ index: 0, elapsed: 0, finished: false }, [])).toBeNull();
   });
 });
 

@@ -66,6 +66,7 @@ export function copySymptomToUserRoutine(symptom: Symptom, id: string, now: stri
     name: symptomRoutineName(symptom.name),
     steps,
     sourceSymptomId: symptom.id,
+    repeat: 1,
     createdAt: now,
     updatedAt: now,
     deletedAt: null,

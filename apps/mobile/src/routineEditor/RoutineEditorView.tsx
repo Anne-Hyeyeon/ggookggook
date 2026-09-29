@@ -34,7 +34,14 @@ export function RoutineEditorView() {
   // inside the handler would still read `false` for both.
   const savingRef = useRef(false);
 
-  const validation = validateUserRoutine({ name: draft.name, steps: toRoutineSteps(draft.steps), sourceSymptomId: draft.sourceSymptomId });
+  // The repeat stepper lands in a later task; until then this screen only preserves an
+  // existing routine's repeat count (falling back to 1 for a new one) rather than exposing it.
+  const validation = validateUserRoutine({
+    name: draft.name,
+    steps: toRoutineSteps(draft.steps),
+    sourceSymptomId: draft.sourceSymptomId,
+    repeat: original?.repeat ?? 1,
+  });
   const showErrors = dirty && !validation.ok;
   const atStepsMax = draft.steps.length >= USER_ROUTINE_LIMITS.stepsMax;
 
@@ -107,7 +114,12 @@ export function RoutineEditorView() {
     if (savingRef.current) return;
     const state = useRoutineDraft.getState();
     const steps = toRoutineSteps(state.draft.steps);
-    const result = validateUserRoutine({ name: state.draft.name, steps, sourceSymptomId: state.draft.sourceSymptomId });
+    const result = validateUserRoutine({
+      name: state.draft.name,
+      steps,
+      sourceSymptomId: state.draft.sourceSymptomId,
+      repeat: state.original?.repeat ?? 1,
+    });
     if (!result.ok) return;
     savingRef.current = true;
     setSaving(true);
@@ -122,6 +134,7 @@ export function RoutineEditorView() {
         name: result.value.name,
         steps: result.value.steps,
         sourceSymptomId: result.value.sourceSymptomId,
+        repeat: result.value.repeat,
         createdAt: state.original?.createdAt ?? now.toISOString(),
         updatedAt: now.toISOString(),
         deletedAt: null,

@@ -37,6 +37,7 @@ const userRoutine: UserRoutine = {
   name: '아침 루틴',
   steps: [{ acupointId: 'GV20', seconds: 10 }, { acupointId: 'GV29', seconds: 10 }],
   sourceSymptomId: null,
+  repeat: 1,
   createdAt: '2026-09-28T00:00:00.000Z',
   updatedAt: '2026-09-28T00:00:00.000Z',
   deletedAt: null,

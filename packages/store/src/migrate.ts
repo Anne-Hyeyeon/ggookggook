@@ -36,6 +36,9 @@ const MIGRATIONS: readonly string[] = [
     deleted_at TEXT
   );
   `,
+  `
+  ALTER TABLE user_routines ADD COLUMN repeat INTEGER NOT NULL DEFAULT 1;
+  `,
 ];
 
 export async function migrate(db: SqlDatabase): Promise<number> {

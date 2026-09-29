@@ -3,8 +3,8 @@ import { act, renderHook } from '@testing-library/react-native';
 import { useGuide } from '@/guide/useGuide';
 
 const segments: GuideSegment[] = [
-  { stepIndex: 0, acupointId: 'GV29', side: 'center', seconds: 3 },
-  { stepIndex: 1, acupointId: 'EX-HN5', side: 'both', seconds: 2 },
+  { stepIndex: 0, round: 1, acupointId: 'GV29', side: 'center', seconds: 3 },
+  { stepIndex: 1, round: 1, acupointId: 'EX-HN5', side: 'both', seconds: 2 },
 ];
 
 beforeEach(() => jest.useFakeTimers());

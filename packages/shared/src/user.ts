@@ -5,6 +5,7 @@ export interface UserRoutine {
   name: string;
   steps: RoutineStep[];
   sourceSymptomId: string | null;
+  repeat: number;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;

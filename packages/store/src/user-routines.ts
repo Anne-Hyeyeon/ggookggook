@@ -6,6 +6,7 @@ interface UserRoutineRow {
   name: string;
   steps: string;
   source_symptom_id: string | null;
+  repeat: number;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -35,6 +36,7 @@ function toRoutine(row: UserRoutineRow): UserRoutine {
     name: row.name,
     steps: parseSteps(row.steps),
     sourceSymptomId: row.source_symptom_id,
+    repeat: row.repeat,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     deletedAt: row.deleted_at,
@@ -57,16 +59,17 @@ export async function getUserRoutine(db: SqlDatabase, id: string): Promise<UserR
 export async function saveUserRoutine(db: SqlDatabase, routine: UserRoutine, now: Date): Promise<void> {
   const updatedAt = now.toISOString();
   await db.runAsync(
-    `INSERT INTO user_routines (id, name, steps, source_symptom_id, created_at, updated_at, deleted_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO user_routines (id, name, steps, source_symptom_id, repeat, created_at, updated_at, deleted_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        name = excluded.name,
        steps = excluded.steps,
        source_symptom_id = excluded.source_symptom_id,
+       repeat = excluded.repeat,
        updated_at = excluded.updated_at,
        deleted_at = excluded.deleted_at
      WHERE user_routines.deleted_at IS NULL`,
-    [routine.id, routine.name, JSON.stringify(routine.steps), routine.sourceSymptomId, routine.createdAt, updatedAt, routine.deletedAt],
+    [routine.id, routine.name, JSON.stringify(routine.steps), routine.sourceSymptomId, routine.repeat, routine.createdAt, updatedAt, routine.deletedAt],
   );
 }
 

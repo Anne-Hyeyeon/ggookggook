@@ -46,6 +46,7 @@ const userRoutine = (overrides: Partial<UserRoutine> = {}): UserRoutine => ({
   name: '아침 루틴',
   steps: [{ acupointId: 'LI4', seconds: 30 }],
   sourceSymptomId: null,
+  repeat: 1,
   createdAt: '2026-09-01T00:00:00.000Z',
   updatedAt: '2026-09-01T00:00:00.000Z',
   deletedAt: null,

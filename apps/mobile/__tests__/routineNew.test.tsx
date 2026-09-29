@@ -43,6 +43,7 @@ const previousRoutine: UserRoutine = {
   name: '이전 편집',
   steps: [{ acupointId: 'ST36', seconds: 90 }],
   sourceSymptomId: null,
+  repeat: 1,
   createdAt: '2026-09-01T00:00:00.000Z',
   updatedAt: '2026-09-01T00:00:00.000Z',
   deletedAt: null,

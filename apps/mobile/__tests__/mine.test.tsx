@@ -53,6 +53,7 @@ const userRoutine = (id: string, overrides: Partial<UserRoutine> = {}): UserRout
   name: '내 아침 루틴',
   steps: [],
   sourceSymptomId: null,
+  repeat: 1,
   createdAt: '2026-09-28T00:00:00.000Z',
   updatedAt: '2026-09-28T00:00:00.000Z',
   deletedAt: null,
