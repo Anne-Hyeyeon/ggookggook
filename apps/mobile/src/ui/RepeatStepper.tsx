@@ -13,7 +13,23 @@ export function RepeatStepper({ value, onDecrement, onIncrement }: RepeatStepper
   const atMin = value <= USER_ROUTINE_LIMITS.repeatMin;
   const atMax = value >= USER_ROUTINE_LIMITS.repeatMax;
   return (
-    <View style={styles.row}>
+    <View
+      style={styles.row}
+      accessible
+      accessibilityRole="adjustable"
+      accessibilityValue={{ min: USER_ROUTINE_LIMITS.repeatMin, max: USER_ROUTINE_LIMITS.repeatMax, now: value, text: `${value}회` }}
+      accessibilityActions={[
+        { name: 'increment', label: '반복 늘리기' },
+        { name: 'decrement', label: '반복 줄이기' },
+      ]}
+      onAccessibilityAction={(event) => {
+        if (event.nativeEvent.actionName === 'increment') {
+          if (!atMax) onIncrement();
+        } else if (event.nativeEvent.actionName === 'decrement') {
+          if (!atMin) onDecrement();
+        }
+      }}
+    >
       <Txt variant="body">반복</Txt>
       <View style={styles.stepper}>
         <Pressable

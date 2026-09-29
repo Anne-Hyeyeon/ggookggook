@@ -31,3 +31,24 @@ it('disables 반복 늘리기 at 5', async () => {
   await fireEvent.press(increment);
   expect(onIncrement).not.toHaveBeenCalled();
 });
+
+it('exposes an adjustable row with the current value and increment/decrement actions', async () => {
+  const onDecrement = jest.fn();
+  const onIncrement = jest.fn();
+  await render(<RepeatStepper value={3} onDecrement={onDecrement} onIncrement={onIncrement} />);
+  const row = screen.getByRole('adjustable');
+  expect(row.props.accessibilityValue).toEqual({ min: 1, max: 5, now: 3, text: '3회' });
+
+  row.props.onAccessibilityAction({ nativeEvent: { actionName: 'increment' } });
+  expect(onIncrement).toHaveBeenCalledTimes(1);
+  row.props.onAccessibilityAction({ nativeEvent: { actionName: 'decrement' } });
+  expect(onDecrement).toHaveBeenCalledTimes(1);
+});
+
+it('ignores an adjustable increment/decrement action at the limit', async () => {
+  const onDecrement = jest.fn();
+  await render(<RepeatStepper value={1} onDecrement={onDecrement} onIncrement={jest.fn()} />);
+  const row = screen.getByRole('adjustable');
+  row.props.onAccessibilityAction({ nativeEvent: { actionName: 'decrement' } });
+  expect(onDecrement).not.toHaveBeenCalled();
+});
