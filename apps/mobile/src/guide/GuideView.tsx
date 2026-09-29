@@ -50,11 +50,24 @@ export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewPro
   // notification below already marks the change, so the immediately following press
   // event skips its own Heavy impact instead of doubling up in the same tick.
   const skipNextPressHaptic = useRef(false);
+  // Set right before a seek (이전/다음) that lands while the routine is genuinely paused
+  // (not mid get-ready): the rhythm isn't actually running, so that landing announces the
+  // point's name instead of "꾹 누르세요" and skips the haptic buzz entirely.
+  const seekAnnounceRef = useRef<string | null>(null);
 
   const onEvent = useCallback(
     (event: 'press' | 'rest' | 'segment') => {
-      if (event === 'press') AccessibilityInfo.announceForAccessibility('꾹 누르세요');
-      else if (event === 'rest') AccessibilityInfo.announceForAccessibility('잠시 떼세요');
+      if (event === 'press') {
+        const silentPoint = seekAnnounceRef.current;
+        seekAnnounceRef.current = null;
+        if (silentPoint !== null) {
+          AccessibilityInfo.announceForAccessibility(silentPoint);
+          return;
+        }
+        AccessibilityInfo.announceForAccessibility('꾹 누르세요');
+      } else if (event === 'rest') {
+        AccessibilityInfo.announceForAccessibility('잠시 떼세요');
+      }
       if (!settings.rhythmHaptics) return;
       if (event === 'segment') {
         skipNextPressHaptic.current = true;
@@ -125,7 +138,7 @@ export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewPro
   const [readyLeft, setReadyLeft] = useState<number | null>(settings.getReadyEnabled ? GET_READY_SECONDS : null);
   // Set only by the AppState listener, and only when the guide (or the get-ready countdown)
   // was actually running at the time: distinguishes "paused because you left the app" from an
-  // ordinary manual pause, so the play button can say 잠시 멈췄어요 instead of 계속.
+  // ordinary manual pause, so the timer row can show 잠시 멈췄어요 instead of the rhythm cue.
   const [autoPaused, setAutoPaused] = useState(false);
 
   // Announced once, when the countdown starts: the number itself has no live region (it would
@@ -136,7 +149,7 @@ export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewPro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const { progress, paused, setPaused, seek, finishNow } = useGuide({
+  const { progress, paused, setPaused, seek, finishNow, elapsedTicksRef } = useGuide({
     segments,
     pressSeconds: settings.pressSeconds,
     restSeconds: settings.restSeconds,
@@ -145,6 +158,31 @@ export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewPro
     onEvent,
     onFinish,
   });
+
+  // Read here (rather than only further down, past the empty-state early return) so the
+  // round/caution announcements below can depend on it: every hook in this component must
+  // run on every render, including the one where there's nothing to guide.
+  const segment = segments[progress.index];
+
+  // Spoken once per point landed on, not on every tick: keyed on the segment index rather
+  // than the caution text itself, since two different cautioned points share the same text
+  // and a dependency on that text alone would never re-fire between them.
+  const cautionText =
+    segment && !settings.pregnancyMode && content.requireAcupoint(segment.acupointId).cautions.includes('pregnancy')
+      ? '임신 중이면 이 혈자리는 누르지 마세요.'
+      : null;
+  useEffect(() => {
+    if (cautionText) AccessibilityInfo.announceForAccessibility(cautionText);
+  }, [progress.index, cautionText]);
+
+  // Spoken when the round actually changes, never on the first render (undefined guards that).
+  const previousRoundRef = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (segment && previousRoundRef.current !== undefined && previousRoundRef.current !== segment.round) {
+      AccessibilityInfo.announceForAccessibility(`${segment.round}회차`);
+    }
+    previousRoundRef.current = segment?.round;
+  }, [segment]);
 
   // Whichever clock is currently relevant (the get-ready countdown, or the guide itself once
   // it's started): read by the AppState listener below to decide whether backgrounding is an
@@ -212,11 +250,14 @@ export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewPro
   }, [setPaused]);
 
   // Shared by every control that implies the user is taking over from the countdown
-  // (재생/일시정지, 이전, 다음): leaves the get-ready phase without waiting it out.
+  // (재생/일시정지, 이전, 다음): leaves the get-ready phase without waiting it out. Also clears
+  // an auto-pause flagged during the countdown itself, so returning from the background and
+  // then taking over doesn't leave the routine stuck reporting 잠시 멈췄어요 after it's resumed.
   const exitReady = useCallback(() => {
     if (readyLeft === null) return;
     setReadyLeft(null);
     setPaused(false);
+    setAutoPaused(false);
   }, [readyLeft, setPaused]);
 
   const handlePlayPress = useCallback(() => {
@@ -233,27 +274,56 @@ export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewPro
     setPaused(!paused);
   }, [autoPaused, readyLeft, paused, setPaused, seek, exitReady]);
 
+  const [confirmClose, setConfirmClose] = useState(false);
+  const pausedBeforeConfirm = useRef(false);
+
+  const openConfirmClose = useCallback(() => {
+    pausedBeforeConfirm.current = paused;
+    setPaused(true);
+    setConfirmClose(true);
+  }, [paused, setPaused]);
+
   const previousIndex = previousSegmentIndex(progress, segments);
   const nextIndex = nextSegmentIndex(progress, segments);
   const isLastPoint = nextIndex === null;
 
   const handlePrevious = useCallback(() => {
     if (previousIndex === null) return;
+    // Paused (not mid get-ready, which exitReady is about to end anyway): landing here won't
+    // start ticking, so announce the point instead of the press cue and skip the haptic.
+    const landing = segments[previousIndex];
+    if (readyLeft === null && paused && landing) {
+      seekAnnounceRef.current = content.requireAcupoint(landing.acupointId).name.ko;
+    }
     exitReady();
     seek(previousIndex);
-  }, [previousIndex, seek, exitReady]);
+  }, [previousIndex, readyLeft, paused, segments, seek, exitReady]);
 
   const handleNext = useCallback(() => {
+    const wasReady = readyLeft !== null;
+    const silentSeek = !wasReady && paused;
     exitReady();
-    if (isLastPoint) {
+    if (wasReady) {
+      // 다음 during the get-ready countdown only ends the countdown: it starts the current
+      // point in place, it does not also skip ahead to the next one.
+      seek(0);
+      return;
+    }
+    if (nextIndex === null) {
+      // A 마치기 tap that landed here with nothing actually ticked yet (a mistaken double
+      // tap, or a routine reached via 다음 without waiting) must not save a 0-second session:
+      // fall back to the same confirmation a deliberate 닫기 would show instead.
+      if (elapsedTicksRef.current === 0) {
+        openConfirmClose();
+        return;
+      }
       finishNow();
       return;
     }
+    const landing = segments[nextIndex];
+    if (silentSeek && landing) seekAnnounceRef.current = content.requireAcupoint(landing.acupointId).name.ko;
     seek(nextIndex);
-  }, [isLastPoint, nextIndex, seek, finishNow, exitReady]);
-
-  const [confirmClose, setConfirmClose] = useState(false);
-  const pausedBeforeConfirm = useRef(false);
+  }, [readyLeft, paused, nextIndex, segments, seek, finishNow, exitReady, openConfirmClose, elapsedTicksRef]);
 
   const handleClosePress = useCallback(() => {
     // A session save in flight must not be abandoned mid-write: 닫기 (and hardware back,
@@ -264,10 +334,8 @@ export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewPro
       router.back();
       return;
     }
-    pausedBeforeConfirm.current = paused;
-    setPaused(true);
-    setConfirmClose(true);
-  }, [saving, progress.index, progress.elapsed, paused, setPaused]);
+    openConfirmClose();
+  }, [saving, progress.index, progress.elapsed, openConfirmClose]);
 
   const handleContinueRoutine = useCallback(() => {
     setConfirmClose(false);
@@ -300,7 +368,6 @@ export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewPro
 
   const { width, height } = useWindowDimensions();
   const plateSize = Math.min(width - 40, 320, Math.round(height * 0.34));
-  const segment = segments[progress.index];
   if (!segment) {
     return (
       <SafeAreaView style={styles.screen}>
@@ -325,8 +392,13 @@ export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewPro
       ? `다음 ${SIDE_LABEL[next.side]}`
       : `다음 ${content.acupoints.get(next.acupointId)?.name.ko ?? ''}`;
 
-  const playLabel = autoPaused ? '잠시 멈췄어요' : readyLeft !== null ? '바로 시작' : paused ? '계속' : '일시정지';
-  const nextButtonLabel = isLastPoint ? '마치기' : '다음';
+  // Auto vs. manual pause is no longer distinguished on the button itself (both read 계속,
+  // since either way pressing it resumes): the timer row's status line below carries that
+  // distinction instead.
+  const playLabel = readyLeft !== null ? '바로 시작' : paused ? '계속' : '일시정지';
+  // Never 마치기 during get-ready, even on a routine with a single point: the countdown
+  // hasn't started the point yet, so 다음 here can only ever end the countdown, not finish.
+  const nextButtonLabel = readyLeft !== null || !isLastPoint ? '다음' : '마치기';
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -335,7 +407,9 @@ export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewPro
           <View style={styles.top}>
             <Txt style={styles.topName}>{title}</Txt>
             <Txt variant="caption">
-              {rounds > 1 ? `${segment.round}회차 · ${segment.stepIndex + 1} / ${stepCount}` : `${segment.stepIndex + 1} / ${stepCount}`}
+              {rounds > 1
+                ? `${segment.round}/${rounds}회차 · ${segment.stepIndex + 1} / ${stepCount}`
+                : `${segment.stepIndex + 1} / ${stepCount}`}
             </Txt>
             <Pressable
               accessibilityRole="button"
@@ -355,6 +429,7 @@ export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewPro
             <Txt variant="point">{acupoint.name.ko}</Txt>
             {SIDE_LABEL[segment.side] !== '' && <Txt style={styles.side}>{SIDE_LABEL[segment.side]}</Txt>}
           </View>
+          {cautionText && <Txt variant="sub" style={styles.caution}>{cautionText}</Txt>}
           <Txt variant="sub">{firstSentence(acupoint.location)}</Txt>
           <Txt variant="sub">{acupoint.technique}</Txt>
         </ScrollView>
@@ -403,7 +478,9 @@ export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewPro
                   <>
                     <Txt variant="number" style={styles.number} accessibilityLiveRegion="polite">{String(rhythm.secondsLeftInPhase)}</Txt>
                     <View style={styles.timerText}>
-                      <Txt style={styles.action} accessibilityLiveRegion="polite">{rhythm.phase === 'press' ? '꾹 누르세요' : '잠시 떼세요'}</Txt>
+                      <Txt style={styles.action} accessibilityLiveRegion="polite">
+                        {autoPaused ? '잠시 멈췄어요' : rhythm.phase === 'press' ? '꾹 누르세요' : '잠시 떼세요'}
+                      </Txt>
                       <Txt variant="sub">{`${rhythm.pressNumber} / ${rhythm.pressCount}회`}</Txt>
                     </View>
                   </>
@@ -476,6 +553,7 @@ const styles = StyleSheet.create({
   topName: { flex: 1, fontFamily: fonts.semibold, fontSize: 13, color: colors.ink },
   nameRow: { flexDirection: 'row', alignItems: 'baseline', gap: space(2), marginTop: space(2) },
   side: { fontFamily: fonts.semibold, fontSize: 13, color: colors.accent },
+  caution: { color: colors.accent },
   timer: { gap: space(3), paddingHorizontal: space(5), paddingBottom: space(5) },
   timerRow: { flexDirection: 'row', alignItems: 'center', gap: space(4), paddingTop: space(2) },
   number: { minWidth: space(10) },

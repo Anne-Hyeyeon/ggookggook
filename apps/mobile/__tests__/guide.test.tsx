@@ -163,6 +163,28 @@ it('lets you leave the empty-state fallback via 닫기', async () => {
   expect(router.back).toHaveBeenCalledTimes(1);
 });
 
+describe('pregnancy caution', () => {
+  it('shows a caution line and announces it once when the current point is cautioned and pregnancy mode is off (합곡)', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockImplementation(() => {});
+    await render(<GuideScreen />);
+    expect(screen.getByText('임신 중이면 이 혈자리는 누르지 마세요.')).toBeTruthy();
+    expect(announce).toHaveBeenCalledWith('임신 중이면 이 혈자리는 누르지 마세요.');
+    expect(announce.mock.calls.filter(([message]) => message === '임신 중이면 이 혈자리는 누르지 마세요.')).toHaveLength(1);
+
+    await fireEvent.press(screen.getByRole('button', { name: '다음' }));
+    expect(screen.getByText('내관')).toBeTruthy();
+    expect(screen.queryByText('임신 중이면 이 혈자리는 누르지 마세요.')).toBeNull();
+
+    announce.mockRestore();
+  });
+
+  it('hides the caution line once pregnancy mode is on', async () => {
+    useSettings.setState({ settings: { ...DEFAULT_SETTINGS, pregnancyMode: true, getReadyEnabled: false } });
+    await render(<GuideScreen />);
+    expect(screen.queryByText(/임신 중이면/)).toBeNull();
+  });
+});
+
 it('shows the technique text under the location, and hides the WHO code and hanja', async () => {
   await render(<GuideScreen />);
   expect(screen.getByText('반대쪽 엄지로 검지 뼈 쪽을 향해 꾹 누르세요. 뻐근할 정도가 적당합니다.')).toBeTruthy();
@@ -426,9 +448,11 @@ describe('get-ready countdown', () => {
     expect(screen.queryByText('꾹 누르세요')).toBeNull();
     expect(Haptics.impactAsync).not.toHaveBeenCalled();
     expect(announce).not.toHaveBeenCalledWith('꾹 누르세요');
-    // Announced once, right when the countdown starts.
+    // Announced once, right when the countdown starts (this symptom's first point, 합곡, is
+    // also pregnancy-cautioned, so its own once-per-point announcement fires alongside it).
     expect(announce).toHaveBeenCalledWith('곧 시작해요');
-    expect(announce).toHaveBeenCalledTimes(1);
+    const readyAnnouncements = () => announce.mock.calls.filter(([message]) => message === '곧 시작해요');
+    expect(readyAnnouncements()).toHaveLength(1);
 
     await act(async () => {
       jest.advanceTimersByTime(1000);
@@ -439,7 +463,7 @@ describe('get-ready countdown', () => {
     });
     expect(screen.getByText('1')).toBeTruthy();
     // Still only the one announcement: not re-spoken on every tick down.
-    expect(announce).toHaveBeenCalledTimes(1);
+    expect(readyAnnouncements()).toHaveLength(1);
     await act(async () => {
       jest.advanceTimersByTime(1000);
     });
@@ -479,12 +503,12 @@ describe('get-ready countdown', () => {
     expect(screen.getByRole('button', { name: '일시정지' })).toBeTruthy();
   });
 
-  it('다음 during the countdown exits it immediately instead of leaving it stuck on screen', async () => {
+  it('다음 during the countdown only ends the countdown, starting the current point in place rather than skipping it', async () => {
     await render(<GuideScreen />);
     expect(screen.getByText('합곡')).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: '다음' }));
-    expect(screen.getByText('내관')).toBeTruthy();
+    expect(screen.getByText('합곡')).toBeTruthy();
     expect(screen.queryByText(/곧 시작해요/)).toBeNull();
     expect(screen.getByText('꾹 누르세요')).toBeTruthy();
     expect(screen.getByRole('button', { name: '일시정지' })).toBeTruthy();
@@ -573,6 +597,35 @@ describe('이전 / 다음 controls', () => {
 
     announce.mockRestore();
   });
+
+  it('마치기 with zero ticks recorded (a mistaken tap right after 다음) asks for confirmation instead of saving a zero-second session', async () => {
+    await render(<GuideScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: '다음' })); // 합곡 -> 내관, the last point, nothing ticked yet
+    expect(screen.getByRole('button', { name: '마치기' })).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: '마치기' }));
+    expect(screen.getByText('루틴을 그만할까요?')).toBeTruthy();
+    expect(mocked.insertSession).not.toHaveBeenCalled();
+
+    await fireEvent.press(screen.getByRole('button', { name: '그만하기' }));
+    expect(router.back).toHaveBeenCalledTimes(1);
+  });
+
+  it('announces the point name (not 꾹 누르세요) and skips the haptic when seeking while manually paused', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockImplementation(() => {});
+    await render(<GuideScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: '일시정지' }));
+    jest.clearAllMocks();
+    announce.mockClear();
+
+    await fireEvent.press(screen.getByRole('button', { name: '다음' }));
+    expect(screen.getByText('내관')).toBeTruthy();
+    expect(announce).toHaveBeenCalledWith('내관');
+    expect(announce).not.toHaveBeenCalledWith('꾹 누르세요');
+    expect(Haptics.impactAsync).not.toHaveBeenCalled();
+
+    announce.mockRestore();
+  });
 });
 
 describe('rounds', () => {
@@ -584,12 +637,12 @@ describe('rounds', () => {
   it('shows the round indicator once rounds > 1, and advances it as the routine repeats', async () => {
     mockParams = { id: 'food_stagnation', rounds: '2' };
     await render(<GuideScreen />);
-    expect(screen.getByText('1회차 · 1 / 2')).toBeTruthy();
+    expect(screen.getByText('1/2회차 · 1 / 2')).toBeTruthy();
 
     await act(async () => {
       jest.advanceTimersByTime(240_000);
     });
-    expect(screen.getByText('2회차 · 1 / 2')).toBeTruthy();
+    expect(screen.getByText('2/2회차 · 1 / 2')).toBeTruthy();
     expect(router.replace).not.toHaveBeenCalled();
 
     await act(async () => {
@@ -605,42 +658,59 @@ describe('rounds', () => {
     expect(screen.getByRole('button', { name: '다음' })).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: '다음' })); // -> 합곡 (round 2)
-    expect(screen.getByText('2회차 · 1 / 2')).toBeTruthy();
+    expect(screen.getByText('2/2회차 · 1 / 2')).toBeTruthy();
     expect(screen.getByText('합곡')).toBeTruthy();
   });
 
   it('clamps an out-of-range rounds param instead of trusting the URL', async () => {
     mockParams = { id: 'food_stagnation', rounds: '99' };
     await render(<GuideScreen />);
-    expect(screen.getByText('1회차 · 1 / 2')).toBeTruthy();
+    expect(screen.getByText('1/5회차 · 1 / 2')).toBeTruthy();
+  });
+
+  it('announces the round number when it changes', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockImplementation(() => {});
+    mockParams = { id: 'food_stagnation', rounds: '2' };
+    await render(<GuideScreen />);
+    expect(announce).not.toHaveBeenCalledWith('1회차');
+
+    await act(async () => {
+      jest.advanceTimersByTime(240_000);
+    });
+    expect(announce).toHaveBeenCalledWith('2회차');
+
+    announce.mockRestore();
   });
 });
 
 describe('background pause', () => {
-  it('pauses automatically when the app backgrounds, and shows 잠시 멈췄어요 on the play button', async () => {
+  it('pauses automatically when the app backgrounds, showing a 잠시 멈췄어요 status line while the button reads 계속', async () => {
     await render(<GuideScreen />);
     await act(async () => {
       jest.advanceTimersByTime(1000);
     });
 
     await pressAppState('background');
-    expect(screen.getByRole('button', { name: '잠시 멈췄어요' })).toBeTruthy();
+    expect(screen.getByText('잠시 멈췄어요')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '계속' })).toBeTruthy();
 
     await act(async () => {
       jest.advanceTimersByTime(60_000);
     });
     // Still paused: the routine must never keep counting in the background.
-    expect(screen.getByRole('button', { name: '잠시 멈췄어요' })).toBeTruthy();
+    expect(screen.getByText('잠시 멈췄어요')).toBeTruthy();
   });
 
   it('stays paused when returning to the foreground, requiring an explicit tap to resume', async () => {
     await render(<GuideScreen />);
     await pressAppState('background');
     await pressAppState('active');
-    expect(screen.getByRole('button', { name: '잠시 멈췄어요' })).toBeTruthy();
+    expect(screen.getByText('잠시 멈췄어요')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '계속' })).toBeTruthy();
 
-    await fireEvent.press(screen.getByRole('button', { name: '잠시 멈췄어요' }));
+    await fireEvent.press(screen.getByRole('button', { name: '계속' }));
     expect(screen.getByRole('button', { name: '일시정지' })).toBeTruthy();
+    expect(screen.queryByText('잠시 멈췄어요')).toBeNull();
   });
 
   it('does not flag an auto pause when the app backgrounds while already paused manually', async () => {
@@ -648,6 +718,7 @@ describe('background pause', () => {
     await fireEvent.press(screen.getByRole('button', { name: '일시정지' }));
     await pressAppState('background');
     expect(screen.getByRole('button', { name: '계속' })).toBeTruthy();
+    expect(screen.queryByText('잠시 멈췄어요')).toBeNull();
   });
 
   it('pauses the get-ready countdown too, and resumes it in place on tap', async () => {
@@ -664,7 +735,7 @@ describe('background pause', () => {
     });
     expect(screen.getByText('2')).toBeTruthy();
 
-    await fireEvent.press(screen.getByRole('button', { name: '잠시 멈췄어요' }));
+    await fireEvent.press(screen.getByRole('button', { name: '바로 시작' }));
     expect(screen.getByText('2')).toBeTruthy();
     await act(async () => {
       jest.advanceTimersByTime(1000);
@@ -672,14 +743,30 @@ describe('background pause', () => {
     expect(screen.getByText('1')).toBeTruthy();
   });
 
-  it('keeps the 잠시 멈췄어요 label after seeking while auto-paused, rather than reverting to 계속', async () => {
+  it('exiting the get-ready countdown via 다음 after returning from the background also clears the auto-pause flag', async () => {
+    useSettings.setState({ settings: { ...DEFAULT_SETTINGS, getReadyEnabled: true } });
     await render(<GuideScreen />);
     await pressAppState('background');
-    expect(screen.getByRole('button', { name: '잠시 멈췄어요' })).toBeTruthy();
+    await pressAppState('active');
+    expect(screen.getByRole('button', { name: '바로 시작' })).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: '다음' }));
+    expect(screen.getByRole('button', { name: '일시정지' })).toBeTruthy();
+    expect(screen.queryByText('잠시 멈췄어요')).toBeNull();
+  });
+
+  it('keeps the 잠시 멈췄어요 status line and 계속 button after seeking while auto-paused, without a haptic buzz', async () => {
+    await render(<GuideScreen />);
+    await pressAppState('background');
+    expect(screen.getByText('잠시 멈췄어요')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '계속' })).toBeTruthy();
+
+    jest.clearAllMocks();
+    await fireEvent.press(screen.getByRole('button', { name: '다음' }));
     expect(screen.getByText('내관')).toBeTruthy();
-    expect(screen.getByRole('button', { name: '잠시 멈췄어요' })).toBeTruthy();
+    expect(screen.getByText('잠시 멈췄어요')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '계속' })).toBeTruthy();
+    expect(Haptics.impactAsync).not.toHaveBeenCalled();
   });
 
   it('does not register a background listener on web', async () => {

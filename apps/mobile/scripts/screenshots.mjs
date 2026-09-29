@@ -278,15 +278,15 @@ async function runFlow(page) {
 
   // 24. Guide with two rounds, via a direct '?rounds=2' link (Task 4's repeat picker isn't
   // built yet). 다음 (skips ahead a point at a time, no waiting on the timer) is pressed
-  // until the round indicator crosses into "2회차 · 1 / 3" (headache has 3 steps).
+  // until the round indicator crosses into "2/2회차 · 1 / 3" (headache has 3 steps).
   await page.goto(`http://127.0.0.1:${PORT}/guide/headache?rounds=2`, { waitUntil: 'load' });
   const readyButton = page.getByRole('button', { name: '바로 시작' });
   if (await readyButton.isVisible().catch(() => false)) await readyButton.click();
   for (let presses = 0; presses < 20; presses++) {
-    if (await page.getByText('2회차 · 1 / 3', { exact: true }).isVisible().catch(() => false)) break;
+    if (await page.getByText('2/2회차 · 1 / 3', { exact: true }).isVisible().catch(() => false)) break;
     await page.getByRole('button', { name: '다음' }).click();
   }
-  await page.getByText('2회차 · 1 / 3', { exact: true }).waitFor();
+  await page.getByText('2/2회차 · 1 / 3', { exact: true }).waitFor();
   await shoot(page, '24-guide-round.png');
 }
 

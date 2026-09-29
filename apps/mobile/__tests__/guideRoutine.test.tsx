@@ -90,3 +90,46 @@ it('guides through a two-step user routine and records the session with the rout
   );
   expect(router.replace).toHaveBeenCalledWith({ pathname: '/done', params: { sessionId: expect.any(String) } });
 });
+
+describe('?rounds', () => {
+  it("uses the routine's own repeat when no ?rounds param is given", async () => {
+    mockParams = { id: 'r1' };
+    mocked.getUserRoutine.mockResolvedValue({ ...userRoutine, repeat: 3 });
+    await render(<GuideRoutineScreen />);
+    await screen.findByText('백회');
+    expect(screen.getByText('1/3회차 · 1 / 2')).toBeTruthy();
+
+    await act(async () => {
+      jest.advanceTimersByTime(20_000);
+    });
+    expect(screen.getByText('2/3회차 · 1 / 2')).toBeTruthy();
+    expect(router.replace).not.toHaveBeenCalled();
+
+    await act(async () => {
+      jest.advanceTimersByTime(20_000);
+    });
+    expect(screen.getByText('3/3회차 · 1 / 2')).toBeTruthy();
+
+    await act(async () => {
+      jest.advanceTimersByTime(20_000);
+    });
+    expect(mocked.insertSession).toHaveBeenCalledWith({}, expect.objectContaining({ durationSeconds: 60 }));
+  });
+
+  it("honors an explicit ?rounds param even when it differs from the routine's own repeat", async () => {
+    mockParams = { id: 'r1', rounds: '1' };
+    mocked.getUserRoutine.mockResolvedValue({ ...userRoutine, repeat: 3 });
+    await render(<GuideRoutineScreen />);
+    await screen.findByText('백회');
+    expect(screen.queryByText(/회차/)).toBeNull();
+  });
+});
+
+it('shows 다음, never 마치기, during the get-ready countdown even on a single-step routine', async () => {
+  useSettings.setState({ settings: { ...DEFAULT_SETTINGS, getReadyEnabled: true } });
+  mocked.getUserRoutine.mockResolvedValue({ ...userRoutine, steps: [{ acupointId: 'GV20', seconds: 10 }] });
+  await render(<GuideRoutineScreen />);
+  await screen.findByText('백회');
+  expect(screen.getByRole('button', { name: '다음' })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: '마치기' })).toBeNull();
+});

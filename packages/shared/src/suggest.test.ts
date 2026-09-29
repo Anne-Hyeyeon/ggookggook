@@ -64,6 +64,11 @@ describe('suggestFor', () => {
     expect(suggestFor(at(10, 0), symptoms, usage).map((s) => s.id)).toEqual(['eye_fatigue', 'shoulder_pain']);
   });
 
+  it('leaves the second suggestion as-is when the most-used symptom is already the second one', () => {
+    const usage = { shoulder_pain: 5 };
+    expect(suggestFor(at(10, 0), symptoms, usage).map((s) => s.id)).toEqual(['eye_fatigue', 'shoulder_pain']);
+  });
+
   it('does not replace the second suggestion when the most-used symptom has fewer than 3 sessions', () => {
     const usage = { stress: 2 };
     expect(suggestFor(at(5, 0), symptoms, usage).map((s) => s.id)).toEqual(['fatigue', 'neck_pain']);

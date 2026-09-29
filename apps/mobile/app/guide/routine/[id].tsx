@@ -42,12 +42,16 @@ export default function GuideRoutineScreen() {
   // Still loading: show nothing rather than a flash of the empty state.
   if (resolved === undefined) return null;
 
+  // No explicit ?rounds param (most launches carry one, but a deep link or reminder might
+  // not): fall back to the routine's own saved repeat instead of always defaulting to 1.
+  const effectiveRounds = rounds !== undefined ? parseRounds(rounds) : (userRoutine?.repeat ?? 1);
+
   return (
     <GuideView
       routineRef={routineRef}
       title={resolved?.title ?? ''}
       steps={resolved?.steps ?? NO_STEPS}
-      rounds={parseRounds(rounds)}
+      rounds={effectiveRounds}
     />
   );
 }

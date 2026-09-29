@@ -68,5 +68,7 @@ export function useGuide({ segments, pressSeconds, restSeconds, tickMs, initialP
     callbacks.current.onFinish(total);
   }
 
-  return { progress, paused, setPaused, seek, finishNow };
+  // Exposed so a caller can tell a genuine finish from a mistaken 마치기 tap before any
+  // tick has actually run (a fresh routine, or one only ever moved through via seek).
+  return { progress, paused, setPaused, seek, finishNow, elapsedTicksRef };
 }
