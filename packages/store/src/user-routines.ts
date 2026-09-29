@@ -52,8 +52,11 @@ function toRoutine(row: UserRoutineRow): UserRoutine {
 }
 
 export async function listUserRoutines(db: SqlDatabase): Promise<UserRoutine[]> {
+  // Ordered by created_at, not updated_at: an edit (renaming a step, stepping the repeat
+  // count on the preview screen) bumps updated_at but must not reshuffle 내 루틴 or the
+  // Today quick row out from under the person looking at them.
   const rows = await db.getAllAsync<UserRoutineRow>(
-    'SELECT * FROM user_routines WHERE deleted_at IS NULL ORDER BY updated_at DESC',
+    'SELECT * FROM user_routines WHERE deleted_at IS NULL ORDER BY created_at DESC',
     [],
   );
   return rows.map(toRoutine);

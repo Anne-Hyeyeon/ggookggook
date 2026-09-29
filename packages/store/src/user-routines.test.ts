@@ -129,9 +129,22 @@ describe('saveUserRoutine / getUserRoutine', () => {
 });
 
 describe('listUserRoutines', () => {
-  it('lists routines that are not deleted, newest updated first', async () => {
-    await saveUserRoutine(db, routine('old'), new Date('2026-09-27T00:00:00.000Z'));
-    await saveUserRoutine(db, routine('new'), new Date('2026-09-28T00:00:00.000Z'));
+  it('lists routines that are not deleted, newest created first', async () => {
+    await saveUserRoutine(db, routine('old', { createdAt: '2026-09-27T00:00:00.000Z' }), new Date('2026-09-27T00:00:00.000Z'));
+    await saveUserRoutine(db, routine('new', { createdAt: '2026-09-28T00:00:00.000Z' }), new Date('2026-09-28T00:00:00.000Z'));
+    expect((await listUserRoutines(db)).map((r) => r.id)).toEqual(['new', 'old']);
+  });
+
+  it('keeps creation order even after a later edit bumps updated_at', async () => {
+    await saveUserRoutine(db, routine('old', { createdAt: '2026-09-27T00:00:00.000Z' }), new Date('2026-09-27T00:00:00.000Z'));
+    await saveUserRoutine(db, routine('new', { createdAt: '2026-09-28T00:00:00.000Z' }), new Date('2026-09-28T00:00:00.000Z'));
+    // Stepping 'old's repeat count bumps its updated_at past 'new', but must not move it
+    // to the front of the list.
+    await saveUserRoutine(
+      db,
+      routine('old', { createdAt: '2026-09-27T00:00:00.000Z', repeat: 3 }),
+      new Date('2026-09-29T00:00:00.000Z'),
+    );
     expect((await listUserRoutines(db)).map((r) => r.id)).toEqual(['new', 'old']);
   });
 
