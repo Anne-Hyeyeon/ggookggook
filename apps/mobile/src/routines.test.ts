@@ -89,6 +89,7 @@ describe('copySymptomToUserRoutine', () => {
     aliases: [],
     steps: [{ acupointId: 'LI4', seconds: 60 }, { acupointId: 'PC6', seconds: 30 }],
     seeDoctor: '3일 넘게 안 나아지면 병원에 가세요.',
+    group: 'digestion',
   };
 
   it('copies the full, unfiltered step list and sets the source symptom id', () => {

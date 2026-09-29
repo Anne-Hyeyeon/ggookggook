@@ -3,9 +3,9 @@ import type { Acupoint, Symptom } from './content';
 import { searchAcupoints, searchSymptoms } from './search';
 
 const symptoms: Symptom[] = [
-  { id: 'insomnia', name: '불면', aliases: ['잠이 안 올 때'], steps: [{ acupointId: 'HT7', seconds: 60 }], seeDoctor: '…' },
-  { id: 'eye_fatigue', name: '눈 피로', aliases: [], steps: [{ acupointId: 'BL2', seconds: 60 }], seeDoctor: '…' },
-  { id: 'headache', name: '두통', aliases: [], steps: [{ acupointId: 'LI4', seconds: 60 }], seeDoctor: '…' },
+  { id: 'insomnia', name: '불면', aliases: ['잠이 안 올 때'], steps: [{ acupointId: 'HT7', seconds: 60 }], seeDoctor: '…', group: 'sleep-mind' },
+  { id: 'eye_fatigue', name: '눈 피로', aliases: [], steps: [{ acupointId: 'BL2', seconds: 60 }], seeDoctor: '…', group: 'head-eyes' },
+  { id: 'headache', name: '두통', aliases: [], steps: [{ acupointId: 'LI4', seconds: 60 }], seeDoctor: '…', group: 'head-eyes' },
 ];
 const acupoints = new Map<string, Pick<Acupoint, 'name'>>([
   ['HT7', { name: { ko: '신문', hanja: '神門', en: 'Sinmun' } }],

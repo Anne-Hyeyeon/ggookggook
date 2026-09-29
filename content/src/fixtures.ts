@@ -36,6 +36,7 @@ export function validContent(): ContentBundle {
           { acupointId: 'PC6', seconds: 60 },
         ],
         seeDoctor: '가슴 통증이나 식은땀이 함께 오면 바로 119에 연락하세요.',
+        group: 'digestion',
       },
     ],
     plates: [

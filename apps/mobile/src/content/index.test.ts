@@ -25,7 +25,7 @@ const bundle: ContentBundle = {
       whoLocation: 'dorsum',
     },
   ],
-  symptoms: [{ id: 'headache', name: '두통', aliases: [], steps: [{ acupointId: 'LI4', seconds: 60 }], seeDoctor: '병원에 가세요.' }],
+  symptoms: [{ id: 'headache', name: '두통', aliases: [], steps: [{ acupointId: 'LI4', seconds: 60 }], seeDoctor: '병원에 가세요.', group: 'head-eyes' }],
   plates: [
     { id: 'no-image', name: '그림 없음', subject: 's', depicts: 'left', acupointIds: ['LI4'], pins: [{ acupointId: 'LI4', x: 0.1, y: 0.1 }] },
     { id: 'wrist-dup', name: '중복', subject: 's', depicts: 'left', acupointIds: ['LI4'], pins: [{ acupointId: 'LI4', x: 0.2, y: 0.2 }] },

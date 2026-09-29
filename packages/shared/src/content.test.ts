@@ -34,7 +34,7 @@ describe('acupointSchema', () => {
 
 describe('symptomSchema', () => {
   const step = { acupointId: 'LI4', seconds: 60 };
-  const symptom = { id: 'food_stagnation', name: '식체', aliases: ['체했을 때'], steps: [step], seeDoctor: '가슴 통증이 함께 오면 119에 연락하세요.' };
+  const symptom = { id: 'food_stagnation', name: '식체', aliases: ['체했을 때'], steps: [step], seeDoctor: '가슴 통증이 함께 오면 119에 연락하세요.', group: 'digestion' };
 
   it('accepts 1 to 3 steps', () => {
     expect(symptomSchema.safeParse(symptom).success).toBe(true);
