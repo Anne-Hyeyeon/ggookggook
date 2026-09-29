@@ -4,11 +4,12 @@ import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { useDb } from '@/db/DbProvider';
 import { GuideView } from '@/guide/GuideView';
+import { parseRounds } from '@/guide/rounds';
 import { NO_STEPS, resolveRoutine, type RoutineRef } from '@/routines';
 import { useSettings } from '@/state/settings';
 
 export default function GuideRoutineScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, rounds } = useLocalSearchParams<{ id: string; rounds?: string }>();
   const db = useDb();
   const settings = useSettings((state) => state.settings);
   const [userRoutine, setUserRoutine] = useState<UserRoutine | null | undefined>(undefined);
@@ -41,5 +42,12 @@ export default function GuideRoutineScreen() {
   // Still loading: show nothing rather than a flash of the empty state.
   if (resolved === undefined) return null;
 
-  return <GuideView routineRef={routineRef} title={resolved?.title ?? ''} steps={resolved?.steps ?? NO_STEPS} />;
+  return (
+    <GuideView
+      routineRef={routineRef}
+      title={resolved?.title ?? ''}
+      steps={resolved?.steps ?? NO_STEPS}
+      rounds={parseRounds(rounds)}
+    />
+  );
 }

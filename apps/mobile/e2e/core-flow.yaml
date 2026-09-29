@@ -9,6 +9,8 @@ appId: kr.ggookggook.app
 - tapOn: "체했을 때"
 - assertVisible: "이럴 땐 병원에 가세요"
 - tapOn: "시작"
+- assertVisible: "바로 시작"
+- tapOn: "바로 시작"
 - assertVisible: "꾹 누르세요"
 - extendedWaitUntil:
     visible: "루틴을 마쳤어요"

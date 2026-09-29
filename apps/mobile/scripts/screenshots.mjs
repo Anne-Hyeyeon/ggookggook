@@ -140,9 +140,15 @@ async function runFlow(page) {
   await page.getByRole('button', { name: '시작' }).waitFor();
   await shoot(page, '05-symptom.png');
 
-  // 6. Guide, first frame (press phase)
+  // 6 (23). Guide, get-ready countdown ("곧 시작해요 N") before the first press. On by
+  // default; 바로 시작 skips it immediately.
   await page.getByRole('button', { name: '시작' }).click();
   await page.waitForURL('**/guide/**');
+  await page.getByRole('button', { name: '바로 시작' }).waitFor();
+  await shoot(page, '23-guide-ready.png');
+
+  // 6. Guide, first frame (press phase), with the 이전/재생/다음 controls row
+  await page.getByRole('button', { name: '바로 시작' }).click();
   await shoot(page, '06-guide-press.png');
 
   // 7. Guide, a rest phase a few (sped-up) seconds in
@@ -257,6 +263,19 @@ async function runFlow(page) {
   await page.getByText('이 기기에서는 알림을 쓸 수 없어요.').waitFor();
   await page.getByText('이 기기에서는 알림을 쓸 수 없어요.').scrollIntoViewIfNeeded();
   await shoot(page, '21-settings-reminder.png');
+
+  // 24. Guide with two rounds, via a direct '?rounds=2' link (Task 4's repeat picker isn't
+  // built yet). 다음 (skips ahead a point at a time, no waiting on the timer) is pressed
+  // until the round indicator crosses into "2회차 / 2".
+  await page.goto(`http://127.0.0.1:${PORT}/guide/headache?rounds=2`, { waitUntil: 'load' });
+  const readyButton = page.getByRole('button', { name: '바로 시작' });
+  if (await readyButton.isVisible().catch(() => false)) await readyButton.click();
+  for (let presses = 0; presses < 20; presses++) {
+    if (await page.getByText('2회차 / 2', { exact: true }).isVisible().catch(() => false)) break;
+    await page.getByRole('button', { name: '다음' }).click();
+  }
+  await page.getByText('2회차 / 2', { exact: true }).waitFor();
+  await shoot(page, '24-guide-round.png');
 }
 
 async function main() {

@@ -78,6 +78,13 @@ it('toggles rhythm haptics', async () => {
   expect(update).toHaveBeenCalledWith({}, { rhythmHaptics: false });
 });
 
+it('toggles get-ready time, on by default', async () => {
+  await render(<SettingsScreen />);
+  expect(screen.getByRole('switch', { name: '시작 전 준비 시간' }).props.value).toBe(true);
+  await fireEvent(screen.getByRole('switch', { name: '시작 전 준비 시간' }), 'valueChange', false);
+  expect(update).toHaveBeenCalledWith({}, { getReadyEnabled: false });
+});
+
 it('toggles pregnancy mode with the welcome screen sub text', async () => {
   await render(<SettingsScreen />);
   expect(screen.getByText('켜면 임신 중 피해야 할 혈자리를 빼고 안내해요.')).toBeTruthy();

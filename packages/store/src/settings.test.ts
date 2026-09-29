@@ -28,6 +28,17 @@ describe('settings', () => {
     expect(await loadSettings(db)).toEqual({ ...DEFAULT_SETTINGS, rhythmHaptics: false });
   });
 
+  it('round-trips getReadyEnabled turned off', async () => {
+    const settings = { ...DEFAULT_SETTINGS, getReadyEnabled: false };
+    await saveSettings(db, settings, new Date('2026-09-28T00:00:00Z'));
+    expect(await loadSettings(db)).toEqual(settings);
+  });
+
+  it('falls back to getReadyEnabled default when the stored value is mistyped', async () => {
+    await setValue(db, 'settings', JSON.stringify({ ...DEFAULT_SETTINGS, getReadyEnabled: 'no' }), new Date());
+    expect(await loadSettings(db)).toEqual(DEFAULT_SETTINGS);
+  });
+
   it('falls back to defaults when the stored value is not JSON', async () => {
     await setValue(db, 'settings', 'not json', new Date());
     expect(await loadSettings(db)).toEqual(DEFAULT_SETTINGS);

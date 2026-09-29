@@ -53,3 +53,103 @@ it('does nothing with no segments: no interval, no finish', async () => {
   expect(onEvent).not.toHaveBeenCalled();
   expect(onFinish).not.toHaveBeenCalled();
 });
+
+it('starts paused when initialPaused is set, ticking only once resumed, without an initial press event', async () => {
+  const onEvent = jest.fn();
+  const { result } = await renderHook(() =>
+    useGuide({ segments, pressSeconds: 1, restSeconds: 1, tickMs: 1000, initialPaused: true, onEvent, onFinish: jest.fn() }),
+  );
+  expect(result.current.paused).toBe(true);
+  expect(onEvent).not.toHaveBeenCalled();
+  await act(async () => {
+    jest.advanceTimersByTime(5000);
+  });
+  expect(result.current.progress).toEqual({ index: 0, elapsed: 0, finished: false });
+
+  await act(async () => {
+    result.current.setPaused(false);
+  });
+  await act(async () => {
+    jest.advanceTimersByTime(3000);
+  });
+  expect(result.current.progress).toEqual({ index: 1, elapsed: 0, finished: false });
+});
+
+describe('seek', () => {
+  it('jumps to the given segment, resets elapsed, and announces a press', async () => {
+    const onEvent = jest.fn();
+    const { result } = await renderHook(() =>
+      useGuide({ segments, pressSeconds: 1, restSeconds: 1, tickMs: 1000, onEvent, onFinish: jest.fn() }),
+    );
+    onEvent.mockClear();
+
+    await act(async () => {
+      result.current.seek(1);
+    });
+    expect(result.current.progress).toEqual({ index: 1, elapsed: 0, finished: false });
+    expect(onEvent).toHaveBeenCalledWith('press');
+  });
+
+  it('clamps an out-of-range index into bounds', async () => {
+    const { result } = await renderHook(() =>
+      useGuide({ segments, pressSeconds: 1, restSeconds: 1, tickMs: 1000, onEvent: jest.fn(), onFinish: jest.fn() }),
+    );
+    await act(async () => {
+      result.current.seek(99);
+    });
+    expect(result.current.progress).toEqual({ index: 1, elapsed: 0, finished: false });
+  });
+
+  it('resumes ticking from the sought segment after seeking', async () => {
+    const { result } = await renderHook(() =>
+      useGuide({ segments, pressSeconds: 1, restSeconds: 1, tickMs: 1000, onEvent: jest.fn(), onFinish: jest.fn() }),
+    );
+    await act(async () => {
+      result.current.seek(1);
+    });
+    await act(async () => {
+      jest.advanceTimersByTime(1000);
+    });
+    expect(result.current.progress.elapsed).toBe(1);
+  });
+});
+
+describe('finishNow', () => {
+  it('stops ticking and reports the time actually spent, not the full segment duration', async () => {
+    const onFinish = jest.fn();
+    const { result } = await renderHook(() =>
+      useGuide({ segments, pressSeconds: 1, restSeconds: 1, tickMs: 1000, onEvent: jest.fn(), onFinish }),
+    );
+    await act(async () => {
+      jest.advanceTimersByTime(1000);
+    });
+    await act(async () => {
+      result.current.finishNow();
+    });
+    expect(onFinish).toHaveBeenCalledWith(1);
+    expect(result.current.progress.finished).toBe(true);
+
+    onFinish.mockClear();
+    await act(async () => {
+      jest.advanceTimersByTime(5000);
+    });
+    expect(onFinish).not.toHaveBeenCalled();
+  });
+
+  it('does nothing once already finished', async () => {
+    const onFinish = jest.fn();
+    const { result } = await renderHook(() =>
+      useGuide({ segments, pressSeconds: 1, restSeconds: 1, tickMs: 1000, onEvent: jest.fn(), onFinish }),
+    );
+    await act(async () => {
+      jest.advanceTimersByTime(5000);
+    });
+    expect(onFinish).toHaveBeenCalledTimes(1);
+    onFinish.mockClear();
+
+    await act(async () => {
+      result.current.finishNow();
+    });
+    expect(onFinish).not.toHaveBeenCalled();
+  });
+});

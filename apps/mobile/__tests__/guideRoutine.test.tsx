@@ -20,7 +20,7 @@ jest.mock('expo-haptics', () => ({
   ImpactFeedbackStyle: { Heavy: 'heavy', Light: 'light' },
   NotificationFeedbackType: { Success: 'success' },
 }));
-let mockParams: { id: string } = { id: 'r1' };
+let mockParams: { id: string; rounds?: string } = { id: 'r1' };
 jest.mock('expo-router', () => ({
   router: { replace: jest.fn(), back: jest.fn(), dismissTo: jest.fn() },
   useLocalSearchParams: () => mockParams,
@@ -47,7 +47,7 @@ beforeEach(() => {
   jest.useFakeTimers();
   jest.clearAllMocks();
   mockParams = { id: 'r1' };
-  useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS } });
+  useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS, getReadyEnabled: false } });
 });
 afterEach(() => jest.useRealTimers());
 

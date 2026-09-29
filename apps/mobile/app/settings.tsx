@@ -254,6 +254,14 @@ export default function SettingsScreen() {
           />
           <Rule />
           <Toggle
+            label="시작 전 준비 시간"
+            sub="루틴 시작 전 3초 동안 준비할 시간을 줘요."
+            value={settings.getReadyEnabled}
+            onValueChange={(value) => apply({ getReadyEnabled: value })}
+            style={styles.row}
+          />
+          <Rule />
+          <Toggle
             label="임신 중이에요"
             sub="켜면 임신 중 피해야 할 혈자리를 빼고 안내해요."
             value={settings.pregnancyMode}

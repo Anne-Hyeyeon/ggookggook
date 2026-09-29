@@ -1,6 +1,15 @@
-import { buildGuideSegments, rhythmAt, type GuideSegment, type RoutineStep, type SessionLog } from '@ggookggook/shared';
+import {
+  buildGuideSegments,
+  GET_READY_SECONDS,
+  nextSegmentIndex,
+  previousSegmentIndex,
+  rhythmAt,
+  type GuideSegment,
+  type RoutineStep,
+  type SessionLog,
+} from '@ggookggook/shared';
 import { insertSession } from '@ggookggook/store';
-import { AccessibilityInfo, BackHandler, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { AccessibilityInfo, AppState, BackHandler, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useKeepAwake } from 'expo-keep-awake';
 import { router, useFocusEffect } from 'expo-router';
@@ -25,15 +34,16 @@ export interface GuideViewProps {
   routineRef: RoutineRef;
   title: string;
   steps: RoutineStep[];
+  rounds?: number;
 }
 
-export function GuideView({ routineRef, title, steps }: GuideViewProps) {
+export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewProps) {
   useKeepAwake();
   const db = useDb();
   const settings = useSettings((state) => state.settings);
   const startedAt = useRef(new Date().toISOString());
 
-  const segments = useMemo<GuideSegment[]>(() => buildGuideSegments(steps, content.acupoints), [steps]);
+  const segments = useMemo<GuideSegment[]>(() => buildGuideSegments(steps, content.acupoints, rounds), [steps, rounds]);
   const totalSeconds = useMemo(() => segments.reduce((sum, segment) => sum + segment.seconds, 0), [segments]);
 
   // The engine emits ['segment', 'press'] together on a segment change: the Success
@@ -109,14 +119,127 @@ export function GuideView({ routineRef, title, steps }: GuideViewProps) {
     [routineRef, saveSession],
   );
 
-  const { progress, paused, setPaused } = useGuide({
+  // Get-ready: a short "준비" countdown before the first press, skipped entirely when the
+  // setting is off. It holds the guide paused (via `initialPaused`) until it ends or is
+  // skipped, and never counts toward the recorded duration since useGuide hasn't started yet.
+  const [readyLeft, setReadyLeft] = useState<number | null>(settings.getReadyEnabled ? GET_READY_SECONDS : null);
+  // Set only by the AppState listener, and only when the guide (or the get-ready countdown)
+  // was actually running at the time: distinguishes "paused because you left the app" from an
+  // ordinary manual pause, so the play button can say 잠시 멈췄어요 instead of 계속.
+  const [autoPaused, setAutoPaused] = useState(false);
+
+  const { progress, paused, setPaused, seek, finishNow } = useGuide({
     segments,
     pressSeconds: settings.pressSeconds,
     restSeconds: settings.restSeconds,
     tickMs: 1000 / GUIDE_SPEED,
+    initialPaused: readyLeft !== null,
     onEvent,
     onFinish,
   });
+
+  // Whichever clock is currently relevant (the get-ready countdown, or the guide itself once
+  // it's started): read by the AppState listener below to decide whether backgrounding is an
+  // *auto* pause worth flagging, versus a no-op over a pause the user already chose.
+  const runningRef = useRef(false);
+  useEffect(() => {
+    runningRef.current = readyLeft !== null ? !autoPaused : !paused;
+  }, [readyLeft, autoPaused, paused]);
+
+  // The countdown ticks on its own clock, independent of `paused` (which starts, and stays,
+  // true for the whole get-ready phase so the guide underneath never ticks): only an auto pause
+  // from the background listener below halts it. One persistent interval (a ref mirrors the
+  // count, same shape as useGuide's own timer) rather than a new setTimeout scheduled through
+  // an effect after every tick, so a single `jest.advanceTimersByTime` jump past several
+  // seconds still runs every step instead of stalling after the first.
+  const readyLeftRef = useRef(readyLeft);
+  useEffect(() => {
+    readyLeftRef.current = readyLeft;
+  }, [readyLeft]);
+
+  useEffect(() => {
+    if (readyLeftRef.current === null || autoPaused) return;
+    const timer = setInterval(() => {
+      const current = readyLeftRef.current;
+      // Cancelled from outside (스킵 or a control that exits the get-ready phase early):
+      // stop ticking instead of running an idle interval until the screen unmounts.
+      if (current === null) {
+        clearInterval(timer);
+        return;
+      }
+      if (current <= 0) return;
+      const next = current - 1;
+      if (next === 0) {
+        clearInterval(timer);
+        readyLeftRef.current = null;
+        setReadyLeft(null);
+        setPaused(false);
+        seek(0);
+        return;
+      }
+      readyLeftRef.current = next;
+      setReadyLeft(next);
+    }, 1000 / GUIDE_SPEED);
+    return () => clearInterval(timer);
+    // seek is a fresh function each render; including it would tear this interval down and
+    // recreate it every render instead of only when the countdown starts or is auto-paused.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPaused, setPaused]);
+
+  // Pausing on background/inactive keeps both the guide and the get-ready countdown from
+  // ever counting while the app isn't visible. react-native-web's AppState is noisy around
+  // focus changes (Playwright's screenshot harness would otherwise trip it constantly), so
+  // this only runs on native.
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') return;
+      if (runningRef.current) setAutoPaused(true);
+      setPaused(true);
+    });
+    return () => subscription.remove();
+  }, [setPaused]);
+
+  // Shared by every control that implies the user is taking over from the countdown
+  // (재생/일시정지, 이전, 다음): leaves the get-ready phase without waiting it out.
+  const exitReady = useCallback(() => {
+    if (readyLeft === null) return;
+    setReadyLeft(null);
+    setPaused(false);
+  }, [readyLeft, setPaused]);
+
+  const handlePlayPress = useCallback(() => {
+    if (autoPaused) {
+      setAutoPaused(false);
+      if (readyLeft === null) setPaused(false);
+      return;
+    }
+    if (readyLeft !== null) {
+      exitReady();
+      seek(0);
+      return;
+    }
+    setPaused(!paused);
+  }, [autoPaused, readyLeft, paused, setPaused, seek, exitReady]);
+
+  const previousIndex = previousSegmentIndex(progress, segments);
+  const nextIndex = nextSegmentIndex(progress, segments);
+  const isLastPoint = nextIndex === null;
+
+  const handlePrevious = useCallback(() => {
+    if (previousIndex === null) return;
+    exitReady();
+    seek(previousIndex);
+  }, [previousIndex, seek, exitReady]);
+
+  const handleNext = useCallback(() => {
+    exitReady();
+    if (isLastPoint) {
+      finishNow();
+      return;
+    }
+    seek(nextIndex);
+  }, [isLastPoint, nextIndex, seek, finishNow, exitReady]);
 
   const [confirmClose, setConfirmClose] = useState(false);
   const pausedBeforeConfirm = useRef(false);
@@ -191,13 +314,19 @@ export function GuideView({ routineRef, title, steps }: GuideViewProps) {
       ? `다음 ${SIDE_LABEL[next.side]}`
       : `다음 ${content.acupoints.get(next.acupointId)?.name.ko ?? ''}`;
 
+  const playLabel = autoPaused ? '잠시 멈췄어요' : readyLeft !== null ? '바로 시작' : paused ? '계속' : '일시정지';
+  const nextButtonLabel = isLastPoint ? '마치기' : '다음';
+
   return (
     <SafeAreaView style={styles.screen}>
       <View testID="guide-body" style={styles.body} importantForAccessibility={confirmClose ? 'no-hide-descendants' : 'auto'}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.top}>
             <Txt style={styles.topName}>{title}</Txt>
-            <Txt variant="caption">{`${segment.stepIndex + 1} / ${stepCount}`}</Txt>
+            <View style={styles.topMeta}>
+              {rounds > 1 && <Txt variant="caption">{`${segment.round}회차 / ${rounds}`}</Txt>}
+              <Txt variant="caption">{`${segment.stepIndex + 1} / ${stepCount}`}</Txt>
+            </View>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="닫기"
@@ -253,20 +382,46 @@ export function GuideView({ routineRef, title, steps }: GuideViewProps) {
           ) : (
             <>
               <View style={styles.timerRow}>
-                <Txt variant="number" style={styles.number} accessibilityLiveRegion="polite">{String(rhythm.secondsLeftInPhase)}</Txt>
-                <View style={styles.timerText}>
-                  <Txt style={styles.action} accessibilityLiveRegion="polite">{rhythm.phase === 'press' ? '꾹 누르세요' : '잠시 떼세요'}</Txt>
-                  <Txt variant="sub">{`${rhythm.pressNumber} / ${rhythm.pressCount}회`}</Txt>
-                </View>
+                {readyLeft !== null ? (
+                  <>
+                    <Txt variant="number" style={styles.number} accessibilityLiveRegion="polite">{String(readyLeft)}</Txt>
+                    <View style={styles.timerText}>
+                      <Txt style={styles.action} accessibilityLiveRegion="polite">{`곧 시작해요 ${readyLeft}`}</Txt>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <Txt variant="number" style={styles.number} accessibilityLiveRegion="polite">{String(rhythm.secondsLeftInPhase)}</Txt>
+                    <View style={styles.timerText}>
+                      <Txt style={styles.action} accessibilityLiveRegion="polite">{rhythm.phase === 'press' ? '꾹 누르세요' : '잠시 떼세요'}</Txt>
+                      <Txt variant="sub">{`${rhythm.pressNumber} / ${rhythm.pressCount}회`}</Txt>
+                    </View>
+                  </>
+                )}
               </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={paused ? '계속' : '일시정지'}
-                onPress={() => setPaused(!paused)}
-                style={styles.bigButton}
-              >
-                <Txt style={styles.bigButtonLabel}>{paused ? '계속' : '일시정지'}</Txt>
-              </Pressable>
+              <View style={styles.controlsRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="이전"
+                  accessibilityState={{ disabled: previousIndex === null }}
+                  disabled={previousIndex === null}
+                  onPress={handlePrevious}
+                  style={[styles.sideButton, previousIndex === null && styles.pauseDisabled]}
+                >
+                  <Txt style={styles.pauseLabel}>이전</Txt>
+                </Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={playLabel} onPress={handlePlayPress} style={styles.bigButton}>
+                  <Txt style={styles.bigButtonLabel}>{playLabel}</Txt>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={nextButtonLabel}
+                  onPress={handleNext}
+                  style={styles.sideButton}
+                >
+                  <Txt style={styles.pauseLabel}>{nextButtonLabel}</Txt>
+                </Pressable>
+              </View>
               <View style={styles.track}>
                 <View style={[styles.fill, { width: `${Math.min(100, (doneSeconds / totalSeconds) * 100)}%` }]} />
               </View>
@@ -309,6 +464,7 @@ const styles = StyleSheet.create({
   scrollContent: { padding: space(5), gap: space(3) },
   top: { flexDirection: 'row', alignItems: 'center', gap: space(3) },
   topName: { flex: 1, fontFamily: fonts.semibold, fontSize: 13, color: colors.ink },
+  topMeta: { alignItems: 'flex-end', gap: space(0.5) },
   nameRow: { flexDirection: 'row', alignItems: 'baseline', gap: space(2), marginTop: space(2) },
   side: { fontFamily: fonts.semibold, fontSize: 13, color: colors.accent },
   timer: { gap: space(3), paddingHorizontal: space(5), paddingBottom: space(5) },
@@ -316,7 +472,9 @@ const styles = StyleSheet.create({
   number: { minWidth: space(10) },
   timerText: { flex: 1, gap: space(0.5) },
   action: { fontFamily: fonts.bold, fontSize: 15, color: colors.ink },
+  controlsRow: { flexDirection: 'row', gap: space(3) },
   bigButton: {
+    flex: 2,
     minHeight: space(14),
     borderWidth: 1.5,
     borderColor: colors.ink,
@@ -326,6 +484,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: space(3),
   },
   bigButtonLabel: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
+  sideButton: {
+    flex: 1,
+    minHeight: space(14),
+    borderWidth: 1.5,
+    borderColor: colors.ink,
+    borderRadius: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: space(2),
+  },
   pause: {
     borderWidth: 1.5,
     borderColor: colors.ink,

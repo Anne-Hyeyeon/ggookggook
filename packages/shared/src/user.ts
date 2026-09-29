@@ -49,6 +49,7 @@ export interface Settings {
   pressSeconds: number;
   restSeconds: number;
   pregnancyMode: boolean;
+  getReadyEnabled: boolean;
   reminder: Reminder | null;
 }
 
@@ -57,8 +58,11 @@ export const DEFAULT_SETTINGS: Settings = {
   pressSeconds: 5,
   restSeconds: 2,
   pregnancyMode: false,
+  getReadyEnabled: true,
   reminder: null,
 };
+
+export const GET_READY_SECONDS = 3;
 
 export const PRESS_SECONDS_MIN = 3;
 export const PRESS_SECONDS_MAX = 10;

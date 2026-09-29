@@ -1,11 +1,12 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo } from 'react';
 import { GuideView } from '@/guide/GuideView';
+import { parseRounds } from '@/guide/rounds';
 import { NO_STEPS, resolveRoutine, type RoutineRef } from '@/routines';
 import { useSettings } from '@/state/settings';
 
 export default function GuideScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, rounds } = useLocalSearchParams<{ id: string; rounds?: string }>();
   const settings = useSettings((state) => state.settings);
 
   const routineRef = useMemo<RoutineRef>(() => ({ kind: 'symptom', id }), [id]);
@@ -16,5 +17,12 @@ export default function GuideScreen() {
     [routineRef],
   );
 
-  return <GuideView routineRef={routineRef} title={resolved?.title ?? ''} steps={resolved?.steps ?? NO_STEPS} />;
+  return (
+    <GuideView
+      routineRef={routineRef}
+      title={resolved?.title ?? ''}
+      steps={resolved?.steps ?? NO_STEPS}
+      rounds={parseRounds(rounds)}
+    />
+  );
 }
