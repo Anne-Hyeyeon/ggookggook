@@ -128,6 +128,14 @@ export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewPro
   // ordinary manual pause, so the play button can say 잠시 멈췄어요 instead of 계속.
   const [autoPaused, setAutoPaused] = useState(false);
 
+  // Announced once, when the countdown starts: the number itself has no live region (it would
+  // otherwise be re-announced every second), so this is the only spoken cue that it's running.
+  useEffect(() => {
+    if (readyLeft !== null) AccessibilityInfo.announceForAccessibility('곧 시작해요');
+    // Intentionally mount-only: readyLeft ticking down every second must not retrigger this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const { progress, paused, setPaused, seek, finishNow } = useGuide({
     segments,
     pressSeconds: settings.pressSeconds,
@@ -193,6 +201,9 @@ export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewPro
   useEffect(() => {
     if (Platform.OS === 'web') return;
     const subscription = AppState.addEventListener('change', (nextState) => {
+      // Pauses on 'background' *and* 'inactive' (not just 'active' → anything-else): iOS
+      // reports 'inactive' for the app switcher and Control Center too, and the routine
+      // must not keep counting through those either.
       if (nextState === 'active') return;
       if (runningRef.current) setAutoPaused(true);
       setPaused(true);
@@ -323,10 +334,9 @@ export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewPro
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.top}>
             <Txt style={styles.topName}>{title}</Txt>
-            <View style={styles.topMeta}>
-              {rounds > 1 && <Txt variant="caption">{`${segment.round}회차 / ${rounds}`}</Txt>}
-              <Txt variant="caption">{`${segment.stepIndex + 1} / ${stepCount}`}</Txt>
-            </View>
+            <Txt variant="caption">
+              {rounds > 1 ? `${segment.round}회차 · ${segment.stepIndex + 1} / ${stepCount}` : `${segment.stepIndex + 1} / ${stepCount}`}
+            </Txt>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="닫기"
@@ -384,9 +394,9 @@ export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewPro
               <View style={styles.timerRow}>
                 {readyLeft !== null ? (
                   <>
-                    <Txt variant="number" style={styles.number} accessibilityLiveRegion="polite">{String(readyLeft)}</Txt>
+                    <Txt variant="number" style={styles.number}>{String(readyLeft)}</Txt>
                     <View style={styles.timerText}>
-                      <Txt style={styles.action} accessibilityLiveRegion="polite">{`곧 시작해요 ${readyLeft}`}</Txt>
+                      <Txt style={styles.action}>곧 시작해요</Txt>
                     </View>
                   </>
                 ) : (
@@ -464,7 +474,6 @@ const styles = StyleSheet.create({
   scrollContent: { padding: space(5), gap: space(3) },
   top: { flexDirection: 'row', alignItems: 'center', gap: space(3) },
   topName: { flex: 1, fontFamily: fonts.semibold, fontSize: 13, color: colors.ink },
-  topMeta: { alignItems: 'flex-end', gap: space(0.5) },
   nameRow: { flexDirection: 'row', alignItems: 'baseline', gap: space(2), marginTop: space(2) },
   side: { fontFamily: fonts.semibold, fontSize: 13, color: colors.accent },
   timer: { gap: space(3), paddingHorizontal: space(5), paddingBottom: space(5) },
@@ -479,11 +488,12 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.ink,
     borderRadius: 2,
+    backgroundColor: colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: space(3),
   },
-  bigButtonLabel: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
+  bigButtonLabel: { fontFamily: fonts.semibold, fontSize: 15, color: colors.bg },
   sideButton: {
     flex: 1,
     minHeight: space(14),

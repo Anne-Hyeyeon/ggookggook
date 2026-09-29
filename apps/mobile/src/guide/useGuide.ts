@@ -1,4 +1,4 @@
-import { advanceGuide, guideElapsedTotal, seekSegment, type GuideEvent, type GuideProgress, type GuideSegment } from '@ggookggook/shared';
+import { advanceGuide, seekSegment, type GuideEvent, type GuideProgress, type GuideSegment } from '@ggookggook/shared';
 import { useEffect, useRef, useState } from 'react';
 
 interface UseGuideOptions {
@@ -16,6 +16,9 @@ export function useGuide({ segments, pressSeconds, restSeconds, tickMs, initialP
   const [paused, setPaused] = useState(initialPaused ?? false);
   const progressRef = useRef(progress);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Real running ticks only: a seek (이전/다음) jumps `progress` without touching this, so
+  // skipping ahead adds nothing and skipping back subtracts nothing from the recorded duration.
+  const elapsedTicksRef = useRef(0);
   const callbacks = useRef({ onEvent, onFinish });
   callbacks.current = { onEvent, onFinish };
 
@@ -31,9 +34,10 @@ export function useGuide({ segments, pressSeconds, restSeconds, tickMs, initialP
     const timer = setInterval(() => {
       const { progress: next, events } = advanceGuide(progressRef.current, segments, pressSeconds, restSeconds);
       progressRef.current = next;
+      elapsedTicksRef.current += 1;
       setProgress(next);
       for (const event of events) {
-        if (event === 'finish') callbacks.current.onFinish(guideElapsedTotal(next, segments));
+        if (event === 'finish') callbacks.current.onFinish(elapsedTicksRef.current);
         else callbacks.current.onEvent(event);
       }
       if (next.finished) clearInterval(timer);
@@ -57,7 +61,7 @@ export function useGuide({ segments, pressSeconds, restSeconds, tickMs, initialP
   function finishNow() {
     if (progressRef.current.finished) return;
     if (intervalRef.current) clearInterval(intervalRef.current);
-    const total = guideElapsedTotal(progressRef.current, segments);
+    const total = elapsedTicksRef.current;
     const finished: GuideProgress = { ...progressRef.current, finished: true };
     progressRef.current = finished;
     setProgress(finished);

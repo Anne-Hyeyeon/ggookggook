@@ -152,4 +152,38 @@ describe('finishNow', () => {
     });
     expect(onFinish).not.toHaveBeenCalled();
   });
+
+  it('does not count a segment skipped over by seek toward the recorded duration', async () => {
+    const onFinish = jest.fn();
+    const { result } = await renderHook(() =>
+      useGuide({ segments, pressSeconds: 1, restSeconds: 1, tickMs: 1000, onEvent: jest.fn(), onFinish }),
+    );
+    await act(async () => {
+      result.current.seek(1); // skips the whole first (3-second) segment without ticking
+    });
+    await act(async () => {
+      jest.advanceTimersByTime(1000); // 1 real tick spent on the second segment
+    });
+    await act(async () => {
+      result.current.finishNow();
+    });
+    expect(onFinish).toHaveBeenCalledWith(1);
+  });
+
+  it('does not subtract time when 이전 restarts the current point or moves back a point', async () => {
+    const onFinish = jest.fn();
+    const { result } = await renderHook(() =>
+      useGuide({ segments, pressSeconds: 1, restSeconds: 1, tickMs: 1000, onEvent: jest.fn(), onFinish }),
+    );
+    await act(async () => {
+      jest.advanceTimersByTime(2000); // 2 real ticks into the first (3-second) segment
+    });
+    await act(async () => {
+      result.current.seek(0); // restarts the same point in place, as 이전 does once elapsed time has passed
+    });
+    await act(async () => {
+      result.current.finishNow();
+    });
+    expect(onFinish).toHaveBeenCalledWith(2);
+  });
 });

@@ -420,20 +420,26 @@ describe('get-ready countdown', () => {
   it('counts down before the first press, deferring the press announcement and haptic until it ends', async () => {
     const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockImplementation(() => {});
     await render(<GuideScreen />);
-    expect(screen.getByText('곧 시작해요 3')).toBeTruthy();
+    expect(screen.getByText('곧 시작해요')).toBeTruthy();
+    expect(screen.getByText('3')).toBeTruthy();
     expect(screen.getByRole('button', { name: '바로 시작' })).toBeTruthy();
     expect(screen.queryByText('꾹 누르세요')).toBeNull();
     expect(Haptics.impactAsync).not.toHaveBeenCalled();
     expect(announce).not.toHaveBeenCalledWith('꾹 누르세요');
+    // Announced once, right when the countdown starts.
+    expect(announce).toHaveBeenCalledWith('곧 시작해요');
+    expect(announce).toHaveBeenCalledTimes(1);
 
     await act(async () => {
       jest.advanceTimersByTime(1000);
     });
-    expect(screen.getByText('곧 시작해요 2')).toBeTruthy();
+    expect(screen.getByText('2')).toBeTruthy();
     await act(async () => {
       jest.advanceTimersByTime(1000);
     });
-    expect(screen.getByText('곧 시작해요 1')).toBeTruthy();
+    expect(screen.getByText('1')).toBeTruthy();
+    // Still only the one announcement: not re-spoken on every tick down.
+    expect(announce).toHaveBeenCalledTimes(1);
     await act(async () => {
       jest.advanceTimersByTime(1000);
     });
@@ -490,6 +496,13 @@ describe('get-ready countdown', () => {
     });
     expect(screen.queryByText(/곧 시작해요/)).toBeNull();
   });
+
+  it('닫기 during the countdown leaves right away, without a confirmation (nothing has happened yet)', async () => {
+    await render(<GuideScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: '닫기' }));
+    expect(router.back).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('루틴을 그만할까요?')).toBeNull();
+  });
 });
 
 describe('이전 / 다음 controls', () => {
@@ -516,17 +529,18 @@ describe('이전 / 다음 controls', () => {
     expect(screen.getByText('왼쪽')).toBeTruthy();
   });
 
-  it('다음 becomes 마치기 once on the last point, which records the actual elapsed time and finishes', async () => {
+  it('다음 becomes 마치기 once on the last point, which records only the time actually spent ticking, not time skipped over', async () => {
     await render(<GuideScreen />);
-    await fireEvent.press(screen.getByRole('button', { name: '다음' })); // 합곡 -> 내관 (the last point)
+    await fireEvent.press(screen.getByRole('button', { name: '다음' })); // 합곡 -> 내관 (the last point), skipped instantly
     expect(screen.getByRole('button', { name: '마치기' })).toBeTruthy();
 
     await act(async () => {
       jest.advanceTimersByTime(10_000);
     });
     await fireEvent.press(screen.getByRole('button', { name: '마치기' }));
-    // 60s (합곡, both sides, skipped by 다음) + 10s actually spent on 내관, not the full 120s.
-    expect(mocked.insertSession).toHaveBeenCalledWith({}, expect.objectContaining({ durationSeconds: 130, feedback: null }));
+    // 합곡 (both sides) contributes 0, since 다음 skipped it without ticking; only the 10s
+    // actually spent on 내관 counts, not the full 120s a natural finish would have recorded.
+    expect(mocked.insertSession).toHaveBeenCalledWith({}, expect.objectContaining({ durationSeconds: 10, feedback: null }));
     expect(router.replace).toHaveBeenCalledWith({ pathname: '/done', params: { sessionId: expect.any(String) } });
   });
 
@@ -570,12 +584,12 @@ describe('rounds', () => {
   it('shows the round indicator once rounds > 1, and advances it as the routine repeats', async () => {
     mockParams = { id: 'food_stagnation', rounds: '2' };
     await render(<GuideScreen />);
-    expect(screen.getByText('1회차 / 2')).toBeTruthy();
+    expect(screen.getByText('1회차 · 1 / 2')).toBeTruthy();
 
     await act(async () => {
       jest.advanceTimersByTime(240_000);
     });
-    expect(screen.getByText('2회차 / 2')).toBeTruthy();
+    expect(screen.getByText('2회차 · 1 / 2')).toBeTruthy();
     expect(router.replace).not.toHaveBeenCalled();
 
     await act(async () => {
@@ -591,14 +605,14 @@ describe('rounds', () => {
     expect(screen.getByRole('button', { name: '다음' })).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: '다음' })); // -> 합곡 (round 2)
-    expect(screen.getByText('2회차 / 2')).toBeTruthy();
+    expect(screen.getByText('2회차 · 1 / 2')).toBeTruthy();
     expect(screen.getByText('합곡')).toBeTruthy();
   });
 
   it('clamps an out-of-range rounds param instead of trusting the URL', async () => {
     mockParams = { id: 'food_stagnation', rounds: '99' };
     await render(<GuideScreen />);
-    expect(screen.getByText('1회차 / 5')).toBeTruthy();
+    expect(screen.getByText('1회차 · 1 / 2')).toBeTruthy();
   });
 });
 
@@ -642,20 +656,30 @@ describe('background pause', () => {
     await act(async () => {
       jest.advanceTimersByTime(1000);
     });
-    expect(screen.getByText('곧 시작해요 2')).toBeTruthy();
+    expect(screen.getByText('2')).toBeTruthy();
 
     await pressAppState('background');
     await act(async () => {
       jest.advanceTimersByTime(5000);
     });
-    expect(screen.getByText('곧 시작해요 2')).toBeTruthy();
+    expect(screen.getByText('2')).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: '잠시 멈췄어요' }));
-    expect(screen.getByText('곧 시작해요 2')).toBeTruthy();
+    expect(screen.getByText('2')).toBeTruthy();
     await act(async () => {
       jest.advanceTimersByTime(1000);
     });
-    expect(screen.getByText('곧 시작해요 1')).toBeTruthy();
+    expect(screen.getByText('1')).toBeTruthy();
+  });
+
+  it('keeps the 잠시 멈췄어요 label after seeking while auto-paused, rather than reverting to 계속', async () => {
+    await render(<GuideScreen />);
+    await pressAppState('background');
+    expect(screen.getByRole('button', { name: '잠시 멈췄어요' })).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: '다음' }));
+    expect(screen.getByText('내관')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '잠시 멈췄어요' })).toBeTruthy();
   });
 
   it('does not register a background listener on web', async () => {
