@@ -18,14 +18,16 @@ import {
 } from '@ggookggook/store';
 import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, SectionList, StyleSheet, TextInput, View } from 'react-native';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { AppState, Platform, Pressable, ScrollView, SectionList, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
 import { formatDateLine, formatRelativeDay, greetingFor } from '@/format';
 import { GROUP_LABELS, GROUP_ORDER, sectionsBySymptomGroup } from '@/groups';
-import { routineSummary, summaryLine, visibleSteps, visibleStepsFor } from '@/routine';
+import { MyRoutineChip } from '@/home/MyRoutineChip';
+import { SuggestionRow } from '@/home/SuggestionRow';
+import { routineSummary, visibleSteps } from '@/routine';
 import { isUserRoutineUsable } from '@/routines';
 import { useSettings } from '@/state/settings';
 import { colors, fonts, space } from '@/theme';
@@ -36,6 +38,7 @@ import { Txt } from '@/ui/Txt';
 // letting React bail out via Object.is instead of looping on a fresh {} each time.
 const NO_USAGE: Record<string, number> = {};
 const NO_ROUTINES: UserRoutine[] = [];
+const NO_REPEATS: Record<string, number> = {};
 
 const CHIPS: readonly { id: SymptomGroup | 'all'; label: string }[] = [
   { id: 'all', label: '전체' },
@@ -73,60 +76,99 @@ export default function TodayScreen() {
   const [betterCount, setBetterCount] = useState(0);
   const [usageCounts, setUsageCounts] = useState<Record<string, number>>(NO_USAGE);
   const [myRoutines, setMyRoutines] = useState<UserRoutine[]>(NO_ROUTINES);
+  const [suggestionRepeats, setSuggestionRepeats] = useState<Record<string, number>>(NO_REPEATS);
+  // Mirrors whether this screen is the currently focused one: the async loads below (and the
+  // AppState listener that repeats them) must not set state once it's lost focus or unmounted.
+  const activeRef = useRef(true);
+  // Guards 시작/다시 하기 against a double tap firing two navigations before the first one's
+  // push has actually moved the screen away; reset on every focus so a legitimate return trip
+  // isn't left permanently blocked.
+  const navigatingRef = useRef(false);
+
+  const load = useCallback(() => {
+    latestCompletedSession(db)
+      .then((session) => resolveRecentRoutine(db, session))
+      .then((resolved) => {
+        if (activeRef.current) setRecent(resolved);
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to load the most recent session', error);
+        if (activeRef.current) setRecent(null);
+      });
+    countSessionsByFeedback(db, 'better')
+      .then((count) => {
+        if (activeRef.current) setBetterCount(count);
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to load the better-feedback count', error);
+        if (activeRef.current) setBetterCount(0);
+      });
+    // Loads the suggestions' remembered repeat counts here too, right after the usage counts
+    // that decide which symptoms they are: 시작 then has the repeat in hand already, with no
+    // second store read needed on tap.
+    countSessionsBySymptom(db)
+      .then((counts) => {
+        if (!activeRef.current) return undefined;
+        setUsageCounts(counts);
+        const suggested = suggestFor(new Date(), content.symptoms, counts);
+        return Promise.all(suggested.map((symptom) => getSymptomRepeat(db, symptom.id).then((repeat) => [symptom.id, repeat] as const)));
+      })
+      .then((entries) => {
+        if (activeRef.current && entries) setSuggestionRepeats(Object.fromEntries(entries));
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to load symptom usage counts', error);
+        if (activeRef.current) {
+          setUsageCounts(NO_USAGE);
+          setSuggestionRepeats(NO_REPEATS);
+        }
+      });
+    listUserRoutines(db)
+      .then((routines) => {
+        if (activeRef.current) setMyRoutines(routines);
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to load my routines', error);
+        if (activeRef.current) setMyRoutines(NO_ROUTINES);
+      });
+  }, [db]);
 
   useFocusEffect(
     useCallback(() => {
-      let active = true;
-      latestCompletedSession(db)
-        .then((session) => resolveRecentRoutine(db, session))
-        .then((resolved) => {
-          if (active) setRecent(resolved);
-        })
-        .catch((error) => {
-          console.error('Failed to load the most recent session', error);
-          if (active) setRecent(null);
-        });
-      countSessionsByFeedback(db, 'better')
-        .then((count) => {
-          if (active) setBetterCount(count);
-        })
-        .catch((error) => {
-          console.error('Failed to load the better-feedback count', error);
-          if (active) setBetterCount(0);
-        });
-      countSessionsBySymptom(db)
-        .then((counts) => {
-          if (active) setUsageCounts(counts);
-        })
-        .catch((error) => {
-          console.error('Failed to load symptom usage counts', error);
-          if (active) setUsageCounts(NO_USAGE);
-        });
-      listUserRoutines(db)
-        .then((routines) => {
-          if (active) setMyRoutines(routines);
-        })
-        .catch((error) => {
-          console.error('Failed to load my routines', error);
-          if (active) setMyRoutines(NO_ROUTINES);
-        });
+      activeRef.current = true;
+      navigatingRef.current = false;
+      load();
+      // react-native-web's AppState is noisy around ordinary focus changes (the Playwright
+      // screenshot harness would otherwise retrigger this constantly), so only native gets
+      // the foreground-refresh behavior.
+      if (Platform.OS === 'web') {
+        return () => {
+          activeRef.current = false;
+        };
+      }
+      const subscription = AppState.addEventListener('change', (nextState) => {
+        // Coming back to Today from the background: the greeting and 지금 해 보기 depend on
+        // the time of day, which a re-render alone won't pick up without fresh state to key it.
+        if (nextState === 'active') load();
+      });
       return () => {
-        active = false;
+        activeRef.current = false;
+        subscription.remove();
       };
-    }, [db]),
+    }, [load]),
   );
 
-  const handleStartSuggestion = useCallback(
-    (symptomId: string) => {
-      getSymptomRepeat(db, symptomId)
-        .then((repeat) => router.push(`/guide/${symptomId}?rounds=${repeat}`))
-        .catch((error: unknown) => {
-          console.error('Failed to load the symptom repeat before starting', error);
-          router.push(`/guide/${symptomId}?rounds=1`);
-        });
-    },
-    [db],
-  );
+  const handleStartSuggestion = useCallback((symptomId: string, repeat: number) => {
+    if (navigatingRef.current) return;
+    navigatingRef.current = true;
+    router.push(`/guide/${symptomId}?rounds=${repeat}`);
+  }, []);
+
+  const handleRecentPress = useCallback(() => {
+    if (!recent || navigatingRef.current) return;
+    navigatingRef.current = true;
+    router.push(recent.href);
+  }, [recent]);
 
   // Ties keep content order because Array#sort is stable; with no history every count is
   // 0, so the sort is a no-op and content order falls out for free.
@@ -160,6 +202,8 @@ export default function TodayScreen() {
   }, [searching, query, selectedGroup, sortedSymptoms]);
   const cat = content.image('cat-shoulder');
   const now = new Date();
+
+  const renderItem = useCallback(({ item }: { item: Symptom }) => <SymptomRow symptom={item} settings={settings} />, [settings]);
 
   const header = (
     <View style={styles.header}>
@@ -199,7 +243,7 @@ export default function TodayScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`${recent.title} 다시 하기`}
-            onPress={() => router.push(recent.href)}
+            onPress={handleRecentPress}
             style={styles.recent}
           >
             <Txt variant="sub" style={styles.recentLabel}>
@@ -221,7 +265,12 @@ export default function TodayScreen() {
           {suggestions.map((symptom, index) => (
             <View key={symptom.id}>
               {index > 0 && <Rule />}
-              <SuggestionRow symptom={symptom} settings={settings} onStart={handleStartSuggestion} />
+              <SuggestionRow
+                symptom={symptom}
+                settings={settings}
+                repeat={suggestionRepeats[symptom.id] ?? 1}
+                onStart={handleStartSuggestion}
+              />
             </View>
           ))}
         </View>
@@ -271,9 +320,10 @@ export default function TodayScreen() {
         // The 7 group sections plus all ~30 symptoms comfortably exceed the default
         // initial render batch, which would otherwise hide later groups until scrolled.
         initialNumToRender={50}
+        stickySectionHeadersEnabled={false}
         contentContainerStyle={styles.content}
         ListHeaderComponent={header}
-        renderItem={({ item }) => <SymptomRow symptom={item} settings={settings} />}
+        renderItem={renderItem}
         renderSectionHeader={({ section }) =>
           section.title ? <Txt variant="caption" style={styles.sectionHeader}>{section.title}</Txt> : null
         }
@@ -284,63 +334,12 @@ export default function TodayScreen() {
   );
 }
 
-function SuggestionRow({
-  symptom,
-  settings,
-  onStart,
-}: {
+interface SymptomRowProps {
   symptom: Symptom;
   settings: Settings;
-  onStart: (symptomId: string) => void;
-}) {
-  const steps = visibleSteps(symptom, settings);
-  const { minutes } = routineSummary(steps);
-  const names = steps.map((step) => content.acupoints.get(step.acupointId)?.name.ko ?? '').join(' · ');
-  // Two sibling Pressables, not one nested in the other: react-native-web renders a
-  // `Pressable` with accessibilityRole="button" as an actual <button>, and a <button>
-  // inside a <button> is invalid HTML that breaks web hydration.
-  return (
-    <View style={styles.suggestRow}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${symptom.name} 미리보기`}
-        onPress={() => router.push(`/symptom/${symptom.id}`)}
-        style={styles.suggestText}
-      >
-        <Txt maxFontSizeMultiplier={1.4} style={styles.suggestName}>{symptom.name}</Txt>
-        <Txt variant="pointSmall">{names}</Txt>
-        <Txt variant="sub">{`${minutes}분`}</Txt>
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${symptom.name} 시작`}
-        hitSlop={10}
-        onPress={() => onStart(symptom.id)}
-        style={styles.suggestStart}
-      >
-        <Txt style={styles.suggestStartLabel}>시작</Txt>
-      </Pressable>
-    </View>
-  );
 }
 
-function MyRoutineChip({ routine, settings }: { routine: UserRoutine; settings: Settings }) {
-  const { count, minutes } = routineSummary(visibleStepsFor(routine.steps, settings), routine.repeat);
-  const summary = summaryLine(count, minutes, routine.repeat);
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`${routine.name}, ${summary}`}
-      onPress={() => router.push(`/routine/${routine.id}`)}
-      style={styles.myRoutineChip}
-    >
-      <Txt maxFontSizeMultiplier={1.4} style={styles.myRoutineName}>{routine.name}</Txt>
-      <Txt variant="caption">{summary}</Txt>
-    </Pressable>
-  );
-}
-
-function SymptomRow({ symptom, settings }: { symptom: Symptom; settings: Settings }) {
+const SymptomRow = memo(function SymptomRow({ symptom, settings }: SymptomRowProps) {
   const steps = visibleSteps(symptom, settings);
   const { minutes } = routineSummary(steps);
   const names = steps.map((step) => content.acupoints.get(step.acupointId)?.name.ko ?? '').join(' · ');
@@ -353,7 +352,7 @@ function SymptomRow({ symptom, settings }: { symptom: Symptom; settings: Setting
       <Txt maxFontSizeMultiplier={1.4} style={styles.minutes} testID={`minutes-${symptom.id}`}>{`${minutes}분`}</Txt>
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
@@ -392,33 +391,9 @@ const styles = StyleSheet.create({
     paddingVertical: space(1),
   },
   suggestTitle: { paddingTop: space(2.5), paddingBottom: space(0.5) },
-  suggestRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: space(3), gap: space(3) },
-  suggestText: { flex: 1, gap: 3 },
-  suggestName: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
-  suggestStart: {
-    minWidth: space(14),
-    height: space(9),
-    borderRadius: 2,
-    backgroundColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: space(3),
-  },
-  suggestStartLabel: { fontFamily: fonts.semibold, fontSize: 13.5, color: colors.bg },
   myRoutinesBlock: { gap: space(1) },
   myRoutinesLabel: { paddingTop: space(1) },
   myRoutinesRow: { gap: space(2), paddingRight: space(2) },
-  myRoutineChip: {
-    borderWidth: 1,
-    borderColor: colors.ink,
-    borderRadius: 2,
-    minHeight: 44,
-    paddingHorizontal: space(3.5),
-    paddingVertical: space(1.5),
-    justifyContent: 'center',
-    gap: 2,
-  },
-  myRoutineName: { fontFamily: fonts.semibold, fontSize: 13.5, color: colors.ink },
   chipsRow: { gap: space(2), paddingRight: space(2) },
   chip: {
     minHeight: 36,

@@ -2,6 +2,7 @@ import { DEFAULT_SETTINGS, type UserRoutine } from '@ggookggook/shared';
 import * as store from '@ggookggook/store';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
+import { AppState, Platform } from 'react-native';
 import { act } from 'react-test-renderer';
 import TodayScreen from '../app/(tabs)/index';
 import { useSettings } from '@/state/settings';
@@ -36,6 +37,7 @@ beforeEach(() => {
   // don't care about the suggestion block aren't at the mercy of the real wall clock landing
   // on a window whose symptom collides with a name a test asserts elsewhere on screen.
   jest.useFakeTimers().setSystemTime(at(7));
+  jest.spyOn(AppState, 'addEventListener');
   useSettings.setState({ loaded: true, settings: { ...DEFAULT_SETTINGS } });
   mocked.latestCompletedSession.mockResolvedValue(null);
   mocked.countSessionsByFeedback.mockResolvedValue(0);
@@ -122,6 +124,22 @@ it('starts the recent routine again from its 다시 하기 affordance', async ()
   await render(<TodayScreen />);
   await fireEvent.press(await screen.findByText('다시 하기'));
   expect(router.push).toHaveBeenCalledWith('/symptom/headache');
+});
+
+it('does not double-push when 다시 하기 is tapped twice before navigation lands', async () => {
+  mocked.latestCompletedSession.mockResolvedValue({
+    id: 's1',
+    routine: { kind: 'symptom', symptomId: 'headache' },
+    startedAt: new Date().toISOString(),
+    completedAt: new Date().toISOString(),
+    durationSeconds: 240,
+    feedback: null,
+  });
+  await render(<TodayScreen />);
+  const again = await screen.findByText('다시 하기');
+  await fireEvent.press(again);
+  await fireEvent.press(again);
+  expect(router.push).toHaveBeenCalledTimes(1);
 });
 
 it('shows a recent user routine by name and starts it again from /routine/<id>', async () => {
@@ -251,6 +269,38 @@ describe('greeting', () => {
   });
 });
 
+describe('foreground refresh', () => {
+  it('recomputes the greeting and suggestions when the app returns to the foreground', async () => {
+    jest.useFakeTimers().setSystemTime(at(7));
+    // A fresh object every call, the same as a real SQL query would return: proves the
+    // re-render comes from an actual reload rather than a stale, reference-equal state set.
+    mocked.countSessionsBySymptom.mockImplementation(async () => ({}));
+    await render(<TodayScreen />);
+    expect(screen.getByText('좋은 아침이에요')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '기운이 없을 때 미리보기' })).toBeTruthy();
+
+    jest.setSystemTime(at(15));
+    const call = (AppState.addEventListener as jest.Mock).mock.calls.findLast(([name]) => name === 'change');
+    await act(async () => {
+      call?.[1]('active');
+    });
+
+    expect(screen.getByText('오후도 잠깐 쉬어 가요')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '눈이 뻑뻑할 때 미리보기' })).toBeTruthy();
+  });
+
+  it('does not register a foreground listener on web', async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = 'web';
+    try {
+      await render(<TodayScreen />);
+      expect(AppState.addEventListener).not.toHaveBeenCalled();
+    } finally {
+      Platform.OS = originalOS;
+    }
+  });
+});
+
 describe('지금 해 보기', () => {
   it('suggests up to two symptoms for the time of day, with their acupoint names and minutes', async () => {
     jest.useFakeTimers().setSystemTime(at(7));
@@ -274,8 +324,27 @@ describe('지금 해 보기', () => {
     jest.useFakeTimers().setSystemTime(at(7));
     mocked.getSymptomRepeat.mockImplementation(async (_db, symptomId: string) => (symptomId === 'fatigue' ? 3 : 1));
     await render(<TodayScreen />);
+    // The repeat is already loaded by the time 시작 is tappable, from the focus effect
+    // itself rather than a second read fired by the tap.
+    await waitFor(() => expect(mocked.getSymptomRepeat).toHaveBeenCalledWith({}, 'fatigue'));
     await fireEvent.press(screen.getByRole('button', { name: '기운이 없을 때 시작' }));
-    await waitFor(() => expect(router.push).toHaveBeenCalledWith('/guide/fatigue?rounds=3'));
+    expect(router.push).toHaveBeenCalledWith('/guide/fatigue?rounds=3');
+  });
+
+  it('shows a suggestion repeat count in its summary line', async () => {
+    jest.useFakeTimers().setSystemTime(at(7));
+    mocked.getSymptomRepeat.mockImplementation(async (_db, symptomId: string) => (symptomId === 'fatigue' ? 2 : 1));
+    await render(<TodayScreen />);
+    expect(await screen.findByText('3곳 · 2회 · 약 8분')).toBeTruthy();
+  });
+
+  it('does not double-push when 시작 is tapped twice before navigation lands', async () => {
+    jest.useFakeTimers().setSystemTime(at(7));
+    await render(<TodayScreen />);
+    const button = screen.getByRole('button', { name: '기운이 없을 때 시작' });
+    await fireEvent.press(button);
+    await fireEvent.press(button);
+    expect(router.push).toHaveBeenCalledTimes(1);
   });
 
   it('hides the suggestion block while searching', async () => {
