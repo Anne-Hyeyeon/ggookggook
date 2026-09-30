@@ -35,6 +35,44 @@
           "resizeMode": "contain",
           "backgroundColor": "#F8F8F7"
         }
+      ],
+      [
+        "expo-widgets",
+        {
+          "bundleIdentifier": "kr.ggookggook.app.ExpoWidgetsTarget",
+          "groupIdentifier": "group.kr.ggookggook.app",
+          "widgets": [
+            {
+              "name": "GgookWidget",
+              "displayName": "꾹꾹",
+              "description": "최근 루틴과 지금 해 보기를 바로 열어요.",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "GgookWidget",
+              "label": "꾹꾹",
+              "description": "최근 루틴과 지금 해 보기를 바로 열어요.",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
       ]
     ],
     "experiments": {
