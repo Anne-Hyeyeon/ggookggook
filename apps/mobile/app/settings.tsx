@@ -1,4 +1,5 @@
 import {
+  APPEARANCE_VALUES,
   DEFAULT_REMINDER_HOUR,
   DEFAULT_REMINDER_MINUTE,
   DEFAULT_REMINDER_ROUTINE,
@@ -7,6 +8,7 @@ import {
   REMINDER_MINUTE_STEP,
   REST_SECONDS_MAX,
   REST_SECONDS_MIN,
+  type Appearance,
   type Reminder,
   type UserRoutine,
 } from '@ggookggook/shared';
@@ -22,11 +24,19 @@ import { DISCLAIMER_NOTICES } from '@/disclaimers';
 import { cancelReminder, ensurePermission, isReminderSupported, scheduleDailyReminder } from '@/notifications/reminder';
 import { isUserRoutineUsable, type RoutineRef } from '@/routines';
 import { useSettings } from '@/state/settings';
-import { colors, fonts, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { fonts, space } from '@/theme';
+import { useThemedStyles } from '@/theme/useThemedStyles';
 import { BackLink } from '@/ui/BackLink';
 import { Rule } from '@/ui/Rule';
 import { Toggle } from '@/ui/Toggle';
 import { Txt } from '@/ui/Txt';
+
+const APPEARANCE_LABEL: Record<Appearance, string> = {
+  system: '시스템에 맞춤',
+  light: '밝게',
+  dark: '어둡게',
+};
 
 const DEFAULT_REMINDER: Reminder = {
   enabled: false,
@@ -72,6 +82,7 @@ async function resolveScheduledReminderTitle(db: SqlDatabase, routine: RoutineRe
 }
 
 export default function SettingsScreen() {
+  const styles = useThemedStyles(makeStyles);
   const db = useDb();
   const { settings, update } = useSettings();
   const [noticesOpen, setNoticesOpen] = useState(false);
@@ -228,6 +239,20 @@ export default function SettingsScreen() {
 
         <View>
           <Rule />
+          <View style={styles.appearanceRow}>
+            <Txt variant="body">화면 모드</Txt>
+            <View style={styles.appearanceChips}>
+              {APPEARANCE_VALUES.map((value) => (
+                <AppearanceChip
+                  key={value}
+                  label={APPEARANCE_LABEL[value]}
+                  selected={settings.appearance === value}
+                  onPress={() => apply({ appearance: value })}
+                />
+              ))}
+            </View>
+          </View>
+          <Rule />
           <Toggle
             label="리듬 진동"
             value={settings.rhythmHaptics}
@@ -377,6 +402,7 @@ interface StepperRowProps {
 }
 
 function StepperRow({ label, value, min, max, onDecrement, onIncrement }: StepperRowProps) {
+  const styles = useThemedStyles(makeStyles);
   const atMin = value <= min;
   const atMax = value >= max;
   return (
@@ -423,6 +449,7 @@ interface WrapStepperRowProps {
 // Like StepperRow, but for a value that wraps around a full cycle (a clock's hour or minute)
 // instead of clamping at a min/max, so neither button is ever disabled.
 function WrapStepperRow({ label, valueLabel, decrementLabel, incrementLabel, onDecrement, onIncrement }: WrapStepperRowProps) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.row}>
       <Txt variant="body">{label}</Txt>
@@ -452,6 +479,7 @@ function WrapStepperRow({ label, valueLabel, decrementLabel, incrementLabel, onD
 }
 
 function ReminderRoutineOption({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable
       accessibilityRole="button"
@@ -467,28 +495,58 @@ function ReminderRoutineOption({ label, selected, onPress }: { label: string; se
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  body: { padding: space(5), gap: space(4), paddingBottom: space(10) },
-  error: { color: colors.accent },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: space(4), gap: space(3) },
-  sectionLabel: { paddingTop: space(3) },
-  notices: { gap: space(3), paddingBottom: space(3) },
-  notice: { paddingLeft: space(1) },
-  stepper: { flexDirection: 'row', alignItems: 'center', gap: space(3) },
-  stepButton: {
-    width: space(8),
-    height: space(8),
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepButtonDim: { opacity: 0.3 },
-  stepSymbol: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
-  stepValue: { minWidth: 34, textAlign: 'center' },
-  timeValue: { minWidth: 64, textAlign: 'center' },
-  routineOption: { paddingVertical: space(3) },
-  routineOptionSelected: { fontFamily: fonts.semibold, color: colors.accent },
-});
+function AppearanceChip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={[styles.appearanceChip, selected && styles.appearanceChipSelected]}
+    >
+      <Txt style={[styles.appearanceChipLabel, selected && styles.appearanceChipLabelSelected]}>{label}</Txt>
+    </Pressable>
+  );
+}
+
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+    body: { padding: space(5), gap: space(4), paddingBottom: space(10) },
+    error: { color: colors.accent },
+    row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: space(4), gap: space(3) },
+    sectionLabel: { paddingTop: space(3) },
+    notices: { gap: space(3), paddingBottom: space(3) },
+    notice: { paddingLeft: space(1) },
+    stepper: { flexDirection: 'row', alignItems: 'center', gap: space(3) },
+    stepButton: {
+      width: space(8),
+      height: space(8),
+      borderRadius: 4,
+      borderWidth: 1,
+      borderColor: colors.ink,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    stepButtonDim: { opacity: 0.3 },
+    stepSymbol: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
+    stepValue: { minWidth: 34, textAlign: 'center' },
+    timeValue: { minWidth: 64, textAlign: 'center' },
+    routineOption: { paddingVertical: space(3) },
+    routineOptionSelected: { fontFamily: fonts.semibold, color: colors.accent },
+    appearanceRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: space(4), gap: space(3) },
+    appearanceChips: { flexDirection: 'row', gap: space(2) },
+    appearanceChip: {
+      minHeight: 36,
+      borderWidth: 1,
+      borderColor: colors.rule,
+      borderRadius: 2,
+      paddingHorizontal: space(3),
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    appearanceChipSelected: { backgroundColor: colors.ink, borderColor: colors.ink },
+    appearanceChipLabel: { fontFamily: fonts.semibold, fontSize: 12.5, color: colors.ink },
+    appearanceChipLabelSelected: { color: colors.bg },
+  });

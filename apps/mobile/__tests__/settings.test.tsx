@@ -71,6 +71,16 @@ it('goes back', async () => {
   expect(router.back).toHaveBeenCalled();
 });
 
+it('shows the appearance row with 시스템에 맞춤 selected by default, and applies a pick', async () => {
+  await render(<SettingsScreen />);
+  expect(screen.getByRole('button', { name: '시스템에 맞춤' }).props.accessibilityState.selected).toBe(true);
+  expect(screen.getByRole('button', { name: '밝게' }).props.accessibilityState.selected).toBe(false);
+  expect(screen.getByRole('button', { name: '어둡게' }).props.accessibilityState.selected).toBe(false);
+
+  await fireEvent.press(screen.getByRole('button', { name: '어둡게' }));
+  expect(update).toHaveBeenCalledWith({}, { appearance: 'dark' });
+});
+
 it('toggles rhythm haptics', async () => {
   await render(<SettingsScreen />);
   expect(screen.getByRole('switch', { name: '리듬 진동' }).props.activeThumbColor).toBeUndefined();
