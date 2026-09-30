@@ -1,6 +1,6 @@
 import type { SessionLog, SessionRoutineRef } from '@ggookggook/shared';
 import type { RoutineStats } from '@ggookggook/store';
-import { localDayKey } from '@/format';
+import { localDayKey, localMidnight } from '@/format';
 
 export interface WeekTotals {
   count: number;
@@ -21,14 +21,12 @@ export interface TopRoutine {
   betterCount: number;
 }
 
-const DAY_MS = 86_400_000;
-
-// Fixed Monday-first header for the 4-week calendar grid (see `calendarDays`): unlike a
-// rolling column order, a real calendar always reads 월..일 left to right.
+// Fixed Monday-first header for the 4-week calendar grid: unlike a rolling column order, a real calendar always reads 월..일.
 export const CALENDAR_WEEKDAYS: readonly string[] = ['월', '화', '수', '목', '금', '토', '일'];
 
-function localMidnight(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+// Date constructor field overflow, not a fixed 24h offset, so a step across a DST transition still lands on local midnight.
+function addDays(date: Date, days: number): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
 }
 
 // Monday-indexed weekday (0=월 ... 6=일), unlike Date#getDay's Sunday-indexed 0-6.
@@ -38,24 +36,18 @@ function mondayIndex(date: Date): number {
 
 // Monday 00:00 local of the week containing `now`.
 export function startOfWeek(now: Date): Date {
-  const midnight = localMidnight(now);
-  return new Date(midnight.getTime() - mondayIndex(midnight) * DAY_MS);
+  return addDays(localMidnight(now), -mondayIndex(localMidnight(now)));
 }
 
-// The earliest timestamp the records screen needs to fetch: covers both the 28-day
-// calendar and (since a week is 7 days) last week's totals, in a single query.
+// The calendar grid's first row; shared by the calendar and 자주 한 루틴's stats query, so the two never disagree on "recent".
 export function recordsWindowStart(now: Date): Date {
-  return new Date(localMidnight(now).getTime() - 27 * DAY_MS);
+  return addDays(startOfWeek(now), -21);
 }
 
-// The 4-week dot calendar: 4 full Monday..Sunday rows, oldest first, the last row being
-// the week containing `now` ("이번 주", matching the summary line above it). A day after
-// `now`'s local day (the remainder of the current week, which hasn't happened yet) is
-// `null`, not a zero-count day: the caller renders it as an empty cell with no dot and no
-// accessibility label, rather than claiming "0 sessions" for a day that hasn't occurred.
+// 4 full Monday..Sunday rows, oldest first, ending in the week containing `now`; a day after `now` is `null`, not a zero-count day.
 export function calendarDays(sessions: SessionLog[], now: Date): (CalendarDay | null)[] {
   const today = localMidnight(now);
-  const gridStart = new Date(startOfWeek(now).getTime() - 21 * DAY_MS);
+  const gridStart = recordsWindowStart(now);
   const byDay = new Map<string, { count: number; hasBetter: boolean }>();
   for (const session of sessions) {
     const timestamp = session.completedAt ?? session.startedAt;
@@ -67,7 +59,7 @@ export function calendarDays(sessions: SessionLog[], now: Date): (CalendarDay | 
   }
   const days: (CalendarDay | null)[] = [];
   for (let i = 0; i < 28; i++) {
-    const date = new Date(gridStart.getTime() + i * DAY_MS);
+    const date = addDays(gridStart, i);
     if (date.getTime() > today.getTime()) {
       days.push(null);
       continue;
@@ -78,8 +70,7 @@ export function calendarDays(sessions: SessionLog[], now: Date): (CalendarDay | 
   return days;
 }
 
-// Half-open [from, toExclusive): callers pick `toExclusive` so a boundary instant (the
-// Monday shared between "지난주" and "이번 주") is never double-counted.
+// Half-open [from, toExclusive): the boundary Monday shared between "지난주" and "이번 주" is never double-counted.
 function weekTotals(sessions: SessionLog[], from: Date, toExclusive: Date): WeekTotals {
   let count = 0;
   let totalSeconds = 0;
@@ -93,23 +84,22 @@ function weekTotals(sessions: SessionLog[], from: Date, toExclusive: Date): Week
   return { count, totalSeconds };
 }
 
-// "이번 주" = Monday 00:00 local of the current week through `now` (inclusive of the
-// instant `now` itself); "지난주" = the previous Monday-Sunday week in full.
+// "이번 주" = Monday 00:00 local through `now` itself; "지난주" = the previous Monday-Sunday week in full.
 export function thisAndLastWeek(sessions: SessionLog[], now: Date): { thisWeek: WeekTotals; lastWeek: WeekTotals } {
   const thisWeekStart = startOfWeek(now);
-  const lastWeekStart = new Date(thisWeekStart.getTime() - 7 * DAY_MS);
+  const lastWeekStart = addDays(thisWeekStart, -7);
   return {
     thisWeek: weekTotals(sessions, thisWeekStart, new Date(now.getTime() + 1)),
     lastWeek: weekTotals(sessions, lastWeekStart, thisWeekStart),
   };
 }
 
-function refKey(ref: SessionRoutineRef): string {
+// Shared with the records screen (for a stable list key), so the two never drift apart.
+export function refKey(ref: SessionRoutineRef): string {
   return ref.kind === 'symptom' ? `symptom:${ref.symptomId}` : `user:${ref.routineId}`;
 }
 
-// The routine ref's own "나아졌어요" count (never a ratio/percentage): sorted by
-// completed count descending, tie-broken by ref for a deterministic order.
+// The ref's own "나아졌어요" count (never a ratio): sorted by completed count descending, tie-broken by ref for a stable order.
 export function topRoutines(stats: RoutineStats[], limit: number): TopRoutine[] {
   return [...stats]
     .sort((a, b) => b.completedCount - a.completedCount || refKey(a.ref).localeCompare(refKey(b.ref)))

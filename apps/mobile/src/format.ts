@@ -4,10 +4,12 @@ export function formatDateLine(date: Date): string {
   return `${date.getMonth() + 1}월 ${date.getDate()}일 ${WEEKDAYS[date.getDay()]}요일`;
 }
 
-const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+export function localMidnight(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
 
 export function formatRelativeDay(iso: string, now: Date): string {
-  const days = Math.round((startOfDay(now) - startOfDay(new Date(iso))) / 86_400_000);
+  const days = Math.round((localMidnight(now).getTime() - localMidnight(new Date(iso)).getTime()) / 86_400_000);
   if (days <= 0) return '오늘';
   if (days === 1) return '어제';
   return `${days}일 전`;
@@ -22,7 +24,7 @@ export function formatDuration(seconds: number): string {
 
 export function formatDayHeader(iso: string, now: Date): string {
   const date = new Date(iso);
-  const days = Math.round((startOfDay(now) - startOfDay(date)) / 86_400_000);
+  const days = Math.round((localMidnight(now).getTime() - localMidnight(date).getTime()) / 86_400_000);
   if (days <= 0) return '오늘';
   if (days === 1) return '어제';
   return formatDateLine(date);

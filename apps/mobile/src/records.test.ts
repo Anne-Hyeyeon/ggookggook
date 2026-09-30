@@ -34,8 +34,12 @@ describe('startOfWeek', () => {
 });
 
 describe('recordsWindowStart', () => {
-  it('returns local midnight 27 days before now, so the window covers 28 calendar days total', () => {
-    expect(recordsWindowStart(THURSDAY)).toEqual(new Date(2026, 8, 4));
+  it('returns the calendar grid\'s first row (21 days before the start of this week)', () => {
+    expect(recordsWindowStart(THURSDAY)).toEqual(new Date(2026, 8, 7));
+  });
+
+  it('matches calendarDays\'s first day exactly, so 자주 한 루틴 and the calendar share one window', () => {
+    expect(recordsWindowStart(THURSDAY)).toEqual(calendarDays([], THURSDAY)[0]!.date);
   });
 });
 
@@ -180,5 +184,26 @@ describe('recordMinutes', () => {
 
   it('shows 0 for a zero duration', () => {
     expect(recordMinutes(0)).toBe(0);
+  });
+});
+
+describe('calendar day stepping across a DST transition', () => {
+  const originalTZ = process.env.TZ;
+
+  afterEach(() => {
+    process.env.TZ = originalTZ;
+  });
+
+  it('keeps every grid day at local midnight, not shifted by a fixed 24h step', () => {
+    process.env.TZ = 'America/New_York';
+    // The grid for this `now` spans Feb 23 - Mar 22 2026, which crosses the US spring-forward
+    // transition (Mar 8 2026, clocks jump 2am -> 3am, a 23-hour day). Stepping by a fixed
+    // 24h offset instead of by calendar day would land the days after it at 01:00, not 00:00.
+    const now = new Date(2026, 2, 20, 12, 0);
+    const days = calendarDays([], now);
+    for (const day of days) {
+      if (day === null) continue;
+      expect(day.date.getHours()).toBe(0);
+    }
   });
 });
