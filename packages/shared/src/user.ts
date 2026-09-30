@@ -44,12 +44,17 @@ export interface Reminder {
   routine: ReminderRoutineRef;
 }
 
+export type Appearance = 'system' | 'light' | 'dark';
+
+export const APPEARANCE_VALUES: readonly Appearance[] = ['system', 'light', 'dark'];
+
 export interface Settings {
   rhythmHaptics: boolean;
   pressSeconds: number;
   restSeconds: number;
   pregnancyMode: boolean;
   getReadyEnabled: boolean;
+  appearance: Appearance;
   reminder: Reminder | null;
 }
 
@@ -59,6 +64,7 @@ export const DEFAULT_SETTINGS: Settings = {
   restSeconds: 2,
   pregnancyMode: false,
   getReadyEnabled: true,
+  appearance: 'system',
   reminder: null,
 };
 

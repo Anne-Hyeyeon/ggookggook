@@ -49,6 +49,17 @@ describe('settings', () => {
     expect(await loadSettings(db)).toEqual(DEFAULT_SETTINGS);
   });
 
+  it('round-trips a saved appearance', async () => {
+    const settings = { ...DEFAULT_SETTINGS, appearance: 'dark' as const };
+    await saveSettings(db, settings, new Date('2026-09-28T00:00:00Z'));
+    expect(await loadSettings(db)).toEqual(settings);
+  });
+
+  it('falls back to the default appearance when the stored value is not a known option', async () => {
+    await setValue(db, 'settings', JSON.stringify({ ...DEFAULT_SETTINGS, appearance: 'neon' }), new Date());
+    expect(await loadSettings(db)).toEqual(DEFAULT_SETTINGS);
+  });
+
   it('clamps an out-of-range pressSeconds and restSeconds to the nearest bound', async () => {
     await setValue(db, 'settings', JSON.stringify({ ...DEFAULT_SETTINGS, pressSeconds: 20, restSeconds: 0 }), new Date());
     expect(await loadSettings(db)).toEqual({ ...DEFAULT_SETTINGS, pressSeconds: 10, restSeconds: 1 });

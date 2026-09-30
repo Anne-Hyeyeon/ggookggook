@@ -1,4 +1,5 @@
 import {
+  APPEARANCE_VALUES,
   DEFAULT_REMINDER_ROUTINE,
   DEFAULT_SETTINGS,
   PRESS_SECONDS_MAX,
@@ -10,6 +11,7 @@ import {
   REMINDER_MINUTE_STEP,
   REST_SECONDS_MAX,
   REST_SECONDS_MIN,
+  type Appearance,
   type Reminder,
   type ReminderRoutineRef,
   type Settings,
@@ -32,6 +34,10 @@ function parse(raw: string | null): Record<string, unknown> {
 
 function clampInt(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, Math.round(value)));
+}
+
+function clampAppearance(value: unknown): Appearance {
+  return APPEARANCE_VALUES.includes(value as Appearance) ? (value as Appearance) : DEFAULT_SETTINGS.appearance;
 }
 
 function clampMinute(value: number): number {
@@ -75,6 +81,7 @@ export async function loadSettings(db: SqlDatabase): Promise<Settings> {
   }
   settings.pressSeconds = clampInt(settings.pressSeconds, PRESS_SECONDS_MIN, PRESS_SECONDS_MAX);
   settings.restSeconds = clampInt(settings.restSeconds, REST_SECONDS_MIN, REST_SECONDS_MAX);
+  settings.appearance = clampAppearance(settings.appearance);
   settings.reminder = sanitizeReminder(stored.reminder);
   return settings;
 }
