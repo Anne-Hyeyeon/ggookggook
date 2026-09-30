@@ -10,7 +10,9 @@ import { ROUTINE_DISCLAIMER } from '@/disclaimers';
 import { routineSummary, sideLabel, visibleSteps } from '@/routine';
 import { useFavorites } from '@/state/favorites';
 import { useSettings } from '@/state/settings';
-import { colors, fonts, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { fonts, space } from '@/theme';
+import { useThemedStyles } from '@/theme/useThemedStyles';
 import { BackLink } from '@/ui/BackLink';
 import { Button } from '@/ui/Button';
 import { PlateView } from '@/ui/PlateView';
@@ -18,6 +20,7 @@ import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
 
 export default function AcupointScreen() {
+  const styles = useThemedStyles(makeStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const db = useDb();
   const settings = useSettings((state) => state.settings);
@@ -273,53 +276,60 @@ export default function AcupointScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  wrap: { flex: 1 },
-  body: { padding: space(5), gap: space(5), paddingBottom: space(8) },
-  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  favoriteOn: { color: colors.accent },
-  error: { color: colors.accent },
-  head: { gap: space(1.5) },
-  nameRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: space(1.5) },
-  pointName: { fontSize: 27 },
-  sectionTitle: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink, marginTop: space(2), marginBottom: space(1) },
-  caution: { color: colors.accent },
-  symptomRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: space(11), paddingVertical: space(2.5) },
-  symptomName: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
-  symptomMinutes: { color: colors.accent },
-  footer: { padding: space(5), paddingTop: space(2) },
-  sheetOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: space(5),
-    backgroundColor: colors.scrim,
-  },
-  sheetBox: {
-    width: '100%',
-    maxHeight: '80%',
-    backgroundColor: colors.card,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.rule,
-    borderRadius: 2,
-    padding: space(5),
-    gap: space(3),
-  },
-  sheetTitle: { fontFamily: fonts.semibold },
-  sheetList: { flexGrow: 0 },
-  sheetEmpty: { paddingVertical: space(4), textAlign: 'center' },
-  routineRow: { minHeight: space(11), paddingVertical: space(2.5), gap: space(1) },
-  routineRowDim: { opacity: 0.5 },
-  routineRowHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  routineName: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
-  limit: { color: colors.accent },
-  added: { color: colors.accent },
-  newRow: { minHeight: space(11), paddingVertical: space(2.5), alignItems: 'center' },
-  newRowLabel: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
-  sheetClose: { minHeight: space(11), alignItems: 'center', justifyContent: 'center' },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+    wrap: { flex: 1 },
+    body: { padding: space(5), gap: space(5), paddingBottom: space(8) },
+    topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    favoriteOn: { color: colors.accent },
+    error: { color: colors.accent },
+    head: { gap: space(1.5) },
+    nameRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: space(1.5) },
+    pointName: { fontSize: 27 },
+    sectionTitle: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink, marginTop: space(2), marginBottom: space(1) },
+    caution: { color: colors.accent },
+    symptomRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      minHeight: space(11),
+      paddingVertical: space(2.5),
+    },
+    symptomName: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
+    symptomMinutes: { color: colors.accent },
+    footer: { padding: space(5), paddingTop: space(2) },
+    sheetOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: space(5),
+      backgroundColor: colors.scrim,
+    },
+    sheetBox: {
+      width: '100%',
+      maxHeight: '80%',
+      backgroundColor: colors.card,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.rule,
+      borderRadius: 2,
+      padding: space(5),
+      gap: space(3),
+    },
+    sheetTitle: { fontFamily: fonts.semibold },
+    sheetList: { flexGrow: 0 },
+    sheetEmpty: { paddingVertical: space(4), textAlign: 'center' },
+    routineRow: { minHeight: space(11), paddingVertical: space(2.5), gap: space(1) },
+    routineRowDim: { opacity: 0.5 },
+    routineRowHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    routineName: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
+    limit: { color: colors.accent },
+    added: { color: colors.accent },
+    newRow: { minHeight: space(11), paddingVertical: space(2.5), alignItems: 'center' },
+    newRowLabel: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
+    sheetClose: { minHeight: space(11), alignItems: 'center', justifyContent: 'center' },
+  });

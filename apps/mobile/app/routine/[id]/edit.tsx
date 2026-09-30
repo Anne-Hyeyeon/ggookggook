@@ -8,11 +8,14 @@ import { useDb } from '@/db/DbProvider';
 import { RoutineEditorView } from '@/routineEditor/RoutineEditorView';
 import { isUserRoutineUsable } from '@/routines';
 import { useRoutineDraft } from '@/state/routineDraft';
-import { colors, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { space } from '@/theme';
+import { useThemedStyles } from '@/theme/useThemedStyles';
 import { BackLink } from '@/ui/BackLink';
 import { Txt } from '@/ui/Txt';
 
 export default function EditRoutineScreen() {
+  const styles = useThemedStyles(makeStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const db = useDb();
   const startEdit = useRoutineDraft((state) => state.startEdit);
@@ -54,7 +57,8 @@ export default function EditRoutineScreen() {
   return <RoutineEditorView />;
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  body: { padding: space(5), gap: space(3) },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+    body: { padding: space(5), gap: space(3) },
+  });

@@ -1,6 +1,5 @@
 import type { Acupoint, SessionFeedback, SessionLog, UserRoutine } from '@ggookggook/shared';
 import { getUserRoutine, listCompletedSessions, listUserRoutines } from '@ggookggook/store';
-import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, SectionList, StyleSheet, View } from 'react-native';
@@ -12,7 +11,10 @@ import { firstSentence, routineSummary, summaryLine, visibleStepsFor } from '@/r
 import { DELETED_ROUTINE_LABEL, isUserRoutineUsable } from '@/routines';
 import { useFavorites } from '@/state/favorites';
 import { useSettings } from '@/state/settings';
-import { colors, fonts, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { fonts, space } from '@/theme';
+import { useThemedStyles } from '@/theme/useThemedStyles';
+import { CatImage } from '@/ui/CatImage';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
 
@@ -94,6 +96,7 @@ function groupHistoryByDay(rows: HistoryRow[], now: Date): Section[] {
 }
 
 export default function MineScreen() {
+  const styles = useThemedStyles(makeStyles);
   const db = useDb();
   const [history, setHistory] = useState<History>(EMPTY_HISTORY);
   const [myRoutines, setMyRoutines] = useState<UserRoutine[]>([]);
@@ -206,6 +209,7 @@ function RowView({
   cat: number | null;
   settings: ReturnType<typeof useSettings.getState>['settings'];
 }) {
+  const styles = useThemedStyles(makeStyles);
   if (row.kind === 'favorite') return <FavoriteRowView acupoint={row.acupoint} />;
   if (row.kind === 'routine') return <RoutineRowView routine={row.routine} settings={settings} />;
   if (row.kind === 'newRoutine') return <NewRoutineRowView />;
@@ -213,7 +217,7 @@ function RowView({
   if (row.kind === 'emptyLine') return <Txt variant="sub" style={styles.emptyLine}>{row.text}</Txt>;
   return (
     <View style={styles.empty}>
-      {cat !== null && <Image source={cat} style={styles.catImage} contentFit="contain" accessibilityIgnoresInvertColors />}
+      {cat !== null && <CatImage source={cat} style={styles.catImage} />}
       <Txt variant="heading" style={styles.center}>{HISTORY_EMPTY_TEXT}</Txt>
       <Txt variant="sub" style={styles.center}>오늘 탭에서 불편한 곳을 골라 보세요.</Txt>
     </View>
@@ -221,6 +225,7 @@ function RowView({
 }
 
 function FavoriteRowView({ acupoint }: { acupoint: Acupoint }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable
       accessibilityRole="button"
@@ -238,6 +243,7 @@ function FavoriteRowView({ acupoint }: { acupoint: Acupoint }) {
 }
 
 function RoutineRowView({ routine, settings }: { routine: UserRoutine; settings: ReturnType<typeof useSettings.getState>['settings'] }) {
+  const styles = useThemedStyles(makeStyles);
   const { count, minutes } = routineSummary(visibleStepsFor(routine.steps, settings), routine.repeat);
   const summary = summaryLine(count, minutes, routine.repeat);
   return (
@@ -254,6 +260,7 @@ function RoutineRowView({ routine, settings }: { routine: UserRoutine; settings:
 }
 
 function NewRoutineRowView() {
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable
       accessibilityRole="button"
@@ -267,6 +274,7 @@ function NewRoutineRowView() {
 }
 
 function HistoryRowView({ row }: { row: HistoryRow }) {
+  const styles = useThemedStyles(makeStyles);
   const { session, title, href } = row;
   const timestamp = session.completedAt ?? session.startedAt;
   const time = formatTimeOfDay(timestamp);
@@ -297,23 +305,24 @@ function HistoryRowView({ row }: { row: HistoryRow }) {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  content: { paddingHorizontal: space(5), paddingBottom: space(10), flexGrow: 1 },
-  title: { paddingTop: space(4), paddingBottom: space(2) },
-  sectionLabel: { paddingTop: space(3), paddingBottom: space(1) },
-  row: { gap: space(1), minHeight: space(11), paddingVertical: space(3) },
-  rowHead: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: space(1.5) },
-  pointName: { fontSize: 19, lineHeight: 25 },
-  rowName: { fontFamily: fonts.semibold, fontSize: 15.5, color: colors.ink },
-  newRow: { minHeight: space(11), paddingVertical: space(3), alignItems: 'center', justifyContent: 'center' },
-  newRowLabel: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
-  emptyLine: { textAlign: 'center', paddingVertical: space(4) },
-  historyRow: { flexDirection: 'row', alignItems: 'center', minHeight: space(12), paddingVertical: space(3), gap: space(3) },
-  rowText: { flex: 1, gap: 3 },
-  feedbackBetter: { color: colors.accent },
-  feedbackOther: { color: colors.sub },
-  empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: space(8), gap: space(2) },
-  catImage: { width: 160, height: 160 },
-  center: { textAlign: 'center' },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+    content: { paddingHorizontal: space(5), paddingBottom: space(10), flexGrow: 1 },
+    title: { paddingTop: space(4), paddingBottom: space(2) },
+    sectionLabel: { paddingTop: space(3), paddingBottom: space(1) },
+    row: { gap: space(1), minHeight: space(11), paddingVertical: space(3) },
+    rowHead: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: space(1.5) },
+    pointName: { fontSize: 19, lineHeight: 25 },
+    rowName: { fontFamily: fonts.semibold, fontSize: 15.5, color: colors.ink },
+    newRow: { minHeight: space(11), paddingVertical: space(3), alignItems: 'center', justifyContent: 'center' },
+    newRowLabel: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
+    emptyLine: { textAlign: 'center', paddingVertical: space(4) },
+    historyRow: { flexDirection: 'row', alignItems: 'center', minHeight: space(12), paddingVertical: space(3), gap: space(3) },
+    rowText: { flex: 1, gap: 3 },
+    feedbackBetter: { color: colors.accent },
+    feedbackOther: { color: colors.sub },
+    empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: space(8), gap: space(2) },
+    catImage: { width: 160, height: 160 },
+    center: { textAlign: 'center' },
+  });

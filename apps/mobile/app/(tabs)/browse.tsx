@@ -6,7 +6,10 @@ import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MAX_REGION_HIT_SIZE, regionHitSizes } from '@/browseLayout';
 import { content } from '@/content';
-import { colors, fonts, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { fonts, space } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
+import { useThemedStyles } from '@/theme/useThemedStyles';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
 
@@ -22,12 +25,21 @@ function regionAcupointCount(mapId: BodyMapId, region: Region): number {
 }
 
 function BodyMapImage({ map, width, height }: { map: BodyMap; width: number; height: number }) {
+  const { scheme, colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const image = content.image(map.id);
   const hitSizes = regionHitSizes(map.regions, width, height);
   return (
     <View style={[styles.mapFrame, { width, height }]}>
       {image !== null && (
-        <Image source={image} style={StyleSheet.absoluteFill} contentFit="contain" accessibilityIgnoresInvertColors />
+        <Image
+          source={image}
+          style={StyleSheet.absoluteFill}
+          contentFit="contain"
+          accessibilityIgnoresInvertColors
+          // The body map is ink line art on transparency, same treatment as a plate's image.
+          tintColor={scheme === 'dark' ? colors.line : undefined}
+        />
       )}
       {map.regions.map((region) => {
         if (region.x === null || region.y === null) return null;
@@ -52,6 +64,7 @@ function BodyMapImage({ map, width, height }: { map: BodyMap; width: number; hei
 }
 
 function RegionRow({ mapId, region }: { mapId: BodyMapId; region: Region }) {
+  const styles = useThemedStyles(makeStyles);
   const count = regionAcupointCount(mapId, region);
   return (
     <Pressable
@@ -65,6 +78,7 @@ function RegionRow({ mapId, region }: { mapId: BodyMapId; region: Region }) {
 }
 
 export default function BrowseScreen() {
+  const styles = useThemedStyles(makeStyles);
   const [side, setSide] = useState<'front' | 'back'>('front');
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const mapId: BodyMapId = side === 'front' ? 'body-front' : 'body-back';
@@ -120,27 +134,28 @@ export default function BrowseScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  body: { padding: space(5), gap: space(4), paddingBottom: space(10) },
-  tabs: { flexDirection: 'row', gap: space(5) },
-  tabItem: { paddingBottom: space(1.5) },
-  tabLabel: { fontFamily: fonts.regular, fontSize: 14, color: colors.faint },
-  tabActive: {
-    fontFamily: fonts.bold,
-    color: colors.ink,
-    borderBottomWidth: 1.5,
-    borderBottomColor: colors.ink,
-    paddingBottom: space(0.5),
-  },
-  mapFrame: {
-    alignSelf: 'center',
-    backgroundColor: colors.card,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.rule,
-  },
-  hitArea: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-  dot: { width: DOT_SIZE, height: DOT_SIZE, borderRadius: DOT_SIZE / 2, backgroundColor: colors.accent },
-  row: { paddingVertical: space(3.5), minHeight: space(12), justifyContent: 'center' },
-  rowName: { fontFamily: fonts.semibold, fontSize: 15.5, color: colors.ink },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+    body: { padding: space(5), gap: space(4), paddingBottom: space(10) },
+    tabs: { flexDirection: 'row', gap: space(5) },
+    tabItem: { paddingBottom: space(1.5) },
+    tabLabel: { fontFamily: fonts.regular, fontSize: 14, color: colors.faint },
+    tabActive: {
+      fontFamily: fonts.bold,
+      color: colors.ink,
+      borderBottomWidth: 1.5,
+      borderBottomColor: colors.ink,
+      paddingBottom: space(0.5),
+    },
+    mapFrame: {
+      alignSelf: 'center',
+      backgroundColor: colors.card,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.rule,
+    },
+    hitArea: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
+    dot: { width: DOT_SIZE, height: DOT_SIZE, borderRadius: DOT_SIZE / 2, backgroundColor: colors.accent },
+    row: { paddingVertical: space(3.5), minHeight: space(12), justifyContent: 'center' },
+    rowName: { fontFamily: fonts.semibold, fontSize: 15.5, color: colors.ink },
+  });

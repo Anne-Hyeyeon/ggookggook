@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,13 +6,17 @@ import { useDb } from '@/db/DbProvider';
 import { DISCLAIMER_NOTICES } from '@/disclaimers';
 import { useOnboarding } from '@/state/onboarding';
 import { useSettings } from '@/state/settings';
-import { colors, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { space } from '@/theme';
+import { useThemedStyles } from '@/theme/useThemedStyles';
 import { Button } from '@/ui/Button';
+import { CatImage } from '@/ui/CatImage';
 import { Rule } from '@/ui/Rule';
 import { Toggle } from '@/ui/Toggle';
 import { Txt } from '@/ui/Txt';
 
 export default function WelcomeScreen() {
+  const styles = useThemedStyles(makeStyles);
   const db = useDb();
   const { settings, update } = useSettings();
   const accept = useOnboarding((state) => state.accept);
@@ -44,7 +47,7 @@ export default function WelcomeScreen() {
     return (
       <SafeAreaView style={styles.screen}>
         <View style={styles.intro}>
-          {cat !== null && <Image source={cat} style={styles.cat} contentFit="contain" accessibilityIgnoresInvertColors />}
+          {cat !== null && <CatImage source={cat} style={styles.cat} />}
           <Txt variant="display">꾹꾹</Txt>
           <Txt variant="body" style={styles.center}>
             불편한 곳을 고르면{'\n'}누를 곳을 순서대로 알려드려요.
@@ -94,16 +97,17 @@ export default function WelcomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  intro: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space(4), padding: space(8) },
-  cat: { width: 220, height: 220 },
-  center: { textAlign: 'center', color: colors.sub },
-  captionCenter: { textAlign: 'center' },
-  body: { padding: space(6), gap: space(6) },
-  list: { gap: 0 },
-  notice: { gap: space(3), paddingTop: 0 },
-  noticeText: { paddingVertical: space(3) },
-  footer: { padding: space(5), gap: space(2) },
-  error: { color: colors.accent, textAlign: 'center' },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+    intro: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space(4), padding: space(8) },
+    cat: { width: 220, height: 220 },
+    center: { textAlign: 'center', color: colors.sub },
+    captionCenter: { textAlign: 'center' },
+    body: { padding: space(6), gap: space(6) },
+    list: { gap: 0 },
+    notice: { gap: space(3), paddingTop: 0 },
+    noticeText: { paddingVertical: space(3) },
+    footer: { padding: space(5), gap: space(2) },
+    error: { color: colors.accent, textAlign: 'center' },
+  });

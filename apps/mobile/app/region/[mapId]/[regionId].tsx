@@ -4,13 +4,16 @@ import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { content } from '@/content';
 import { firstSentence } from '@/routine';
-import { colors, fonts, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { fonts, space } from '@/theme';
+import { useThemedStyles } from '@/theme/useThemedStyles';
 import { BackLink } from '@/ui/BackLink';
 import { PlateView } from '@/ui/PlateView';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
 
 export default function RegionScreen() {
+  const styles = useThemedStyles(makeStyles);
   const { mapId: rawMapId, regionId } = useLocalSearchParams<{ mapId: string; regionId: string }>();
   const { width } = useWindowDimensions();
   const plateSize = Math.min(width - space(10), 280);
@@ -71,12 +74,13 @@ export default function RegionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  body: { padding: space(5), gap: space(5), paddingBottom: space(8) },
-  plateBlock: { gap: space(2) },
-  plateCaption: { fontFamily: fonts.semibold, color: colors.sub },
-  row: { gap: space(1), paddingVertical: space(3.5) },
-  rowHead: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: space(1.5) },
-  pointName: { fontSize: 21, lineHeight: 28 },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+    body: { padding: space(5), gap: space(5), paddingBottom: space(8) },
+    plateBlock: { gap: space(2) },
+    plateCaption: { fontFamily: fonts.semibold, color: colors.sub },
+    row: { gap: space(1), paddingVertical: space(3.5) },
+    rowHead: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: space(1.5) },
+    pointName: { fontSize: 21, lineHeight: 28 },
+  });

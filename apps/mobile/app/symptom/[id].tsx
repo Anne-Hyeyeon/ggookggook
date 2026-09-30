@@ -11,7 +11,9 @@ import { newId } from '@/id';
 import { routineSummary, sideLabel, summaryLine, topic, visibleSteps } from '@/routine';
 import { copySymptomToUserRoutine } from '@/routines';
 import { useSettings } from '@/state/settings';
-import { colors, fonts, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { fonts, space } from '@/theme';
+import { useThemedStyles } from '@/theme/useThemedStyles';
 import { BackLink } from '@/ui/BackLink';
 import { Button } from '@/ui/Button';
 import { RepeatStepper } from '@/ui/RepeatStepper';
@@ -21,6 +23,7 @@ import { Txt } from '@/ui/Txt';
 const nameOf = (id: string) => content.acupoints.get(id)?.name.ko ?? id;
 
 export default function SymptomScreen() {
+  const styles = useThemedStyles(makeStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const db = useDb();
   const settings = useSettings((state) => state.settings);
@@ -197,20 +200,21 @@ export default function SymptomScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  body: { padding: space(5), gap: space(5), paddingBottom: space(8) },
-  head: { gap: space(1.5) },
-  summary: { fontFamily: fonts.semibold, fontSize: 13, color: colors.accent, marginTop: space(1) },
-  step: { flexDirection: 'row', gap: space(3), paddingVertical: space(3.5) },
-  stepNo: { width: space(5), paddingTop: space(2.5) },
-  stepText: { flex: 1, gap: space(1) },
-  stepName: { flexDirection: 'row', alignItems: 'baseline', gap: space(1.5) },
-  pointName: { fontSize: 21, lineHeight: 28 },
-  seconds: { textAlign: 'right', paddingTop: space(2) },
-  caution: { color: colors.accent },
-  doctor: { gap: space(2) },
-  doctorTitle: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink, marginTop: space(2) },
-  error: { color: colors.accent },
-  footer: { padding: space(5), paddingTop: space(2), gap: space(3) },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+    body: { padding: space(5), gap: space(5), paddingBottom: space(8) },
+    head: { gap: space(1.5) },
+    summary: { fontFamily: fonts.semibold, fontSize: 13, color: colors.accent, marginTop: space(1) },
+    step: { flexDirection: 'row', gap: space(3), paddingVertical: space(3.5) },
+    stepNo: { width: space(5), paddingTop: space(2.5) },
+    stepText: { flex: 1, gap: space(1) },
+    stepName: { flexDirection: 'row', alignItems: 'baseline', gap: space(1.5) },
+    pointName: { fontSize: 21, lineHeight: 28 },
+    seconds: { textAlign: 'right', paddingTop: space(2) },
+    caution: { color: colors.accent },
+    doctor: { gap: space(2) },
+    doctorTitle: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink, marginTop: space(2) },
+    error: { color: colors.accent },
+    footer: { padding: space(5), paddingTop: space(2), gap: space(3) },
+  });

@@ -7,12 +7,17 @@ import { content } from '@/content';
 import { firstSentence } from '@/routine';
 import { useFavorites } from '@/state/favorites';
 import { useRoutineDraft } from '@/state/routineDraft';
-import { colors, fonts, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { fonts, space } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
+import { useThemedStyles } from '@/theme/useThemedStyles';
 import { BackLink } from '@/ui/BackLink';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
 
 export default function PickAcupointScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [query, setQuery] = useState('');
   const favoriteIds = useFavorites((state) => state.ids);
   const addAcupoint = useRoutineDraft((state) => state.addAcupoint);
@@ -67,6 +72,7 @@ export default function PickAcupointScreen() {
 }
 
 function AcupointRow({ acupoint, onPress }: { acupoint: Acupoint; onPress: () => void }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View>
       <Rule />
@@ -87,20 +93,21 @@ function AcupointRow({ acupoint, onPress }: { acupoint: Acupoint; onPress: () =>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  body: { padding: space(5), gap: space(4), paddingBottom: space(10) },
-  search: {
-    fontFamily: fonts.regular,
-    fontSize: 14,
-    color: colors.ink,
-    borderBottomWidth: 1.5,
-    borderBottomColor: colors.ink,
-    paddingVertical: space(2),
-  },
-  empty: { paddingVertical: space(4), textAlign: 'center' },
-  sectionLabel: { paddingBottom: space(1) },
-  row: { gap: space(1), paddingVertical: space(3.5), minHeight: space(11) },
-  rowHead: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: space(1.5) },
-  pointName: { fontSize: 21, lineHeight: 28 },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+    body: { padding: space(5), gap: space(4), paddingBottom: space(10) },
+    search: {
+      fontFamily: fonts.regular,
+      fontSize: 14,
+      color: colors.ink,
+      borderBottomWidth: 1.5,
+      borderBottomColor: colors.ink,
+      paddingVertical: space(2),
+    },
+    empty: { paddingVertical: space(4), textAlign: 'center' },
+    sectionLabel: { paddingBottom: space(1) },
+    row: { gap: space(1), paddingVertical: space(3.5), minHeight: space(11) },
+    rowHead: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: space(1.5) },
+    pointName: { fontSize: 21, lineHeight: 28 },
+  });

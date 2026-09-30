@@ -1,6 +1,5 @@
 import type { SessionFeedback, SessionLog, Settings, UserRoutine } from '@ggookggook/shared';
 import { getSession, getUserRoutine, setSessionFeedback } from '@ggookggook/store';
-import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -10,7 +9,10 @@ import { useDb } from '@/db/DbProvider';
 import { formatDuration } from '@/format';
 import { DELETED_ROUTINE_LABEL, isUserRoutineUsable, resolveRoutine, type ResolvedRoutine } from '@/routines';
 import { useSettings } from '@/state/settings';
-import { colors, fonts, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { fonts, space } from '@/theme';
+import { useThemedStyles } from '@/theme/useThemedStyles';
+import { CatImage } from '@/ui/CatImage';
 import { Txt } from '@/ui/Txt';
 
 const OPTIONS: { value: SessionFeedback; label: string }[] = [
@@ -32,6 +34,7 @@ function resolveDoneRoutine(
 }
 
 export default function DoneScreen() {
+  const styles = useThemedStyles(makeStyles);
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
   const db = useDb();
   const settings = useSettings((state) => state.settings);
@@ -88,7 +91,7 @@ export default function DoneScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.body}>
-        {cat !== null && <Image source={cat} style={styles.cat} contentFit="contain" accessibilityIgnoresInvertColors />}
+        {cat !== null && <CatImage source={cat} style={styles.cat} />}
         {resolved && (
           <Txt variant="caption" style={styles.center}>
             {resolved.title}
@@ -146,18 +149,19 @@ export default function DoneScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  body: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: space(6), gap: space(2) },
-  cat: { width: 200, height: 200, marginBottom: space(2) },
-  center: { textAlign: 'center' },
-  error: { color: colors.accent, textAlign: 'center' },
-  question: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink, marginTop: space(6) },
-  options: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space(2), marginTop: space(2) },
-  option: { borderWidth: 1, borderColor: colors.ink, borderRadius: 2, paddingHorizontal: space(3), paddingVertical: space(2.5) },
-  optionSelected: { backgroundColor: colors.ink },
-  optionLabel: { fontFamily: fonts.regular, fontSize: 13, color: colors.ink },
-  optionLabelSelected: { color: colors.bg },
-  home: { alignItems: 'center', padding: space(6) },
-  homeLabel: { textDecorationLine: 'underline' },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+    body: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: space(6), gap: space(2) },
+    cat: { width: 200, height: 200, marginBottom: space(2) },
+    center: { textAlign: 'center' },
+    error: { color: colors.accent, textAlign: 'center' },
+    question: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink, marginTop: space(6) },
+    options: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space(2), marginTop: space(2) },
+    option: { borderWidth: 1, borderColor: colors.ink, borderRadius: 2, paddingHorizontal: space(3), paddingVertical: space(2.5) },
+    optionSelected: { backgroundColor: colors.ink },
+    optionLabel: { fontFamily: fonts.regular, fontSize: 13, color: colors.ink },
+    optionLabelSelected: { color: colors.bg },
+    home: { alignItems: 'center', padding: space(6) },
+    homeLabel: { textDecorationLine: 'underline' },
+  });

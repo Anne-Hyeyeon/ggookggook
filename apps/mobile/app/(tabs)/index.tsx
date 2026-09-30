@@ -16,7 +16,6 @@ import {
   listUserRoutines,
   type SqlDatabase,
 } from '@ggookggook/store';
-import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { AppState, Platform, Pressable, ScrollView, SectionList, StyleSheet, TextInput, View } from 'react-native';
@@ -30,7 +29,11 @@ import { SuggestionRow } from '@/home/SuggestionRow';
 import { routineSummary, visibleSteps } from '@/routine';
 import { isUserRoutineUsable } from '@/routines';
 import { useSettings } from '@/state/settings';
-import { colors, fonts, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { fonts, space } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
+import { useThemedStyles } from '@/theme/useThemedStyles';
+import { CatImage } from '@/ui/CatImage';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
 
@@ -68,6 +71,8 @@ async function resolveRecentRoutine(db: SqlDatabase, session: SessionLog | null)
 }
 
 export default function TodayScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const db = useDb();
   const settings = useSettings((state) => state.settings);
   const [query, setQuery] = useState('');
@@ -218,16 +223,7 @@ export default function TodayScreen() {
         <Txt variant="title" style={styles.title}>
           어디가{'\n'}불편하세요?
         </Txt>
-        {cat !== null && (
-          <Image
-            source={cat}
-            style={styles.titleCat}
-            contentFit="contain"
-            accessibilityIgnoresInvertColors
-            accessibilityElementsHidden
-            importantForAccessibility="no"
-          />
-        )}
+        {cat !== null && <CatImage source={cat} style={styles.titleCat} decorative />}
       </View>
       <TextInput
         value={query}
@@ -340,6 +336,7 @@ interface SymptomRowProps {
 }
 
 const SymptomRow = memo(function SymptomRow({ symptom, settings }: SymptomRowProps) {
+  const styles = useThemedStyles(makeStyles);
   const steps = visibleSteps(symptom, settings);
   const { minutes } = routineSummary(steps);
   const names = steps.map((step) => content.acupoints.get(step.acupointId)?.name.ko ?? '').join(' · ');
@@ -354,63 +351,64 @@ const SymptomRow = memo(function SymptomRow({ symptom, settings }: SymptomRowPro
   );
 });
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  content: { paddingHorizontal: space(5), paddingBottom: space(10) },
-  header: { paddingTop: space(4), paddingBottom: space(2), gap: space(2) },
-  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space(2) },
-  title: { flex: 1, marginTop: space(1), marginBottom: space(1) },
-  titleCat: { width: 72, height: 72 },
-  search: {
-    fontFamily: fonts.regular,
-    fontSize: 14,
-    color: colors.ink,
-    borderBottomWidth: 1.5,
-    borderBottomColor: colors.ink,
-    paddingVertical: space(2),
-  },
-  recentBlock: { gap: space(1.5) },
-  recent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: space(3),
-    minHeight: space(12),
-    paddingVertical: space(3),
-  },
-  recentLabel: { flex: 1 },
-  recentAction: { fontFamily: fonts.semibold, fontSize: 12.5, color: colors.accent },
-  betterLine: { paddingBottom: space(1) },
-  suggestCard: {
-    backgroundColor: colors.card,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.rule,
-    borderRadius: 2,
-    paddingHorizontal: space(4),
-    paddingVertical: space(1),
-  },
-  suggestTitle: { paddingTop: space(2.5), paddingBottom: space(0.5) },
-  myRoutinesBlock: { gap: space(1) },
-  myRoutinesLabel: { paddingTop: space(1) },
-  myRoutinesRow: { gap: space(2), paddingRight: space(2) },
-  chipsRow: { gap: space(2), paddingRight: space(2) },
-  chip: {
-    minHeight: 36,
-    borderWidth: 1,
-    borderColor: colors.rule,
-    borderRadius: 2,
-    paddingHorizontal: space(3.5),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chipSelected: { backgroundColor: colors.ink, borderColor: colors.ink },
-  chipLabel: { fontFamily: fonts.semibold, fontSize: 13, color: colors.ink },
-  chipLabelSelected: { color: colors.bg },
-  sectionHeader: { paddingTop: space(3), paddingBottom: space(1), backgroundColor: colors.bg },
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: space(3.5), gap: space(3) },
-  rowText: { flex: 1, gap: 3 },
-  rowName: { fontFamily: fonts.semibold, fontSize: 15.5, color: colors.ink },
-  minutes: { fontFamily: fonts.semibold, fontSize: 12, color: colors.accent },
-  empty: { paddingVertical: space(8), textAlign: 'center' },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+    content: { paddingHorizontal: space(5), paddingBottom: space(10) },
+    header: { paddingTop: space(4), paddingBottom: space(2), gap: space(2) },
+    topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space(2) },
+    title: { flex: 1, marginTop: space(1), marginBottom: space(1) },
+    titleCat: { width: 72, height: 72 },
+    search: {
+      fontFamily: fonts.regular,
+      fontSize: 14,
+      color: colors.ink,
+      borderBottomWidth: 1.5,
+      borderBottomColor: colors.ink,
+      paddingVertical: space(2),
+    },
+    recentBlock: { gap: space(1.5) },
+    recent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: space(3),
+      minHeight: space(12),
+      paddingVertical: space(3),
+    },
+    recentLabel: { flex: 1 },
+    recentAction: { fontFamily: fonts.semibold, fontSize: 12.5, color: colors.accent },
+    betterLine: { paddingBottom: space(1) },
+    suggestCard: {
+      backgroundColor: colors.card,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.rule,
+      borderRadius: 2,
+      paddingHorizontal: space(4),
+      paddingVertical: space(1),
+    },
+    suggestTitle: { paddingTop: space(2.5), paddingBottom: space(0.5) },
+    myRoutinesBlock: { gap: space(1) },
+    myRoutinesLabel: { paddingTop: space(1) },
+    myRoutinesRow: { gap: space(2), paddingRight: space(2) },
+    chipsRow: { gap: space(2), paddingRight: space(2) },
+    chip: {
+      minHeight: 36,
+      borderWidth: 1,
+      borderColor: colors.rule,
+      borderRadius: 2,
+      paddingHorizontal: space(3.5),
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    chipSelected: { backgroundColor: colors.ink, borderColor: colors.ink },
+    chipLabel: { fontFamily: fonts.semibold, fontSize: 13, color: colors.ink },
+    chipLabelSelected: { color: colors.bg },
+    sectionHeader: { paddingTop: space(3), paddingBottom: space(1), backgroundColor: colors.bg },
+    row: { flexDirection: 'row', alignItems: 'center', paddingVertical: space(3.5), gap: space(3) },
+    rowText: { flex: 1, gap: 3 },
+    rowName: { fontFamily: fonts.semibold, fontSize: 15.5, color: colors.ink },
+    minutes: { fontFamily: fonts.semibold, fontSize: 12, color: colors.accent },
+    empty: { paddingVertical: space(8), textAlign: 'center' },
+  });

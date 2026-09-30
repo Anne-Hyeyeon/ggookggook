@@ -11,7 +11,9 @@ import { reminderRoutineFallback, scheduleDailyReminder } from '@/notifications/
 import { routineSummary, sideLabel, summaryLine, topic, visibleStepsFor } from '@/routine';
 import { isUserRoutineUsable } from '@/routines';
 import { useSettings } from '@/state/settings';
-import { colors, fonts, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { fonts, space } from '@/theme';
+import { useThemedStyles } from '@/theme/useThemedStyles';
 import { BackLink } from '@/ui/BackLink';
 import { Button } from '@/ui/Button';
 import { RepeatStepper } from '@/ui/RepeatStepper';
@@ -19,6 +21,7 @@ import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
 
 export default function RoutinePreviewScreen() {
+  const styles = useThemedStyles(makeStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const db = useDb();
   const settings = useSettings((state) => state.settings);
@@ -276,55 +279,56 @@ export default function RoutinePreviewScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  wrap: { flex: 1 },
-  body: { padding: space(5), gap: space(5), paddingBottom: space(8) },
-  head: { gap: space(1.5) },
-  summary: { fontFamily: fonts.semibold, fontSize: 13, color: colors.accent, marginTop: space(1) },
-  step: { flexDirection: 'row', gap: space(3), paddingVertical: space(3.5) },
-  stepNo: { width: space(5), paddingTop: space(2.5) },
-  stepText: { flex: 1, gap: space(1) },
-  stepName: { flexDirection: 'row', alignItems: 'baseline', gap: space(1.5) },
-  pointName: { fontSize: 21, lineHeight: 28 },
-  seconds: { textAlign: 'right', paddingTop: space(2) },
-  caution: { color: colors.accent },
-  error: { color: colors.accent },
-  footer: { padding: space(5), paddingTop: space(2), gap: space(3) },
-  footerLinks: { flexDirection: 'row', justifyContent: 'center', gap: space(6) },
-  footerLink: { minHeight: space(11), alignItems: 'center', justifyContent: 'center' },
-  deleteLabel: { color: colors.accent },
-  confirmOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: space(5),
-    backgroundColor: colors.scrim,
-  },
-  confirmBox: {
-    width: '100%',
-    backgroundColor: colors.card,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.rule,
-    borderRadius: 2,
-    padding: space(5),
-    gap: space(4),
-  },
-  confirmText: { textAlign: 'center' },
-  confirmButtons: { gap: space(3) },
-  confirmButton: {
-    minHeight: space(13),
-    borderWidth: 1.5,
-    borderColor: colors.ink,
-    borderRadius: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  confirmButtonLabel: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
-  confirmPrimary: { backgroundColor: colors.ink },
-  confirmPrimaryLabel: { color: colors.bg },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+    wrap: { flex: 1 },
+    body: { padding: space(5), gap: space(5), paddingBottom: space(8) },
+    head: { gap: space(1.5) },
+    summary: { fontFamily: fonts.semibold, fontSize: 13, color: colors.accent, marginTop: space(1) },
+    step: { flexDirection: 'row', gap: space(3), paddingVertical: space(3.5) },
+    stepNo: { width: space(5), paddingTop: space(2.5) },
+    stepText: { flex: 1, gap: space(1) },
+    stepName: { flexDirection: 'row', alignItems: 'baseline', gap: space(1.5) },
+    pointName: { fontSize: 21, lineHeight: 28 },
+    seconds: { textAlign: 'right', paddingTop: space(2) },
+    caution: { color: colors.accent },
+    error: { color: colors.accent },
+    footer: { padding: space(5), paddingTop: space(2), gap: space(3) },
+    footerLinks: { flexDirection: 'row', justifyContent: 'center', gap: space(6) },
+    footerLink: { minHeight: space(11), alignItems: 'center', justifyContent: 'center' },
+    deleteLabel: { color: colors.accent },
+    confirmOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: space(5),
+      backgroundColor: colors.scrim,
+    },
+    confirmBox: {
+      width: '100%',
+      backgroundColor: colors.card,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.rule,
+      borderRadius: 2,
+      padding: space(5),
+      gap: space(4),
+    },
+    confirmText: { textAlign: 'center' },
+    confirmButtons: { gap: space(3) },
+    confirmButton: {
+      minHeight: space(13),
+      borderWidth: 1.5,
+      borderColor: colors.ink,
+      borderRadius: 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    confirmButtonLabel: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
+    confirmPrimary: { backgroundColor: colors.ink },
+    confirmPrimaryLabel: { color: colors.bg },
+  });
