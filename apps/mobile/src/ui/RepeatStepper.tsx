@@ -1,6 +1,8 @@
 import { USER_ROUTINE_LIMITS } from '@ggookggook/shared';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { colors, fonts, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { fonts, space } from '@/theme';
+import { useThemedStyles } from '@/theme/useThemedStyles';
 import { Txt } from './Txt';
 
 interface RepeatStepperProps {
@@ -10,6 +12,7 @@ interface RepeatStepperProps {
 }
 
 export function RepeatStepper({ value, onDecrement, onIncrement }: RepeatStepperProps) {
+  const styles = useThemedStyles(makeStyles);
   const atMin = value <= USER_ROUTINE_LIMITS.repeatMin;
   const atMax = value >= USER_ROUTINE_LIMITS.repeatMax;
   return (
@@ -60,19 +63,20 @@ export function RepeatStepper({ value, onDecrement, onIncrement }: RepeatStepper
   );
 }
 
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: space(2) },
-  stepper: { flexDirection: 'row', alignItems: 'center', gap: space(3) },
-  stepButton: {
-    width: space(8),
-    height: space(8),
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepButtonDim: { opacity: 0.3 },
-  stepSymbol: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
-  stepValue: { minWidth: 40, textAlign: 'center' },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: space(2) },
+    stepper: { flexDirection: 'row', alignItems: 'center', gap: space(3) },
+    stepButton: {
+      width: space(8),
+      height: space(8),
+      borderRadius: 4,
+      borderWidth: 1,
+      borderColor: colors.ink,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    stepButtonDim: { opacity: 0.3 },
+    stepSymbol: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
+    stepValue: { minWidth: 40, textAlign: 'center' },
+  });

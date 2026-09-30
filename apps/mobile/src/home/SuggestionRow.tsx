@@ -3,7 +3,9 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { content } from '@/content';
 import { routineSummary, summaryLine, visibleSteps } from '@/routine';
-import { colors, fonts, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { fonts, space } from '@/theme';
+import { useThemedStyles } from '@/theme/useThemedStyles';
 import { Txt } from '@/ui/Txt';
 
 export interface SuggestionRowProps {
@@ -14,6 +16,7 @@ export interface SuggestionRowProps {
 }
 
 export function SuggestionRow({ symptom, settings, repeat, onStart }: SuggestionRowProps) {
+  const styles = useThemedStyles(makeStyles);
   const steps = visibleSteps(symptom, settings);
   const { count, minutes } = routineSummary(steps, repeat);
   const names = steps.map((step) => content.acupoints.get(step.acupointId)?.name.ko ?? '').join(' · ');
@@ -45,18 +48,19 @@ export function SuggestionRow({ symptom, settings, repeat, onStart }: Suggestion
   );
 }
 
-const styles = StyleSheet.create({
-  suggestRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: space(3), gap: space(3) },
-  suggestText: { flex: 1, gap: space(0.75) },
-  suggestName: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
-  suggestStart: {
-    minWidth: space(14),
-    height: space(9),
-    borderRadius: 2,
-    backgroundColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: space(3),
-  },
-  suggestStartLabel: { fontFamily: fonts.semibold, fontSize: 13.5, color: colors.bg },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    suggestRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: space(3), gap: space(3) },
+    suggestText: { flex: 1, gap: space(0.75) },
+    suggestName: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
+    suggestStart: {
+      minWidth: space(14),
+      height: space(9),
+      borderRadius: 2,
+      backgroundColor: colors.ink,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: space(3),
+    },
+    suggestStartLabel: { fontFamily: fonts.semibold, fontSize: 13.5, color: colors.bg },
+  });

@@ -1,19 +1,22 @@
 import { Platform, StyleSheet, Text, type TextProps, type TextStyle } from 'react-native';
-import { colors, fonts } from '@/theme';
+import type { Colors } from '@/theme';
+import { fonts } from '@/theme';
+import { useThemedStyles } from '@/theme/useThemedStyles';
 
 export type TxtVariant = 'display' | 'title' | 'heading' | 'body' | 'sub' | 'caption' | 'point' | 'pointSmall' | 'number';
 
-const styles = StyleSheet.create({
-  display: { fontFamily: fonts.bold, fontSize: 34, lineHeight: 42, letterSpacing: -1, color: colors.ink },
-  title: { fontFamily: fonts.bold, fontSize: 25, lineHeight: 33, letterSpacing: -0.6, color: colors.ink },
-  heading: { fontFamily: fonts.bold, fontSize: 19, lineHeight: 26, letterSpacing: -0.4, color: colors.ink },
-  body: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 22, color: colors.ink },
-  sub: { fontFamily: fonts.regular, fontSize: 12.5, lineHeight: 19, color: colors.sub },
-  caption: { fontFamily: fonts.regular, fontSize: 11, lineHeight: 16, color: colors.faint },
-  point: { fontFamily: fonts.serif, fontSize: 27, lineHeight: 36, letterSpacing: -0.4, color: colors.ink },
-  pointSmall: { fontFamily: fonts.serif, fontSize: 12.5, lineHeight: 18, color: colors.line },
-  number: { fontFamily: fonts.bold, fontSize: 46, lineHeight: 52, letterSpacing: -1.2, color: colors.accent, fontVariant: ['tabular-nums'] },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    display: { fontFamily: fonts.bold, fontSize: 34, lineHeight: 42, letterSpacing: -1, color: colors.ink },
+    title: { fontFamily: fonts.bold, fontSize: 25, lineHeight: 33, letterSpacing: -0.6, color: colors.ink },
+    heading: { fontFamily: fonts.bold, fontSize: 19, lineHeight: 26, letterSpacing: -0.4, color: colors.ink },
+    body: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 22, color: colors.ink },
+    sub: { fontFamily: fonts.regular, fontSize: 12.5, lineHeight: 19, color: colors.sub },
+    caption: { fontFamily: fonts.regular, fontSize: 11, lineHeight: 16, color: colors.faint },
+    point: { fontFamily: fonts.serif, fontSize: 27, lineHeight: 36, letterSpacing: -0.4, color: colors.ink },
+    pointSmall: { fontFamily: fonts.serif, fontSize: 12.5, lineHeight: 18, color: colors.line },
+    number: { fontFamily: fonts.bold, fontSize: 46, lineHeight: 52, letterSpacing: -1.2, color: colors.accent, fontVariant: ['tabular-nums'] },
+  });
 
 // Per-variant clamp: unlisted variants have no maxFontSizeMultiplier (default RN scaling).
 const MAX_FONT_SIZE_MULTIPLIER: Partial<Record<TxtVariant, number>> = {
@@ -31,6 +34,7 @@ type WebOnlyTextStyle = TextStyle & { wordBreak?: 'keep-all' };
 const keepAllStyle: WebOnlyTextStyle | undefined = Platform.OS === 'web' ? { wordBreak: 'keep-all' } : undefined;
 
 export function Txt({ variant = 'body', style, ...props }: TextProps & { variant?: TxtVariant }) {
+  const styles = useThemedStyles(makeStyles);
   const maxFontSizeMultiplier = MAX_FONT_SIZE_MULTIPLIER[variant];
   return (
     <Text

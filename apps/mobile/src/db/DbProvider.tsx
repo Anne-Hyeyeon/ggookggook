@@ -2,7 +2,9 @@ import { migrate, type SqlDatabase, type SqlValue } from '@ggookggook/store';
 import * as SQLite from 'expo-sqlite';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { colors, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { space } from '@/theme';
+import { useThemedStyles } from '@/theme/useThemedStyles';
 import { Txt } from '@/ui/Txt';
 
 const DbContext = createContext<SqlDatabase | null>(null);
@@ -25,6 +27,7 @@ function adapt(db: SQLite.SQLiteDatabase): SqlDatabase {
 }
 
 export function DbProvider({ children }: { children: ReactNode }) {
+  const styles = useThemedStyles(makeStyles);
   const [db, setDb] = useState<SqlDatabase | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -62,6 +65,7 @@ export function useDb(): SqlDatabase {
   return db;
 }
 
-const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space(8), backgroundColor: colors.bg },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space(8), backgroundColor: colors.bg },
+  });

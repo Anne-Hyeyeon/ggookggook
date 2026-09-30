@@ -10,7 +10,10 @@ import { newId } from '@/id';
 import { scheduleDailyReminder } from '@/notifications/reminder';
 import { isRoutineDraftDirty, toRoutineSteps, useRoutineDraft } from '@/state/routineDraft';
 import { useSettings } from '@/state/settings';
-import { colors, fonts, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { fonts, space } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
+import { useThemedStyles } from '@/theme/useThemedStyles';
 import { BackLink } from '@/ui/BackLink';
 import { Button } from '@/ui/Button';
 import { RepeatStepper } from '@/ui/RepeatStepper';
@@ -18,6 +21,8 @@ import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
 
 export function RoutineEditorView() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const db = useDb();
   const original = useRoutineDraft((state) => state.original);
   const draft = useRoutineDraft((state) => state.draft);
@@ -339,7 +344,8 @@ export function RoutineEditorView() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   body: { flex: 1 },
   scrollContent: { padding: space(5), gap: space(3), paddingBottom: space(8) },
@@ -428,4 +434,4 @@ const styles = StyleSheet.create({
   confirmButtonLabel: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
   confirmPrimary: { backgroundColor: colors.ink },
   confirmPrimaryLabel: { color: colors.bg },
-});
+  });

@@ -3,7 +3,10 @@ import { Image } from 'expo-image';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { PlateView as PlateData } from '@/content';
-import { colors, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { space } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
+import { useThemedStyles } from '@/theme/useThemedStyles';
 import { Txt } from './Txt';
 
 interface PlateViewProps {
@@ -13,6 +16,8 @@ interface PlateViewProps {
 }
 
 function PlateViewComponent({ view, side, size }: PlateViewProps) {
+  const { scheme, colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   if (!view || view.image === null) {
     return (
       <View
@@ -40,6 +45,9 @@ function PlateViewComponent({ view, side, size }: PlateViewProps) {
         source={view.image}
         style={[StyleSheet.absoluteFill, mirror && styles.mirrored]}
         contentFit="contain"
+        // The plate is ink line art on transparency; tinting it with the line token in dark
+        // mode keeps the lines legible against the dark background instead of going near-black.
+        tintColor={scheme === 'dark' ? colors.line : undefined}
       />
       {pins.map((pin) => {
         const x = mirror ? 1 - pin.x : pin.x;
@@ -62,28 +70,29 @@ export const PlateView = memo(PlateViewComponent);
 const DOT_SIZE = 14;
 const HALO_SIZE = 30;
 
-const styles = StyleSheet.create({
-  frame: { backgroundColor: colors.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.rule, alignSelf: 'center' },
-  placeholder: { alignItems: 'center', justifyContent: 'center', padding: space(4) },
-  mirrored: { transform: [{ scaleX: -1 }] },
-  pinWrap: {
-    position: 'absolute',
-    width: HALO_SIZE,
-    height: HALO_SIZE,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  halo: {
-    position: 'absolute',
-    width: HALO_SIZE,
-    height: HALO_SIZE,
-    borderRadius: HALO_SIZE / 2,
-    backgroundColor: colors.accentSoft,
-  },
-  dot: {
-    width: DOT_SIZE,
-    height: DOT_SIZE,
-    borderRadius: DOT_SIZE / 2,
-    backgroundColor: colors.accent,
-  },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    frame: { backgroundColor: colors.card, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.rule, alignSelf: 'center' },
+    placeholder: { alignItems: 'center', justifyContent: 'center', padding: space(4) },
+    mirrored: { transform: [{ scaleX: -1 }] },
+    pinWrap: {
+      position: 'absolute',
+      width: HALO_SIZE,
+      height: HALO_SIZE,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    halo: {
+      position: 'absolute',
+      width: HALO_SIZE,
+      height: HALO_SIZE,
+      borderRadius: HALO_SIZE / 2,
+      backgroundColor: colors.accentSoft,
+    },
+    dot: {
+      width: DOT_SIZE,
+      height: DOT_SIZE,
+      borderRadius: DOT_SIZE / 2,
+      backgroundColor: colors.accent,
+    },
+  });

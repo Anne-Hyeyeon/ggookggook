@@ -23,7 +23,9 @@ import { newId } from '@/id';
 import { firstSentence } from '@/routine';
 import { toSessionRoutineRef, type RoutineRef } from '@/routines';
 import { useSettings } from '@/state/settings';
-import { colors, fonts, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { fonts, space } from '@/theme';
+import { useThemedStyles } from '@/theme/useThemedStyles';
 import { PlateView } from '@/ui/PlateView';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
@@ -38,6 +40,7 @@ export interface GuideViewProps {
 }
 
 export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewProps) {
+  const styles = useThemedStyles(makeStyles);
   useKeepAwake();
   const db = useDb();
   const settings = useSettings((state) => state.settings);
@@ -545,7 +548,8 @@ export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewPro
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   body: { flex: 1 },
   scrollContent: { padding: space(5), gap: space(3) },
@@ -632,4 +636,4 @@ const styles = StyleSheet.create({
   confirmButtonLabel: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
   confirmPrimary: { backgroundColor: colors.ink },
   confirmPrimaryLabel: { color: colors.bg },
-});
+  });

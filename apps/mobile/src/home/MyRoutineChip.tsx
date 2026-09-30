@@ -2,7 +2,9 @@ import type { Settings, UserRoutine } from '@ggookggook/shared';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet } from 'react-native';
 import { routineSummary, summaryLine, visibleStepsFor } from '@/routine';
-import { colors, fonts, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { fonts, space } from '@/theme';
+import { useThemedStyles } from '@/theme/useThemedStyles';
 import { Txt } from '@/ui/Txt';
 
 export interface MyRoutineChipProps {
@@ -11,6 +13,7 @@ export interface MyRoutineChipProps {
 }
 
 export function MyRoutineChip({ routine, settings }: MyRoutineChipProps) {
+  const styles = useThemedStyles(makeStyles);
   const { count, minutes } = routineSummary(visibleStepsFor(routine.steps, settings), routine.repeat);
   const summary = summaryLine(count, minutes, routine.repeat);
   return (
@@ -26,16 +29,17 @@ export function MyRoutineChip({ routine, settings }: MyRoutineChipProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  myRoutineChip: {
-    borderWidth: 1,
-    borderColor: colors.ink,
-    borderRadius: 2,
-    minHeight: space(11),
-    paddingHorizontal: space(3.5),
-    paddingVertical: space(1.5),
-    justifyContent: 'center',
-    gap: space(0.5),
-  },
-  myRoutineName: { fontFamily: fonts.semibold, fontSize: 13.5, color: colors.ink },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    myRoutineChip: {
+      borderWidth: 1,
+      borderColor: colors.ink,
+      borderRadius: 2,
+      minHeight: space(11),
+      paddingHorizontal: space(3.5),
+      paddingVertical: space(1.5),
+      justifyContent: 'center',
+      gap: space(0.5),
+    },
+    myRoutineName: { fontFamily: fonts.semibold, fontSize: 13.5, color: colors.ink },
+  });

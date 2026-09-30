@@ -1,5 +1,8 @@
 import { Pressable, StyleSheet } from 'react-native';
-import { colors, fonts, space } from '@/theme';
+import type { Colors } from '@/theme';
+import { fonts, space } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
+import { useThemedStyles } from '@/theme/useThemedStyles';
 import { Txt } from './Txt';
 
 interface ButtonProps {
@@ -10,6 +13,8 @@ interface ButtonProps {
 }
 
 export function Button({ label, onPress, kind = 'primary', disabled = false }: ButtonProps) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const primary = kind === 'primary';
   return (
     <Pressable
@@ -24,10 +29,11 @@ export function Button({ label, onPress, kind = 'primary', disabled = false }: B
   );
 }
 
-const styles = StyleSheet.create({
-  base: { height: space(13), borderRadius: 2, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space(5) },
-  primary: { backgroundColor: colors.ink },
-  secondary: { borderWidth: 1, borderColor: colors.ink },
-  dim: { opacity: 0.6 },
-  label: { fontFamily: fonts.semibold, fontSize: 15 },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    base: { height: space(13), borderRadius: 2, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space(5) },
+    primary: { backgroundColor: colors.ink },
+    secondary: { borderWidth: 1, borderColor: colors.ink },
+    dim: { opacity: 0.6 },
+    label: { fontFamily: fonts.semibold, fontSize: 15 },
+  });
