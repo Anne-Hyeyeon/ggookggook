@@ -27,7 +27,7 @@ import { GROUP_LABELS, GROUP_ORDER, sectionsBySymptomGroup } from '@/groups';
 import { MyRoutineChip } from '@/home/MyRoutineChip';
 import { SuggestionRow } from '@/home/SuggestionRow';
 import { routineSummary, visibleSteps } from '@/routine';
-import { isUserRoutineUsable } from '@/routines';
+import { resolveRoutineRefTitle } from '@/routines';
 import { useSettings } from '@/state/settings';
 import type { Colors } from '@/theme';
 import { fonts, space } from '@/theme';
@@ -54,20 +54,23 @@ interface RecentRoutine {
   href: `/symptom/${string}` | `/routine/${string}`;
 }
 
-// Resolves what the "최근" row shows for a completed session: a symptom's name is always
-// known from content, but a user routine's name (and whether the row shows at all) depends
-// on that routine still existing, so it's looked up fresh rather than assumed.
+// Shares its title/link resolution with 나의 기록's 자주 한 루틴 and 내 루틴's history; a deleted user routine (href null) hides the row.
 async function resolveRecentRoutine(db: SqlDatabase, session: SessionLog | null): Promise<RecentRoutine | null> {
   if (!session) return null;
-  if (session.routine.kind === 'symptom') {
-    const symptom = content.symptom(session.routine.symptomId);
-    return symptom ? { session, title: symptom.name, href: `/symptom/${symptom.id}` } : null;
-  }
-  const routine = await getUserRoutine(db, session.routine.routineId).catch((error: unknown) => {
-    console.error('Failed to load the recent user routine', error);
-    return null;
-  });
-  return isUserRoutineUsable(routine) ? { session, title: routine.name, href: `/routine/${routine.id}` } : null;
+  const userRoutines =
+    session.routine.kind === 'user'
+      ? new Map([
+          [
+            session.routine.routineId,
+            await getUserRoutine(db, session.routine.routineId).catch((error: unknown) => {
+              console.error('Failed to load the recent user routine', error);
+              return null;
+            }),
+          ],
+        ])
+      : new Map<string, UserRoutine | null>();
+  const resolved = resolveRoutineRefTitle(session.routine, userRoutines);
+  return resolved && resolved.href !== null ? { session, title: resolved.title, href: resolved.href } : null;
 }
 
 export default function TodayScreen() {
