@@ -1,8 +1,11 @@
 import { DEFAULT_SETTINGS } from '@ggookggook/shared';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import WelcomeScreen from '../app/welcome';
 import { useOnboarding } from '@/state/onboarding';
 import { useSettings } from '@/state/settings';
+import { darkColors, lightColors } from '@/theme';
+import { ThemeContext } from '@/theme/ThemeProvider';
 
 jest.mock('@/db/DbProvider', () => {
   const db = {};
@@ -32,6 +35,21 @@ it('walks through the intro, pregnancy toggle, and disclaimer', async () => {
 
   await fireEvent.press(screen.getByRole('button', { name: '확인했어요' }));
   expect(accept).toHaveBeenCalledWith({});
+});
+
+it('uses the light ink token by default, and the dark ink token when the theme is forced dark', async () => {
+  await render(<WelcomeScreen />);
+  expect(StyleSheet.flatten(screen.getByText('꾹꾹').props.style).color).toBe(lightColors.ink);
+
+  await render(
+    <ThemeContext.Provider value={{ scheme: 'dark', colors: darkColors }}>
+      <WelcomeScreen />
+    </ThemeContext.Provider>,
+  );
+  const darkTexts = screen.getAllByText('꾹꾹');
+  const lastDarkText = darkTexts[darkTexts.length - 1];
+  if (!lastDarkText) throw new Error('expected at least one 꾹꾹 text node');
+  expect(StyleSheet.flatten(lastDarkText.props.style).color).toBe(darkColors.ink);
 });
 
 it('shows an inline message and keeps the button usable when accepting fails', async () => {
