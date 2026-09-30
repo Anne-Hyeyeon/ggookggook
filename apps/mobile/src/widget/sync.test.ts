@@ -1,9 +1,7 @@
 import type { SessionLog, UserRoutine } from '@ggookggook/shared';
 import * as store from '@ggookggook/store';
-import { Platform } from 'react-native';
 import { content } from '@/content';
-import { updateAndroidWidget } from './androidWidget';
-import { updateIosWidget } from './iosWidget';
+import { loadWidgetUpdater } from './native';
 import { WIDGET_SNAPSHOT_KEY } from './storage';
 import { buildWidgetSnapshot } from './snapshot';
 import { syncWidgets } from './sync';
@@ -14,8 +12,8 @@ jest.mock('@ggookggook/store', () => ({
   getUserRoutine: jest.fn(),
   setValue: jest.fn(),
 }));
-jest.mock('./iosWidget', () => ({ updateIosWidget: jest.fn() }));
-jest.mock('./androidWidget', () => ({ updateAndroidWidget: jest.fn() }));
+jest.mock('./native', () => ({ loadWidgetUpdater: jest.fn() }));
+const updateWidget = jest.fn();
 
 const mockedStore = store as jest.Mocked<typeof store>;
 const db: store.SqlDatabase = { execAsync: jest.fn(), runAsync: jest.fn(), getFirstAsync: jest.fn(), getAllAsync: jest.fn() };
@@ -44,7 +42,8 @@ const routine: UserRoutine = {
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(console, 'error').mockImplementation(() => {});
-  Platform.OS = 'ios';
+  updateWidget.mockReset();
+  jest.mocked(loadWidgetUpdater).mockReturnValue(updateWidget);
   mockedStore.latestCompletedSession.mockResolvedValue(userSession);
   mockedStore.countSessionsBySymptom.mockResolvedValue({ headache: 4 });
   mockedStore.getUserRoutine.mockResolvedValue(routine);
@@ -60,21 +59,12 @@ const expectedSnapshot = () =>
     recentUserRoutine: routine,
   });
 
-it('builds the snapshot from the store, persists it, and updates the iOS widget on iOS', async () => {
+it('builds the snapshot from the store, persists it, and hands it to the platform widget', async () => {
   await syncWidgets(db, NOW);
 
   expect(mockedStore.getUserRoutine).toHaveBeenCalledWith(db, 'r1');
   expect(mockedStore.setValue).toHaveBeenCalledWith(db, WIDGET_SNAPSHOT_KEY, JSON.stringify(expectedSnapshot()), NOW);
-  expect(updateIosWidget).toHaveBeenCalledWith(expectedSnapshot(), NOW);
-  expect(updateAndroidWidget).not.toHaveBeenCalled();
-});
-
-it('updates the Android widget on Android', async () => {
-  Platform.OS = 'android';
-  await syncWidgets(db, NOW);
-
-  expect(updateAndroidWidget).toHaveBeenCalledWith(expectedSnapshot(), NOW);
-  expect(updateIosWidget).not.toHaveBeenCalled();
+  expect(updateWidget).toHaveBeenCalledWith(expectedSnapshot(), NOW);
 });
 
 it('does not look up a user routine for a symptom session', async () => {
@@ -82,17 +72,15 @@ it('does not look up a user routine for a symptom session', async () => {
   await syncWidgets(db, NOW);
 
   expect(mockedStore.getUserRoutine).not.toHaveBeenCalled();
-  expect(updateIosWidget).toHaveBeenCalledWith(expect.objectContaining({ recent: expect.objectContaining({ ref: { kind: 'symptom', id: 'headache' } }) }), NOW);
+  expect(updateWidget).toHaveBeenCalledWith(expect.objectContaining({ recent: expect.objectContaining({ ref: { kind: 'symptom', id: 'headache' } }) }), NOW);
 });
 
-it('is a no-op on web', async () => {
-  Platform.OS = 'web';
+it('does nothing, not even a store read, when no widget is available (web, Expo Go)', async () => {
+  jest.mocked(loadWidgetUpdater).mockReturnValue(null);
   await syncWidgets(db, NOW);
 
   expect(mockedStore.latestCompletedSession).not.toHaveBeenCalled();
   expect(mockedStore.setValue).not.toHaveBeenCalled();
-  expect(updateIosWidget).not.toHaveBeenCalled();
-  expect(updateAndroidWidget).not.toHaveBeenCalled();
 });
 
 it('logs and swallows a store failure, leaving the widget untouched', async () => {
@@ -101,15 +89,17 @@ it('logs and swallows a store failure, leaving the widget untouched', async () =
 
   await expect(syncWidgets(db, NOW)).resolves.toBeUndefined();
   expect(console.error).toHaveBeenCalledWith('Failed to update the home-screen widget', failure);
-  expect(updateIosWidget).not.toHaveBeenCalled();
+  expect(updateWidget).not.toHaveBeenCalled();
 });
 
-it('logs and swallows a native widget update failure', async () => {
+it('logs and swallows a native widget update failure, sync or async', async () => {
   const failure = new Error('no app group');
-  jest.mocked(updateIosWidget).mockImplementation(() => {
+  updateWidget.mockImplementationOnce(() => {
     throw failure;
   });
-
   await expect(syncWidgets(db, NOW)).resolves.toBeUndefined();
+  updateWidget.mockRejectedValueOnce(failure);
+  await expect(syncWidgets(db, NOW)).resolves.toBeUndefined();
+  expect(console.error).toHaveBeenCalledTimes(2);
   expect(console.error).toHaveBeenCalledWith('Failed to update the home-screen widget', failure);
 });

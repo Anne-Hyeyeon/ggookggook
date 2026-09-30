@@ -1,4 +1,4 @@
-import type { WidgetSnapshot } from './snapshot';
+import type { WidgetSnapshot } from '@/widget/snapshot';
 
-// The iOS widget lives in iosWidget.ios.tsx; on Android and web there is nothing to update.
+// The real iOS widget lives in iosWidget.ios.tsx; Android and web have nothing to update.
 export function updateIosWidget(_snapshot: WidgetSnapshot, _now: Date): void {}

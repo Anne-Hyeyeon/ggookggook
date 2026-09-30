@@ -1,9 +1,16 @@
 import * as store from '@ggookggook/store';
 import type { ReactElement } from 'react';
-import { requestWidgetUpdate, type WidgetTaskHandlerProps } from 'react-native-android-widget';
+import { registerWidgetTaskHandler, requestWidgetUpdate, type WidgetTaskHandlerProps } from 'react-native-android-widget';
 import { content } from '@/content';
 import { darkColors, lightColors } from '@/theme';
-import { androidWidgetTaskHandler, ANDROID_WIDGET_NAME, GgookWidget, renderAndroidWidget, updateAndroidWidget } from './androidWidget.android';
+import {
+  androidWidgetTaskHandler,
+  ANDROID_WIDGET_NAME,
+  GgookWidget,
+  registerAndroidWidgetTaskHandler,
+  renderAndroidWidget,
+  updateAndroidWidget,
+} from './androidWidget.android';
 import { buildWidgetSnapshot } from './snapshot';
 import { WIDGET_SNAPSHOT_KEY } from './storage';
 import appJson from '../../app.json';
@@ -11,6 +18,7 @@ import appJson from '../../app.json';
 jest.mock('react-native-android-widget', () => ({
   FlexWidget: () => null,
   TextWidget: () => null,
+  registerWidgetTaskHandler: jest.fn(),
   requestWidgetUpdate: jest.fn().mockResolvedValue(undefined),
 }));
 jest.mock('@ggookggook/store', () => ({ getValue: jest.fn() }));
@@ -42,8 +50,7 @@ function isNode(value: unknown): value is Node {
   return typeof value === 'object' && value !== null && 'props' in value && 'type' in value;
 }
 
-// Expands function components other than the library's leaf widgets, then collects every
-// element in the tree, so assertions can look at the rendered widget without a native host.
+// Expands our own components down to the library's leaf widgets, since there is no native host to render into.
 function flatten(value: unknown): Node[] {
   if (Array.isArray(value)) return value.flatMap(flatten);
   if (!isNode(value)) return [];
@@ -103,6 +110,11 @@ it('requests an update of the named widget with the rendered snapshot', async ()
   if (!call) throw new Error('expected a call');
   const { renderWidget } = call[0];
   expect(renderWidget({ widgetName: ANDROID_WIDGET_NAME, widgetId: 1, width: 1, height: 1, screenInfo: { screenHeightDp: 1, screenWidthDp: 1, density: 1, densityDpi: 1 } })).toEqual(renderAndroidWidget(snapshot, NOW));
+});
+
+it('registers its headless task handler with the library', () => {
+  registerAndroidWidgetTaskHandler();
+  expect(registerWidgetTaskHandler).toHaveBeenCalledWith(androidWidgetTaskHandler);
 });
 
 describe('androidWidgetTaskHandler', () => {

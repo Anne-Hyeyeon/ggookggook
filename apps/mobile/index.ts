@@ -1,6 +1,5 @@
 import 'expo-router/entry';
-import { registerAndroidWidget } from './src/widget/registerAndroidWidget';
+import { registerAndroidWidget } from './src/widget/native';
 
-// react-native-android-widget renders the widget from a headless JS task, which has to be
-// registered from the app entry (outside any component) so it exists even with no UI running.
+// The widget's headless task must be registered from the entry, outside any component.
 registerAndroidWidget();

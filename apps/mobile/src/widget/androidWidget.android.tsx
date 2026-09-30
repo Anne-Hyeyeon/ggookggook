@@ -1,6 +1,7 @@
 import { getValue } from '@ggookggook/store';
 import {
   FlexWidget,
+  registerWidgetTaskHandler,
   requestWidgetUpdate,
   TextWidget,
   type ColorProp,
@@ -9,9 +10,9 @@ import {
 } from 'react-native-android-widget';
 import { openAppDatabase } from '@/db/open';
 import { darkColors, lightColors } from '@/theme';
-import { WIDGET_COPY } from './copy';
-import { parseWidgetSnapshot, suggestionAt, type WidgetEntry, type WidgetSnapshot } from './snapshot';
-import { WIDGET_SNAPSHOT_KEY } from './storage';
+import { WIDGET_COPY } from '@/widget/copy';
+import { parseWidgetSnapshot, suggestionAt, type WidgetEntry, type WidgetSnapshot } from '@/widget/snapshot';
+import { WIDGET_SNAPSHOT_KEY } from '@/widget/storage';
 
 // Must match the widget `name` in app.json's react-native-android-widget plugin config.
 export const ANDROID_WIDGET_NAME = 'GgookWidget';
@@ -92,11 +93,13 @@ async function loadStoredSnapshot(): Promise<WidgetSnapshot | null> {
   }
 }
 
-// Runs headless (no React tree, possibly with the app closed) whenever the launcher adds,
-// resizes, or periodically refreshes the widget: it re-reads the last synced snapshot and
-// picks the suggestion for the current hour, so the widget keeps up without the app open.
+// Headless (possibly with the app closed): re-reads the last snapshot and picks the suggestion for the current hour.
 export const androidWidgetTaskHandler: WidgetTaskHandler = async ({ widgetAction, renderWidget }) => {
   if (widgetAction === 'WIDGET_ADDED' || widgetAction === 'WIDGET_UPDATE' || widgetAction === 'WIDGET_RESIZED') {
     renderWidget(renderAndroidWidget(await loadStoredSnapshot(), new Date()));
   }
 };
+
+export function registerAndroidWidgetTaskHandler(): void {
+  registerWidgetTaskHandler(androidWidgetTaskHandler);
+}
