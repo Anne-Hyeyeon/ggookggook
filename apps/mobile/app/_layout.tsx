@@ -2,6 +2,7 @@ import { NotoSerifKR_700Bold } from '@expo-google-fonts/noto-serif-kr';
 import { useFonts } from 'expo-font';
 import { router, Stack, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DbProvider, useDb } from '@/db/DbProvider';
@@ -31,7 +32,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <ThemedStatusBar />
+        <ThemedChrome />
         <DbProvider>
           <Routes />
         </DbProvider>
@@ -40,11 +41,13 @@ export default function RootLayout() {
   );
 }
 
-// A light status bar reads on a dark background and vice versa; kept as its own component
-// (rather than inlined in RootLayout) since it needs useTheme(), which only resolves once
-// ThemeProvider is mounted above it.
-function ThemedStatusBar() {
-  const { scheme } = useTheme();
+// Its own component (not inlined in RootLayout) since it needs useTheme(), which only resolves once ThemeProvider is mounted above it.
+function ThemedChrome() {
+  const { scheme, colors } = useTheme();
+  useEffect(() => {
+    // Keeps the native root view (glimpsed around the splash screen/transitions) off the light splash color once dark mode is active.
+    void SystemUI.setBackgroundColorAsync(colors.bg);
+  }, [colors.bg]);
   return <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />;
 }
 

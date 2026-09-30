@@ -27,13 +27,17 @@
       "expo-sqlite",
       "expo-image",
       "expo-notifications",
+      "expo-system-ui",
       [
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
           "imageWidth": 220,
           "resizeMode": "contain",
-          "backgroundColor": "#F8F8F7"
+          "backgroundColor": "#F8F8F7",
+          "dark": {
+            "backgroundColor": "#171614"
+          }
         }
       ],
       [
