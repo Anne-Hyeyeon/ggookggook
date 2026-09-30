@@ -67,7 +67,7 @@ Conventions for this npm-workspaces Expo/React Native monorepo (`packages/shared
 - Environment/config reads (`process.env.EXPO_PUBLIC_*`) are parsed once in a small config module
   (`apps/mobile/src/config/env.ts`), not inline in a screen.
 - The `SqlDatabase` interface in `packages/store/src/db.ts` plus its two adapters
-  (`expo-sqlite` in `DbProvider.tsx`, `better-sqlite3` in `test-db.ts`) is this repo's Ports &
+  (`expo-sqlite` in `apps/mobile/src/db/open.ts`, `better-sqlite3` in `test-db.ts`) is this repo's Ports &
   Adapters: the port is the interface, the concrete implementation is swapped at the edge. Keep
   using this shape for any future integration instead of importing a vendor SDK into
   `packages/shared` or `packages/store` business logic.

@@ -20,10 +20,21 @@ function adapt(db: SQLite.SQLiteDatabase): SqlDatabase {
   };
 }
 
-// Shared by the app's DbProvider and the Android widget's headless task, which runs without
-// the React tree and so has to open the same database on its own.
-export async function openAppDatabase(): Promise<SqlDatabase> {
+async function openAndMigrate(): Promise<SqlDatabase> {
   const opened = adapt(await SQLite.openDatabaseAsync(DATABASE_NAME));
   await migrate(opened);
   return opened;
+}
+
+// One shared open+migrate: the app and the Android widget's headless task run in the same JS runtime.
+let opening: Promise<SqlDatabase> | null = null;
+
+export function openAppDatabase(): Promise<SqlDatabase> {
+  if (!opening) {
+    opening = openAndMigrate().catch((error: unknown) => {
+      opening = null;
+      throw error;
+    });
+  }
+  return opening;
 }
