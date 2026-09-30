@@ -10,6 +10,7 @@ import { useFavorites } from '@/state/favorites';
 import { useOnboarding } from '@/state/onboarding';
 import { useSettings } from '@/state/settings';
 import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
+import { useWidgetSync } from '@/widget/useWidgetSync';
 
 // Module-scope, not inside a component: registers exactly once, when the app's JS first
 // loads, rather than on every RootLayout render.
@@ -60,6 +61,7 @@ export function Routes() {
   const favoritesLoaded = useFavorites((state) => state.loaded);
   const loadFavorites = useFavorites((state) => state.load);
   const navigationReady = useRootNavigationState()?.key != null;
+  useWidgetSync(db);
 
   useEffect(() => {
     void loadSettings(db);

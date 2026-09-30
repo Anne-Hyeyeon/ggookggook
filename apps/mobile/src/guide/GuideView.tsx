@@ -29,6 +29,7 @@ import { useThemedStyles } from '@/theme/useThemedStyles';
 import { PlateView } from '@/ui/PlateView';
 import { Rule } from '@/ui/Rule';
 import { Txt } from '@/ui/Txt';
+import { syncWidgets } from '@/widget/sync';
 
 const SIDE_LABEL = { left: '왼쪽', right: '오른쪽', both: '양쪽 함께', center: '' } as const;
 
@@ -106,6 +107,7 @@ export function GuideView({ routineRef, title, steps, rounds = 1 }: GuideViewPro
       setSaving(true);
       try {
         await insertSession(db, log);
+        void syncWidgets(db);
         if (!isMounted.current) return;
         setFailedLog(null);
         router.replace({ pathname: '/done', params: { sessionId: log.id } });

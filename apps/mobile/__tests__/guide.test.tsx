@@ -6,12 +6,14 @@ import { router } from 'expo-router';
 import { AccessibilityInfo, AppState, BackHandler, Platform, StyleSheet } from 'react-native';
 import GuideScreen from '../app/guide/[id]';
 import { useSettings } from '@/state/settings';
+import { syncWidgets } from '@/widget/sync';
 
 jest.mock('@/db/DbProvider', () => {
   const db = {};
   return { useDb: () => db };
 });
 jest.mock('@ggookggook/store', () => ({ insertSession: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('@/widget/sync', () => ({ syncWidgets: jest.fn().mockResolvedValue(undefined) }));
 jest.mock('expo-keep-awake', () => ({ useKeepAwake: jest.fn() }));
 jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(),
@@ -81,6 +83,7 @@ it('guides through each side of each point and records the session', async () =>
     jest.advanceTimersByTime(180_000);
   });
   expect(mocked.insertSession).toHaveBeenCalledWith({}, expect.objectContaining({ routine: { kind: 'symptom', symptomId: 'food_stagnation' }, durationSeconds: 240, feedback: null }));
+  expect(syncWidgets).toHaveBeenCalledWith({});
   expect(router.replace).toHaveBeenCalledWith({ pathname: '/done', params: { sessionId: expect.any(String) } });
 });
 
@@ -130,6 +133,7 @@ it('shows a retry option when saving the session fails, and recovers on retry', 
   });
   expect(screen.getByText('기록을 저장하지 못했어요.')).toBeTruthy();
   expect(router.replace).not.toHaveBeenCalled();
+  expect(syncWidgets).not.toHaveBeenCalled();
   expect(consoleError).toHaveBeenCalled();
 
   await fireEvent.press(screen.getByRole('button', { name: '다시 저장' }));

@@ -6,6 +6,7 @@ import * as reminderModule from '@/notifications/reminder';
 import { useFavorites } from '@/state/favorites';
 import { useOnboarding } from '@/state/onboarding';
 import { useSettings } from '@/state/settings';
+import { useWidgetSync } from '@/widget/useWidgetSync';
 
 jest.mock('@/db/DbProvider', () => {
   const db = {};
@@ -30,6 +31,7 @@ jest.mock('expo-router', () => ({
     },
   ),
 }));
+jest.mock('@/widget/useWidgetSync', () => ({ useWidgetSync: jest.fn() }));
 jest.mock('@/notifications/reminder', () => ({
   getLastNotificationRoute: jest.fn(() => null),
   addReminderResponseListener: jest.fn(() => ({ remove: jest.fn() })),
@@ -105,4 +107,9 @@ it('disables the iOS swipe-back gesture on the routine editor screens', async ()
   expect(mockScreenProps.get('routine/new')?.options).toEqual(expect.objectContaining({ gestureEnabled: false }));
   expect(mockScreenProps.get('routine/[id]/edit')?.options).toEqual(expect.objectContaining({ gestureEnabled: false }));
   expect(mockScreenProps.get('routine/[id]/index')?.options).toBeUndefined();
+});
+
+it('keeps the home-screen widget in sync with the open database', async () => {
+  await render(<Routes />);
+  expect(useWidgetSync).toHaveBeenCalledWith({});
 });

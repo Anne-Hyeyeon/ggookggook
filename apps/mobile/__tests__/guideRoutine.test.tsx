@@ -9,6 +9,7 @@ jest.mock('@/db/DbProvider', () => {
   const db = {};
   return { useDb: () => db };
 });
+jest.mock('@/widget/sync', () => ({ syncWidgets: jest.fn().mockResolvedValue(undefined) }));
 jest.mock('@ggookggook/store', () => ({
   getUserRoutine: jest.fn(),
   insertSession: jest.fn().mockResolvedValue(undefined),
