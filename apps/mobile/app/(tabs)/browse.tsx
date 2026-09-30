@@ -33,6 +33,7 @@ function BodyMapImage({ map, width, height }: { map: BodyMap; width: number; hei
     <View style={[styles.mapFrame, { width, height }]}>
       {image !== null && (
         <Image
+          testID="body-map-image"
           source={image}
           style={StyleSheet.absoluteFill}
           contentFit="contain"

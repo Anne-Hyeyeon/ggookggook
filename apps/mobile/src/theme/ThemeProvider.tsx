@@ -1,14 +1,14 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
 import { useSettings } from '@/state/settings';
-import { darkColors, lightColors, type ColorScheme, type Colors } from '@/theme';
+import { colorSchemes, type ColorScheme, type Colors } from '@/theme';
 
 interface ThemeContextValue {
   scheme: ColorScheme;
   colors: Colors;
 }
 
-const defaultTheme: ThemeContextValue = { scheme: 'light', colors: lightColors };
+const defaultTheme: ThemeContextValue = { scheme: 'light', colors: colorSchemes.light };
 
 // Exported so a test can render a forced scheme directly (`<ThemeContext.Provider value={...}>`)
 // without going through settings/system-scheme plumbing. The default value (light) is what any
@@ -21,7 +21,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const appearance = useSettings((state) => state.settings.appearance);
   const value = useMemo<ThemeContextValue>(() => {
     const scheme: ColorScheme = appearance === 'system' ? (systemScheme === 'dark' ? 'dark' : 'light') : appearance;
-    return { scheme, colors: scheme === 'dark' ? darkColors : lightColors };
+    return { scheme, colors: colorSchemes[scheme] };
   }, [appearance, systemScheme]);
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
