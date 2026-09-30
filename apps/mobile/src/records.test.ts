@@ -1,19 +1,13 @@
 import type { SessionLog } from '@ggookggook/shared';
 import type { RoutineStats } from '@ggookggook/store';
-import {
-  calendarDays,
-  calendarWeekdayLabels,
-  recordMinutes,
-  recordsWindowStart,
-  startOfWeek,
-  thisAndLastWeek,
-  topRoutines,
-} from './records';
+import { CALENDAR_WEEKDAYS, calendarDays, recordMinutes, recordsWindowStart, startOfWeek, thisAndLastWeek, topRoutines } from './records';
 
 // A fixed anchor so every test is deterministic regardless of the real clock: 2026-09-28 is a
 // Monday, so the surrounding week (Mon 09-28 .. Sun 10-04) and the day before it (Sun 09-27)
 // give known weekday boundaries to assert against.
 const THURSDAY = new Date(2026, 9, 1, 15, 30); // Thu 2026-10-01, 15:30 local
+const MONDAY = new Date(2026, 8, 28, 8, 0); // Mon 2026-09-28, 08:00 local (start of THURSDAY's week)
+const SUNDAY = new Date(2026, 9, 4, 20, 0); // Sun 2026-10-04, 20:00 local (end of THURSDAY's week)
 
 const log = (id: string, completedAt: Date, overrides: Partial<SessionLog> = {}): SessionLog => ({
   id,
@@ -45,15 +39,43 @@ describe('recordsWindowStart', () => {
   });
 });
 
+describe('CALENDAR_WEEKDAYS', () => {
+  it('is the fixed Monday-first header, independent of `now`', () => {
+    expect(CALENDAR_WEEKDAYS).toEqual(['월', '화', '수', '목', '금', '토', '일']);
+  });
+});
+
 describe('calendarDays', () => {
-  it('returns 28 days, oldest first, ending on the local day of `now`', () => {
+  it('returns 28 days (4 full Monday..Sunday weeks), oldest first, the last row being the week containing `now`', () => {
     const days = calendarDays([], THURSDAY);
     expect(days).toHaveLength(28);
-    expect(days[0]!.date).toEqual(new Date(2026, 8, 4));
-    expect(days[27]!.date).toEqual(new Date(2026, 9, 1));
+    expect(days[0]!.date).toEqual(new Date(2026, 8, 7)); // 3 Mondays before THURSDAY's week
+    expect(days[21]!.date).toEqual(new Date(2026, 8, 28)); // Monday of THURSDAY's own week
   });
 
-  it('buckets sessions by local day, counting multiple sessions and flagging a 나아졌어요 day', () => {
+  it('renders every day up to and including `now` as real, and nothing after it', () => {
+    const days = calendarDays([], THURSDAY); // Thursday: index 24 of the grid
+    expect(days.slice(0, 25).every((day) => day !== null)).toBe(true);
+    expect(days.slice(25)).toEqual([null, null, null]);
+    expect(days[24]!.isToday).toBe(true);
+    expect(days.filter((day) => day?.isToday).length).toBe(1);
+  });
+
+  it('renders every day as real, no blanks, when `now` is a Sunday (the last day of its week)', () => {
+    const days = calendarDays([], SUNDAY);
+    expect(days.every((day) => day !== null)).toBe(true);
+    expect(days[27]!.date).toEqual(new Date(2026, 9, 4));
+    expect(days[27]!.isToday).toBe(true);
+  });
+
+  it('renders only today as real and the rest of the current week as blank, when `now` is a Monday', () => {
+    const days = calendarDays([], MONDAY);
+    expect(days[21]!.date).toEqual(new Date(2026, 8, 28));
+    expect(days[21]!.isToday).toBe(true);
+    expect(days.slice(22)).toEqual([null, null, null, null, null, null]);
+  });
+
+  it('buckets sessions by local day across a month boundary, counting multiple sessions and flagging a 나아졌어요 day', () => {
     const days = calendarDays(
       [
         log('a', new Date(2026, 9, 1, 9, 0)),
@@ -62,28 +84,18 @@ describe('calendarDays', () => {
       ],
       THURSDAY,
     );
-    const today = days[27]!;
+    const today = days[24]!; // Thu 2026-10-01
     expect(today.count).toBe(2);
     expect(today.hasBetter).toBe(true);
-    const yesterday = days[26]!;
+    const yesterday = days[23]!; // Wed 2026-09-30
     expect(yesterday.count).toBe(1);
     expect(yesterday.hasBetter).toBe(false);
     expect(days[0]!.count).toBe(0);
   });
 
-  it('ignores a session outside the 28-day window', () => {
+  it('ignores a session outside the calendar window', () => {
     const days = calendarDays([log('old', new Date(2026, 7, 1))], THURSDAY);
-    expect(days.every((day) => day.count === 0)).toBe(true);
-  });
-});
-
-describe('calendarWeekdayLabels', () => {
-  it('rotates so the last label is always the weekday of `now`', () => {
-    expect(calendarWeekdayLabels(THURSDAY)).toEqual(['금', '토', '일', '월', '화', '수', '목']);
-  });
-
-  it('reads in the familiar 월..일 order when `now` is a Sunday', () => {
-    expect(calendarWeekdayLabels(new Date(2026, 9, 4))).toEqual(['월', '화', '수', '목', '금', '토', '일']);
+    expect(days.every((day) => day === null || day.count === 0)).toBe(true);
   });
 });
 

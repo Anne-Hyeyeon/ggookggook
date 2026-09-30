@@ -8,8 +8,8 @@ import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
 import { formatDateLine } from '@/format';
 import {
+  CALENDAR_WEEKDAYS,
   calendarDays,
-  calendarWeekdayLabels,
   recordMinutes,
   recordsWindowStart,
   thisAndLastWeek,
@@ -29,14 +29,22 @@ const TOP_ROUTINES_LIMIT = 5;
 const EMPTY_TEXT = '아직 기록이 없어요.';
 
 interface Data {
+  // Captured once per load and reused for both the fetch window and every render-time
+  // helper below (thisAndLastWeek/calendarDays), instead of each calling `new Date()`
+  // separately: keeps the fetched range and what's derived from it from ever disagreeing
+  // (e.g. a render landing on the other side of local midnight from the fetch).
+  now: Date;
   sessions: SessionLog[];
   stats: RoutineStats[];
   userRoutines: Map<string, UserRoutine | null>;
 }
 
 // A stable reference so a repeated failed refetch sets state to the same value every time,
-// letting React bail out via Object.is instead of looping on a fresh object each time.
-const EMPTY_DATA: Data = { sessions: [], stats: [], userRoutines: new Map() };
+// letting React bail out via Object.is instead of looping on a fresh object each time. The
+// fixed placeholder `now` here never actually reaches the calendar/summary math: with an
+// empty session list, `isEmpty` is true regardless of `now`, so the render always takes the
+// empty-state branch for this value.
+const EMPTY_DATA: Data = { now: new Date(0), sessions: [], stats: [], userRoutines: new Map() };
 
 function routineRefKey(ref: TopRoutine['ref']): string {
   return ref.kind === 'symptom' ? `symptom:${ref.symptomId}` : `user:${ref.routineId}`;
@@ -60,7 +68,7 @@ export default function RecordsScreen() {
           const userRoutineIds = [...new Set(stats.flatMap((stat) => (stat.ref.kind === 'user' ? [stat.ref.routineId] : [])))];
           const routines = await Promise.all(userRoutineIds.map((id) => getUserRoutine(db, id)));
           if (!active) return;
-          setData({ sessions, stats, userRoutines: new Map(userRoutineIds.map((id, i) => [id, routines[i] ?? null])) });
+          setData({ now, sessions, stats, userRoutines: new Map(userRoutineIds.map((id, i) => [id, routines[i] ?? null])) });
         } catch (error) {
           console.error('Failed to load records', error);
           if (active) setData(EMPTY_DATA);
@@ -72,11 +80,9 @@ export default function RecordsScreen() {
     }, [db]),
   );
 
-  const now = new Date();
-  const { thisWeek, lastWeek } = thisAndLastWeek(data.sessions, now);
+  const { thisWeek, lastWeek } = thisAndLastWeek(data.sessions, data.now);
   const isEmpty = thisWeek.count === 0 && lastWeek.count === 0;
-  const days = calendarDays(data.sessions, now);
-  const weekdayLabels = calendarWeekdayLabels(now);
+  const days = calendarDays(data.sessions, data.now);
   // Resolved up front (not inside each row) so a stats entry whose symptom no longer
   // exists in content is dropped before deciding whether the "자주 한 루틴" section itself
   // has anything to show, rather than leaving a heading over zero rows.
@@ -101,20 +107,22 @@ export default function RecordsScreen() {
           <>
             <View style={styles.summary}>
               <Txt variant="heading">{`이번 주 ${thisWeek.count}번 · ${recordMinutes(thisWeek.totalSeconds)}분`}</Txt>
-              <Txt variant="sub">{`지난주 ${lastWeek.count}번 · ${recordMinutes(lastWeek.totalSeconds)}분`}</Txt>
+              <Txt variant="sub">
+                {lastWeek.count === 0 ? '지난주에는 기록이 없어요.' : `지난주 ${lastWeek.count}번 · ${recordMinutes(lastWeek.totalSeconds)}분`}
+              </Txt>
             </View>
 
             <View>
               <View style={styles.weekdayRow}>
-                {weekdayLabels.map((label, index) => (
+                {CALENDAR_WEEKDAYS.map((label, index) => (
                   <Txt key={`weekday-${index}`} variant="caption" style={styles.weekdayLabel}>
                     {label}
                   </Txt>
                 ))}
               </View>
-              <View style={styles.calendarGrid} accessibilityRole="list" accessibilityLabel="최근 28일 기록">
-                {days.map((day) => (
-                  <CalendarCell key={day.date.toISOString()} day={day} />
+              <View style={styles.calendarGrid} accessibilityRole="list" accessibilityLabel="최근 4주 기록">
+                {days.map((day, index) => (
+                  <CalendarCell key={day?.date.toISOString() ?? `blank-${index}`} day={day} />
                 ))}
               </View>
             </View>
@@ -137,20 +145,26 @@ export default function RecordsScreen() {
 // A count of 0 draws a faint outline dot (still visible, so the grid reads as a full
 // calendar rather than having gaps); each additional session steps the dot up in size.
 function dotSize(count: number): number {
-  if (count <= 0) return 6;
-  if (count === 1) return 10;
-  if (count === 2) return 14;
-  return 18;
+  if (count <= 0) return 4;
+  if (count === 1) return 7;
+  if (count === 2) return 10;
+  return 13;
 }
 
-function CalendarCell({ day }: { day: CalendarDay }) {
+// `day` is null for a day after `now` (the remainder of the current week, which hasn't
+// happened yet): rendered as a bare, unlabeled cell, not a dot claiming "0 sessions" for a
+// day that hasn't occurred, and not reachable by screen readers as a day at all.
+function CalendarCell({ day }: { day: CalendarDay | null }) {
   const styles = useThemedStyles(makeStyles);
+  if (day === null) return <View style={styles.dayCell} />;
   const size = dotSize(day.count);
   const label = `${formatDateLine(day.date)}, ${day.count}번${day.hasBetter ? ', 나아졌어요를 남긴 날' : ''}`;
   return (
     <View style={styles.dayCell} accessible accessibilityLabel={label}>
-      <View style={[styles.dotRing, day.hasBetter && styles.dotRingActive]}>
-        <View style={[styles.dot, { width: size, height: size }, day.count === 0 && styles.dotEmpty]} />
+      <View style={[styles.todayRing, day.isToday && styles.todayRingActive]}>
+        <View style={[styles.dotRing, day.hasBetter && styles.dotRingActive]}>
+          <View style={[styles.dot, { width: size, height: size }, day.count === 0 && styles.dotEmpty]} />
+        </View>
       </View>
     </View>
   );
@@ -194,10 +208,22 @@ const makeStyles = (colors: Colors) =>
     weekdayRow: { flexDirection: 'row' },
     weekdayLabel: { width: `${100 / 7}%`, textAlign: 'center' },
     calendarGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-    dayCell: { width: `${100 / 7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center' },
+    dayCell: { width: `${100 / 7}%`, height: space(9), alignItems: 'center', justifyContent: 'center' },
+    // The 나아졌어요 ring (accent) and the today ring (ink) nest around the same dot, so a
+    // day that's both today and has a 나아졌어요 shows both at once.
+    todayRing: {
+      width: 26,
+      height: 26,
+      borderRadius: 9999,
+      borderWidth: 1,
+      borderColor: 'transparent',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    todayRingActive: { borderColor: colors.ink },
     dotRing: {
-      width: 22,
-      height: 22,
+      width: 19,
+      height: 19,
       borderRadius: 9999,
       borderWidth: 1.5,
       borderColor: 'transparent',

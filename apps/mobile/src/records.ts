@@ -1,5 +1,6 @@
 import type { SessionLog, SessionRoutineRef } from '@ggookggook/shared';
 import type { RoutineStats } from '@ggookggook/store';
+import { localDayKey } from '@/format';
 
 export interface WeekTotals {
   count: number;
@@ -10,6 +11,7 @@ export interface CalendarDay {
   date: Date;
   count: number;
   hasBetter: boolean;
+  isToday: boolean;
 }
 
 export interface TopRoutine {
@@ -20,7 +22,10 @@ export interface TopRoutine {
 }
 
 const DAY_MS = 86_400_000;
-const WEEKDAY_KO_MONDAY_FIRST = ['월', '화', '수', '목', '금', '토', '일'];
+
+// Fixed Monday-first header for the 4-week calendar grid (see `calendarDays`): unlike a
+// rolling column order, a real calendar always reads 월..일 left to right.
+export const CALENDAR_WEEKDAYS: readonly string[] = ['월', '화', '수', '목', '금', '토', '일'];
 
 function localMidnight(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -29,10 +34,6 @@ function localMidnight(date: Date): Date {
 // Monday-indexed weekday (0=월 ... 6=일), unlike Date#getDay's Sunday-indexed 0-6.
 function mondayIndex(date: Date): number {
   return (date.getDay() + 6) % 7;
-}
-
-function localDayKey(date: Date): string {
-  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 }
 
 // Monday 00:00 local of the week containing `now`.
@@ -47,46 +48,34 @@ export function recordsWindowStart(now: Date): Date {
   return new Date(localMidnight(now).getTime() - 27 * DAY_MS);
 }
 
-// 28 local calendar days, oldest first, ending on `now`'s local day.
-//
-// The grid's columns roll with `now`'s weekday always last, rather than a fixed
-// Monday-first layout: a fixed Mon..Sun grid can only end exactly on today, as a clean
-// 4x7 rectangle with no dropped or blank days, when today happens to be a Sunday. Rolling
-// the columns (see `calendarWeekdayLabels`, built from the same rotation) keeps every one
-// of the 28 real days, with no padding, for any weekday `now` falls on.
-export function calendarDays(sessions: SessionLog[], now: Date): CalendarDay[] {
+// The 4-week dot calendar: 4 full Monday..Sunday rows, oldest first, the last row being
+// the week containing `now` ("이번 주", matching the summary line above it). A day after
+// `now`'s local day (the remainder of the current week, which hasn't happened yet) is
+// `null`, not a zero-count day: the caller renders it as an empty cell with no dot and no
+// accessibility label, rather than claiming "0 sessions" for a day that hasn't occurred.
+export function calendarDays(sessions: SessionLog[], now: Date): (CalendarDay | null)[] {
   const today = localMidnight(now);
+  const gridStart = new Date(startOfWeek(now).getTime() - 21 * DAY_MS);
   const byDay = new Map<string, { count: number; hasBetter: boolean }>();
   for (const session of sessions) {
-    const timestamp = new Date(session.completedAt ?? session.startedAt);
-    const key = localDayKey(localMidnight(timestamp));
+    const timestamp = session.completedAt ?? session.startedAt;
+    const key = localDayKey(timestamp);
     const entry = byDay.get(key) ?? { count: 0, hasBetter: false };
     entry.count += 1;
     if (session.feedback === 'better') entry.hasBetter = true;
     byDay.set(key, entry);
   }
-  const days: CalendarDay[] = [];
-  for (let i = 27; i >= 0; i--) {
-    const date = new Date(today.getTime() - i * DAY_MS);
-    const entry = byDay.get(localDayKey(date)) ?? { count: 0, hasBetter: false };
-    days.push({ date, count: entry.count, hasBetter: entry.hasBetter });
+  const days: (CalendarDay | null)[] = [];
+  for (let i = 0; i < 28; i++) {
+    const date = new Date(gridStart.getTime() + i * DAY_MS);
+    if (date.getTime() > today.getTime()) {
+      days.push(null);
+      continue;
+    }
+    const entry = byDay.get(localDayKey(date.toISOString())) ?? { count: 0, hasBetter: false };
+    days.push({ date, count: entry.count, hasBetter: entry.hasBetter, isToday: date.getTime() === today.getTime() });
   }
   return days;
-}
-
-// `i` is always taken mod 7 by every caller, so this can never actually miss; the throw
-// just keeps the return type `string` instead of `string | undefined`.
-function requireWeekdayLabel(index: number): string {
-  const label = WEEKDAY_KO_MONDAY_FIRST[index];
-  if (label === undefined) throw new Error(`Invalid weekday index: ${index}`);
-  return label;
-}
-
-// Weekday header labels for `calendarDays`' rolling column order: 7 labels, in column
-// order, with the last one always `now`'s own weekday.
-export function calendarWeekdayLabels(now: Date): string[] {
-  const todayIndex = mondayIndex(localMidnight(now));
-  return Array.from({ length: 7 }, (_, i) => requireWeekdayLabel((todayIndex + 1 + i) % 7));
 }
 
 // Half-open [from, toExclusive): callers pick `toExclusive` so a boundary instant (the

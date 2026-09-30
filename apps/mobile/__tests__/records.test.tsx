@@ -97,6 +97,15 @@ describe('summary', () => {
     expect(screen.getByText('지난주 1번 · 5분')).toBeTruthy();
     expect(screen.queryByText(/%/)).toBeNull();
   });
+
+  it('reads 지난주에는 기록이 없어요 instead of a zeroed line when last week has no sessions', async () => {
+    mocked.listSessionsBetween.mockResolvedValue([log('a', thisWeekSession(9))]);
+
+    await render(<RecordsScreen />);
+
+    expect(await screen.findByText('지난주에는 기록이 없어요.')).toBeTruthy();
+    expect(screen.queryByText('지난주 0번 · 0분')).toBeNull();
+  });
 });
 
 describe('calendar', () => {
@@ -107,7 +116,7 @@ describe('calendar', () => {
     await render(<RecordsScreen />);
     await screen.findByText(/이번 주/);
 
-    expect(screen.getByLabelText('최근 28일 기록')).toBeTruthy();
+    expect(screen.getByLabelText('최근 4주 기록')).toBeTruthy();
     expect(screen.getByLabelText(`${formatDateLine(session)}, 1번, 나아졌어요를 남긴 날`)).toBeTruthy();
   });
 });
