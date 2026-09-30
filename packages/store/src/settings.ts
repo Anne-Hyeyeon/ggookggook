@@ -37,7 +37,7 @@ function clampInt(value: number, min: number, max: number): number {
 }
 
 function clampAppearance(value: unknown): Appearance {
-  return APPEARANCE_VALUES.includes(value as Appearance) ? (value as Appearance) : DEFAULT_SETTINGS.appearance;
+  return APPEARANCE_VALUES.find((option) => option === value) ?? DEFAULT_SETTINGS.appearance;
 }
 
 function clampMinute(value: number): number {
