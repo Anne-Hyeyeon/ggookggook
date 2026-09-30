@@ -90,33 +90,45 @@ function startServer() {
   });
 }
 
+// The step ids the dark pass shoots (Task 1 of the phase 2D plan): a small representative
+// sample across the flow, not every screen, since the dark pass just needs enough coverage
+// to spot-check tokens/tinting, not a full duplicate set of every light shot.
+const DARK_IDS = new Set(['03', '05', '06', '08', '12', '14', '20']);
+
 async function withFontsReady(page) {
   await page.evaluate(() => document.fonts.ready);
 }
 
-async function shoot(page, name) {
+// `name` always keeps its light-pass spelling (e.g. '03-today.png') at every call site,
+// regardless of which pass is running: in the light pass it's written as-is; in the dark
+// pass, only the ids in DARK_IDS are written at all, as `dark-<id>.png` (matching the plan's
+// naming), and every other call is a deliberate no-op rather than a second full shot set.
+async function shoot(page, name, variant = 'light') {
+  const id = name.slice(0, 2);
+  if (variant === 'dark' && !DARK_IDS.has(id)) return;
+  const outName = variant === 'dark' ? `dark-${id}.png` : name;
   await withFontsReady(page);
-  await page.screenshot({ path: path.join(OUT_DIR, name) });
-  console.log(`[screens] wrote ${name}`);
+  await page.screenshot({ path: path.join(OUT_DIR, outName) });
+  console.log(`[screens] wrote ${outName}`);
 }
 
-async function runFlow(page) {
+async function runFlow(page, variant = 'light') {
   await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'load' });
 
   // 1. Welcome, step 1 (intro)
   await page.getByRole('button', { name: '다음' }).waitFor();
-  await shoot(page, '01-welcome.png');
+  await shoot(page, '01-welcome.png', variant);
 
   // 2. Welcome, step 2 (disclaimer)
   await page.getByRole('button', { name: '다음' }).click();
   await page.getByRole('button', { name: '확인했어요' }).waitFor();
-  await shoot(page, '02-disclaimer.png');
+  await shoot(page, '02-disclaimer.png', variant);
 
   // 3. Today
   await page.getByRole('button', { name: '확인했어요' }).click();
   const search = page.getByPlaceholder('증상이나 혈자리 이름');
   await search.waitFor();
-  await shoot(page, '03-today.png');
+  await shoot(page, '03-today.png', variant);
 
   // 22. Today, with a group chip selected (목·어깨·허리): a flat, usage-sorted list of just
   // that group, no section headers. Waits on 속이 울렁거릴 때 (digestion, and never one of
@@ -126,7 +138,7 @@ async function runFlow(page) {
   // a safe wait condition here.
   await page.getByRole('button', { name: '목·어깨·허리' }).click();
   await page.waitForFunction(() => !document.body.innerText.includes('속이 울렁거릴 때'));
-  await shoot(page, '22-today-filter.png');
+  await shoot(page, '22-today-filter.png', variant);
   await page.getByRole('button', { name: '전체' }).click();
   await page.getByText('속이 울렁거릴 때', { exact: true }).waitFor();
 
@@ -136,36 +148,36 @@ async function runFlow(page) {
   await page.getByRole('tab', { name: '내 루틴' }).click();
   await page.getByText('즐겨찾기를 누른 혈자리가 여기에 모여요.').waitFor();
   await page.getByText('오늘 탭에서 불편한 곳을 골라 보세요.').waitFor();
-  await shoot(page, '15-mine-empty.png');
+  await shoot(page, '15-mine-empty.png', variant);
   await page.getByRole('tab', { name: '오늘' }).click();
   await search.waitFor();
 
   // 4. Search "잠이 안" (matches the 잠이 안 올 때 symptom)
   await search.fill('잠이 안');
   await page.getByText('잠이 안 올 때', { exact: true }).waitFor();
-  await shoot(page, '04-search.png');
+  await shoot(page, '04-search.png', variant);
 
   // 5. Symptom detail for headache, found via its old disease-name alias (두통)
   await search.fill('두통');
   await page.getByText('머리가 아플 때', { exact: true }).waitFor();
   await page.getByText('머리가 아플 때', { exact: true }).click();
   await page.getByRole('button', { name: '시작' }).waitFor();
-  await shoot(page, '05-symptom.png');
+  await shoot(page, '05-symptom.png', variant);
 
   // 6 (23). Guide, get-ready countdown ("곧 시작해요 N") before the first press. On by
   // default; 바로 시작 skips it immediately.
   await page.getByRole('button', { name: '시작' }).click();
   await page.waitForURL('**/guide/**');
   await page.getByRole('button', { name: '바로 시작' }).waitFor();
-  await shoot(page, '23-guide-ready.png');
+  await shoot(page, '23-guide-ready.png', variant);
 
   // 6. Guide, first frame (press phase), with the 이전/재생/다음 controls row
   await page.getByRole('button', { name: '바로 시작' }).click();
-  await shoot(page, '06-guide-press.png');
+  await shoot(page, '06-guide-press.png', variant);
 
   // 7. Guide, a rest phase a few (sped-up) seconds in
   await page.waitForFunction(() => document.body.innerText.includes('잠시 떼세요'), null, { timeout: 10_000 });
-  await shoot(page, '07-guide-rest.png');
+  await shoot(page, '07-guide-rest.png', variant);
 
   // 8. Done, after the routine finishes. Feedback is given here (rather than after the
   // shot) so 08-done.png also shows the post-feedback acknowledgement and the selected
@@ -173,7 +185,7 @@ async function runFlow(page) {
   await page.waitForURL('**/done**', { timeout: 60_000 });
   await page.getByRole('button', { name: '나아졌어요' }).click();
   await page.getByText('기록해 둘게요.').waitFor();
-  await shoot(page, '08-done.png');
+  await shoot(page, '08-done.png', variant);
 
   // 9. Today again, showing the just-finished session as the recent row (with its
   // "다시 하기" affordance) and the resulting "나아졌어요를 1번 남겼어요" line.
@@ -182,30 +194,30 @@ async function runFlow(page) {
   await page.getByRole('button', { name: '처음으로' }).click();
   await search.fill('');
   await page.getByText('나아졌어요를 1번 남겼어요').waitFor();
-  await shoot(page, '09-today-after.png');
+  await shoot(page, '09-today-after.png', variant);
 
   // 10. Settings, opened from the Today header
   await page.getByRole('button', { name: '설정' }).click();
   await page.getByText('앱 정보').waitFor();
-  await shoot(page, '10-settings.png');
+  await shoot(page, '10-settings.png', variant);
 
   // 11. 내 루틴 (mine) tab, showing the just-finished session as a history row grouped
   // under "오늘" with its time, duration, and the "나아졌어요" feedback recorded in step 8.
   await page.getByRole('button', { name: '뒤로' }).click();
   await page.getByRole('tab', { name: '내 루틴' }).click();
   await page.getByText('나아졌어요', { exact: true }).waitFor();
-  await shoot(page, '11-mine.png');
+  await shoot(page, '11-mine.png', variant);
 
   // 12. 찾아보기 (browse) tab, front-side body map with its region rows below
   await page.getByRole('tab', { name: '찾아보기' }).click();
   await page.getByText('손 · 혈자리 5곳', { exact: true }).waitFor();
-  await shoot(page, '12-browse.png');
+  await shoot(page, '12-browse.png', variant);
 
   // 13. Region detail for 손, listing acupoints from both linked plates
   // (손목 안쪽 and 손등)
   await page.getByText('손 · 혈자리 5곳', { exact: true }).click();
   await page.getByText('합곡', { exact: true }).waitFor();
-  await shoot(page, '13-region-hand.png');
+  await shoot(page, '13-region-hand.png', variant);
 
   // 14. Acupoint detail for 합곡, including its routines, pregnancy caution, and the
   // favorite toggle turned on (top right, next to 뒤로)
@@ -213,7 +225,7 @@ async function runFlow(page) {
   await page.getByText('이 혈자리를 쓰는 루틴').waitFor();
   await page.getByRole('button', { name: '즐겨찾기에 추가' }).click();
   await page.getByRole('button', { name: '즐겨찾기에서 빼기' }).waitFor();
-  await shoot(page, '14-acupoint-hapgok.png');
+  await shoot(page, '14-acupoint-hapgok.png', variant);
 
   // 15-16. A new routine, named and given two acupoints through the picker. 내 루틴's own
   // 새 루틴 만들기 row leads here too (see step 15's empty-state shot above); this deep-links
@@ -231,7 +243,7 @@ async function runFlow(page) {
   await page.getByText('혈자리 고르기').waitFor();
   await page.getByRole('button', { name: /^내관,/ }).click();
   await page.getByText('내관').first().waitFor();
-  await shoot(page, '16-routine-editor.png');
+  await shoot(page, '16-routine-editor.png', variant);
 
   // 17. The picker again, this time with a search typed, showing the filtered result
   await page.getByRole('button', { name: '혈자리 추가' }).click();
@@ -239,7 +251,7 @@ async function runFlow(page) {
   const pickerSearch = page.getByPlaceholder('혈자리 이름, 한자, 영문');
   await pickerSearch.fill('족');
   await page.getByText('족삼리').waitFor();
-  await shoot(page, '17-routine-picker.png');
+  await shoot(page, '17-routine-picker.png', variant);
 
   // 18. Save the routine (discarding the unpicked picker search above) and land on its
   // new preview: numbers, serif names, seconds, 시작/편집/지우기.
@@ -248,7 +260,7 @@ async function runFlow(page) {
   await page.waitForURL('**/routine/**');
   await page.getByRole('button', { name: '시작' }).waitFor();
   await page.getByRole('button', { name: '지우기' }).waitFor();
-  await shoot(page, '18-routine-preview.png');
+  await shoot(page, '18-routine-preview.png', variant);
 
   // 19. Acupoint detail for 족삼리, with the 루틴에 추가 sheet open: my routines (the one
   // just created, above) with step counts, and 새 루틴 만들기.
@@ -257,7 +269,7 @@ async function runFlow(page) {
   await page.getByRole('button', { name: '루틴에 추가' }).click();
   await page.getByRole('button', { name: '새 루틴 만들기' }).waitFor();
   await page.getByText('아침 루틴').waitFor();
-  await shoot(page, '19-add-to-routine.png');
+  await shoot(page, '19-add-to-routine.png', variant);
 
   // 20. 내 루틴 tab, fully populated: 합곡 favorited (step 14), 아침 루틴 created and now
   // holding all three added acupoints (steps 16-19), and the finished headache routine
@@ -266,7 +278,7 @@ async function runFlow(page) {
   await page.getByText('아침 루틴').waitFor();
   await page.getByText('합곡', { exact: true }).waitFor();
   await page.getByText('나아졌어요', { exact: true }).waitFor();
-  await shoot(page, '20-mine-full.png');
+  await shoot(page, '20-mine-full.png', variant);
 
   // 21. Settings, scrolled to the 알림 section: the daily-reminder switch, off and disabled on
   // web (with its "이 기기에서는 알림을 쓸 수 없어요." note). The time/minute/routine rows
@@ -274,7 +286,7 @@ async function runFlow(page) {
   await page.goto(`http://127.0.0.1:${PORT}/settings`, { waitUntil: 'load' });
   await page.getByText('이 기기에서는 알림을 쓸 수 없어요.').waitFor();
   await page.getByText('이 기기에서는 알림을 쓸 수 없어요.').scrollIntoViewIfNeeded();
-  await shoot(page, '21-settings-reminder.png');
+  await shoot(page, '21-settings-reminder.png', variant);
 
   // 24. Guide with two rounds, via a direct '?rounds=2' link (Task 4's repeat picker isn't
   // built yet). 다음 (skips ahead a point at a time, no waiting on the timer) is pressed
@@ -287,7 +299,7 @@ async function runFlow(page) {
     await page.getByRole('button', { name: '다음' }).click();
   }
   await page.getByText('2/2회차 · 1 / 3', { exact: true }).waitFor();
-  await shoot(page, '24-guide-round.png');
+  await shoot(page, '24-guide-round.png', variant);
 }
 
 async function main() {
@@ -298,32 +310,39 @@ async function main() {
   const server = await startServer();
   const browser = await chromium.launch();
   try {
-    // Fresh, isolated storage (OPFS/IndexedDB/localStorage) per run: a new context
-    // gets its own ephemeral profile, so every run starts at the welcome screen.
-    const context = await browser.newContext({
-      viewport: { width: 390, height: 844 },
-      deviceScaleFactor: 2,
-    });
-    // expo-keep-awake's web Wake Lock request never resolves under headless/automated
-    // Chromium, which otherwise surfaces as an "Uncaught Error" dev overlay covering
-    // the done screen when the guide screen unmounts. This stub is scoped to this
-    // script only; it does not change app code or native behavior.
-    await context.addInitScript(() => {
-      if (window.navigator.wakeLock) {
-        window.navigator.wakeLock.request = async () => ({
-          released: false,
-          type: 'screen',
-          release() {
-            this.released = true;
-          },
-          addEventListener() {},
-          removeEventListener() {},
-        });
-      }
-    });
-    const page = await context.newPage();
-    page.setDefaultTimeout(15_000);
-    await runFlow(page);
+    // The dark pass reruns the whole flow under a `colorScheme: 'dark'` context: the app's
+    // Settings.appearance defaults to 'system', so react-native-web's Appearance module picks
+    // this media-feature override up on its own, with no extra flag or app code needed here.
+    for (const variant of ['light', 'dark']) {
+      // Fresh, isolated storage (OPFS/IndexedDB/localStorage) per run: a new context
+      // gets its own ephemeral profile, so every run starts at the welcome screen.
+      const context = await browser.newContext({
+        viewport: { width: 390, height: 844 },
+        deviceScaleFactor: 2,
+        colorScheme: variant === 'dark' ? 'dark' : 'light',
+      });
+      // expo-keep-awake's web Wake Lock request never resolves under headless/automated
+      // Chromium, which otherwise surfaces as an "Uncaught Error" dev overlay covering
+      // the done screen when the guide screen unmounts. This stub is scoped to this
+      // script only; it does not change app code or native behavior.
+      await context.addInitScript(() => {
+        if (window.navigator.wakeLock) {
+          window.navigator.wakeLock.request = async () => ({
+            released: false,
+            type: 'screen',
+            release() {
+              this.released = true;
+            },
+            addEventListener() {},
+            removeEventListener() {},
+          });
+        }
+      });
+      const page = await context.newPage();
+      page.setDefaultTimeout(15_000);
+      await runFlow(page, variant);
+      await context.close();
+    }
   } finally {
     await browser.close();
     await new Promise((resolve) => server.close(resolve));
