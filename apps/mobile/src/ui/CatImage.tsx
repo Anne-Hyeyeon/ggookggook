@@ -11,11 +11,7 @@ interface CatImageProps {
   decorative?: boolean;
 }
 
-// The cat keeps its red paw pads (never tinted); in dark mode it instead sits on a small
-// paper-colored (light theme's bg token, not the brighter white card token, to avoid a glare
-// at night) rounded backing, with the image clipped inside that same circle so its ink lines
-// never draw past the backing's edge. Light mode renders the image directly, unclipped and
-// unbacked, exactly as before.
+// Dark mode backs the cat with a clipped, paper-colored (light bg, not the brighter card token, to cut night glare) circle; light mode is unbacked.
 export function CatImage({ source, style, decorative = false }: CatImageProps) {
   const { scheme } = useTheme();
   const image = (
