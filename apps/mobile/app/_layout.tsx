@@ -92,6 +92,7 @@ export function Routes() {
         <Stack.Screen name="guide/routine/[id]" options={{ gestureEnabled: false }} />
         <Stack.Screen name="done" options={{ gestureEnabled: false }} />
         <Stack.Screen name="settings" />
+        <Stack.Screen name="records" />
         {/* expo-router (SDK 57) vendors react-navigation internally and doesn't expose
             usePreventRemove publicly (no @react-navigation/* package is even installed), so
             an iOS swipe-back while the editor is dirty can't show the same confirm-leave
