@@ -9,7 +9,7 @@ import { addReminderResponseListener, getLastNotificationRoute, registerNotifica
 import { useFavorites } from '@/state/favorites';
 import { useOnboarding } from '@/state/onboarding';
 import { useSettings } from '@/state/settings';
-import { colors } from '@/theme';
+import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
 
 // Module-scope, not inside a component: registers exactly once, when the app's JS first
 // loads, rather than on every RootLayout render.
@@ -29,17 +29,28 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError) return null;
   return (
     <SafeAreaProvider>
-      <StatusBar style="dark" />
-      <DbProvider>
-        <Routes />
-      </DbProvider>
+      <ThemeProvider>
+        <ThemedStatusBar />
+        <DbProvider>
+          <Routes />
+        </DbProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
+}
+
+// A light status bar reads on a dark background and vice versa; kept as its own component
+// (rather than inlined in RootLayout) since it needs useTheme(), which only resolves once
+// ThemeProvider is mounted above it.
+function ThemedStatusBar() {
+  const { scheme } = useTheme();
+  return <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />;
 }
 
 // Exported so tests can render this directly, bypassing RootLayout's useFonts() (which
 // `require()`s .otf files jest-expo has no transform for).
 export function Routes() {
+  const { colors } = useTheme();
   const db = useDb();
   const settingsLoaded = useSettings((state) => state.loaded);
   const loadSettings = useSettings((state) => state.load);
