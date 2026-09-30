@@ -1,4 +1,4 @@
-import type { SessionFeedback, SessionLog } from '@ggookggook/shared';
+import type { SessionFeedback, SessionLog, SessionRoutineRef } from '@ggookggook/shared';
 import type { SqlDatabase } from './db';
 
 interface SessionRow {
@@ -9,6 +9,13 @@ interface SessionRow {
   completed_at: string | null;
   duration_seconds: number;
   feedback: SessionFeedback | null;
+}
+
+export interface RoutineStats {
+  ref: SessionRoutineRef;
+  completedCount: number;
+  totalSeconds: number;
+  feedbackCounts: Record<SessionFeedback, number>;
 }
 
 function toLog(row: SessionRow): SessionLog {
@@ -63,4 +70,47 @@ export async function countSessionsBySymptom(db: SqlDatabase): Promise<Record<st
     [],
   );
   return Object.fromEntries(rows.map((row) => [row.routine_ref, row.count]));
+}
+
+// Inclusive on both ends: the records screen passes `now` as `toIso`, and a session
+// completed at that exact instant must still show up.
+export async function listSessionsBetween(db: SqlDatabase, fromIso: string, toIso: string): Promise<SessionLog[]> {
+  const rows = await db.getAllAsync<SessionRow>(
+    'SELECT * FROM sessions WHERE completed_at IS NOT NULL AND completed_at >= ? AND completed_at <= ? ORDER BY completed_at ASC',
+    [fromIso, toIso],
+  );
+  return rows.map(toLog);
+}
+
+interface RoutineStatsRow {
+  routine_kind: 'symptom' | 'user';
+  routine_ref: string;
+  completed_count: number;
+  total_seconds: number;
+  better: number;
+  same: number;
+  worse: number;
+}
+
+// From `fromIso` through now (no upper bound): the records screen's "자주 한 루틴" list
+// windows on the same start as its 28-day calendar.
+export async function statsByRoutine(db: SqlDatabase, fromIso: string): Promise<RoutineStats[]> {
+  const rows = await db.getAllAsync<RoutineStatsRow>(
+    `SELECT routine_kind, routine_ref,
+            COUNT(*) as completed_count,
+            SUM(duration_seconds) as total_seconds,
+            SUM(CASE WHEN feedback = 'better' THEN 1 ELSE 0 END) as better,
+            SUM(CASE WHEN feedback = 'same' THEN 1 ELSE 0 END) as same,
+            SUM(CASE WHEN feedback = 'worse' THEN 1 ELSE 0 END) as worse
+       FROM sessions
+      WHERE completed_at IS NOT NULL AND completed_at >= ?
+      GROUP BY routine_kind, routine_ref`,
+    [fromIso],
+  );
+  return rows.map((row) => ({
+    ref: row.routine_kind === 'symptom' ? { kind: 'symptom', symptomId: row.routine_ref } : { kind: 'user', routineId: row.routine_ref },
+    completedCount: row.completed_count,
+    totalSeconds: row.total_seconds,
+    feedbackCounts: { better: row.better, same: row.same, worse: row.worse },
+  }));
 }

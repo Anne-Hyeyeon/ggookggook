@@ -9,7 +9,9 @@ import {
   insertSession,
   latestCompletedSession,
   listCompletedSessions,
+  listSessionsBetween,
   setSessionFeedback,
+  statsByRoutine,
 } from './sessions';
 import { openTestDb } from './test-db';
 
@@ -100,6 +102,64 @@ describe('sessions', () => {
       await insertSession(db, log('b', '2026-09-28T00:02:00.000Z'));
       await insertSession(db, log('c', '2026-09-28T00:03:00.000Z'));
       expect((await listCompletedSessions(db, 2)).map((session) => session.id)).toEqual(['c', 'b']);
+    });
+  });
+
+  describe('listSessionsBetween', () => {
+    it('returns completed sessions within the inclusive range, oldest first', async () => {
+      await insertSession(db, log('a', '2026-09-01T00:00:00.000Z'));
+      await insertSession(db, log('b', '2026-09-15T00:00:00.000Z'));
+      await insertSession(db, log('c', '2026-09-20T00:00:00.000Z'));
+      await insertSession(db, log('d', '2026-09-25T00:00:00.000Z'));
+      const result = await listSessionsBetween(db, '2026-09-15T00:00:00.000Z', '2026-09-20T00:00:00.000Z');
+      expect(result.map((session) => session.id)).toEqual(['b', 'c']);
+    });
+
+    it('excludes open sessions', async () => {
+      await insertSession(db, log('open', null));
+      await insertSession(db, log('done', '2026-09-28T00:04:00.000Z'));
+      const result = await listSessionsBetween(db, '2020-01-01T00:00:00.000Z', '2030-01-01T00:00:00.000Z');
+      expect(result.map((session) => session.id)).toEqual(['done']);
+    });
+  });
+
+  describe('statsByRoutine', () => {
+    it('aggregates completed count, total seconds, and feedback counts per routine ref from a given start', async () => {
+      await insertSession(db, { ...log('a', '2026-09-10T00:00:00.000Z'), durationSeconds: 60 });
+      await setSessionFeedback(db, 'a', 'better');
+      await insertSession(db, { ...log('b', '2026-09-11T00:00:00.000Z'), durationSeconds: 120 });
+      await setSessionFeedback(db, 'b', 'same');
+      await insertSession(db, { ...log('c', '2026-09-05T00:00:00.000Z'), durationSeconds: 300 });
+
+      const result = await statsByRoutine(db, '2026-09-06T00:00:00.000Z');
+
+      expect(result).toEqual([
+        {
+          ref: { kind: 'symptom', symptomId: 'headache' },
+          completedCount: 2,
+          totalSeconds: 180,
+          feedbackCounts: { better: 1, same: 1, worse: 0 },
+        },
+      ]);
+    });
+
+    it('keeps stats separate per routine ref, including user routines', async () => {
+      await insertSession(db, { ...log('a', '2026-09-10T00:00:00.000Z'), routine: { kind: 'user', routineId: 'r1' } });
+      await insertSession(db, log('b', '2026-09-10T00:00:00.000Z'));
+
+      const result = await statsByRoutine(db, '2026-09-01T00:00:00.000Z');
+
+      expect(result).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ ref: { kind: 'user', routineId: 'r1' }, completedCount: 1 }),
+          expect.objectContaining({ ref: { kind: 'symptom', symptomId: 'headache' }, completedCount: 1 }),
+        ]),
+      );
+    });
+
+    it('excludes open sessions', async () => {
+      await insertSession(db, log('open', null));
+      expect(await statsByRoutine(db, '2020-01-01T00:00:00.000Z')).toEqual([]);
     });
   });
 });
