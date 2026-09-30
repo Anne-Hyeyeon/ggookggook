@@ -1,30 +1,13 @@
-import { migrate, type SqlDatabase, type SqlValue } from '@ggookggook/store';
-import * as SQLite from 'expo-sqlite';
+import type { SqlDatabase } from '@ggookggook/store';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { openAppDatabase } from '@/db/open';
 import type { Colors } from '@/theme';
 import { space } from '@/theme';
 import { useThemedStyles } from '@/theme/useThemedStyles';
 import { Txt } from '@/ui/Txt';
 
 const DbContext = createContext<SqlDatabase | null>(null);
-
-function adapt(db: SQLite.SQLiteDatabase): SqlDatabase {
-  return {
-    execAsync(source: string) {
-      return db.execAsync(source);
-    },
-    runAsync(source: string, params: SqlValue[]) {
-      return db.runAsync(source, params);
-    },
-    getFirstAsync<T>(source: string, params: SqlValue[]) {
-      return db.getFirstAsync<T>(source, params);
-    },
-    getAllAsync<T>(source: string, params: SqlValue[]) {
-      return db.getAllAsync<T>(source, params);
-    },
-  };
-}
 
 export function DbProvider({ children }: { children: ReactNode }) {
   const styles = useThemedStyles(makeStyles);
@@ -35,8 +18,7 @@ export function DbProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const opened = adapt(await SQLite.openDatabaseAsync('ggookggook.db'));
-        await migrate(opened);
+        const opened = await openAppDatabase();
         if (!cancelled) setDb(opened);
       } catch (error) {
         console.error('Failed to open the local database', error);
