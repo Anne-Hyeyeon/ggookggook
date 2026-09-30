@@ -93,7 +93,7 @@ function startServer() {
 // The step ids the dark pass shoots (Task 1 of the phase 2D plan): a small representative
 // sample across the flow, not every screen, since the dark pass just needs enough coverage
 // to spot-check tokens/tinting, not a full duplicate set of every light shot.
-const DARK_IDS = new Set(['03', '05', '06', '08', '12', '14', '20']);
+const DARK_IDS = new Set(['03', '05', '06', '08', '12', '14', '20', '25']);
 
 async function withFontsReady(page) {
   await page.evaluate(() => document.fonts.ready);
@@ -279,6 +279,14 @@ async function runFlow(page, variant = 'light') {
   await page.getByText('합곡', { exact: true }).waitFor();
   await page.getByText('나아졌어요', { exact: true }).waitFor();
   await shoot(page, '20-mine-full.png', variant);
+
+  // 25. 나의 기록, reached via 내 루틴's own 기록 전체 보기 row (only shown once there's at
+  // least one session, as here): this-week/last-week totals, the 28-day dot calendar, and
+  // 자주 한 루틴 showing the headache routine finished (with 나아졌어요) back in step 8.
+  await page.getByText('기록 전체 보기').click();
+  await page.getByText('나의 기록').waitFor();
+  await page.getByText(/이번 주/).waitFor();
+  await shoot(page, '25-records.png', variant);
 
   // 21. Settings, scrolled to the 알림 section: the daily-reminder switch, off and disabled on
   // web (with its "이 기기에서는 알림을 쓸 수 없어요." note). The time/minute/routine rows
