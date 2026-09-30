@@ -198,14 +198,17 @@ export default function MineScreen() {
 function SeeAllRecordsRow() {
   const styles = useThemedStyles(makeStyles);
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="기록 전체 보기"
-      onPress={() => router.push('/records')}
-      style={styles.newRow}
-    >
-      <Txt style={styles.newRowLabel}>기록 전체 보기</Txt>
-    </Pressable>
+    <View>
+      <Rule />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="기록 전체 보기"
+        onPress={() => router.push('/records')}
+        style={styles.newRow}
+      >
+        <Txt style={styles.newRowLabel}>기록 전체 보기</Txt>
+      </Pressable>
+    </View>
   );
 }
 
