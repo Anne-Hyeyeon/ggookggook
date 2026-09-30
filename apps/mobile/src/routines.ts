@@ -48,6 +48,31 @@ export function toSessionRoutineRef(ref: RoutineRef): SessionRoutineRef {
   return ref.kind === 'symptom' ? { kind: 'symptom', symptomId: ref.id } : { kind: 'user', routineId: ref.id };
 }
 
+export interface ResolvedRoutineRefTitle {
+  title: string;
+  // Navigation target for this ref's preview screen; null for a deleted user routine,
+  // which has nothing left to preview.
+  href: `/symptom/${string}` | `/routine/${string}` | null;
+}
+
+// Shared by 내 루틴's session history and 나의 기록's 자주 한 루틴 list: resolves a
+// session's routine ref to its display title and preview link. Returns null for a symptom
+// id no longer in content (a row the caller should skip); a soft-deleted user routine still
+// resolves, showing DELETED_ROUTINE_LABEL with no link.
+export function resolveRoutineRefTitle(
+  ref: SessionRoutineRef,
+  userRoutines: ReadonlyMap<string, UserRoutine | null>,
+): ResolvedRoutineRefTitle | null {
+  if (ref.kind === 'symptom') {
+    const symptom = content.symptom(ref.symptomId);
+    if (!symptom) return null;
+    return { title: symptom.name, href: `/symptom/${symptom.id}` };
+  }
+  const routine = userRoutines.get(ref.routineId);
+  const usable = isUserRoutineUsable(routine);
+  return { title: usable ? routine.name : DELETED_ROUTINE_LABEL, href: usable ? `/routine/${routine.id}` : null };
+}
+
 // "내 루틴으로 복사" copies the symptom's full step list, not the pregnancy-filtered view
 // on screen: filtering is re-applied wherever the resulting user routine is shown or run.
 export function symptomRoutineName(name: string): string {

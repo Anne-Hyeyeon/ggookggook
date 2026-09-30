@@ -1,5 +1,13 @@
 import { DEFAULT_SETTINGS, type Symptom, type UserRoutine } from '@ggookggook/shared';
-import { copySymptomToUserRoutine, isUserRoutineUsable, NO_STEPS, resolveRoutine, symptomRoutineName, toSessionRoutineRef } from '@/routines';
+import {
+  copySymptomToUserRoutine,
+  isUserRoutineUsable,
+  NO_STEPS,
+  resolveRoutine,
+  resolveRoutineRefTitle,
+  symptomRoutineName,
+  toSessionRoutineRef,
+} from '@/routines';
 
 const userRoutine: UserRoutine = {
   id: 'r1',
@@ -68,6 +76,33 @@ it('treats a soft-deleted row the same as a missing one', () => {
   expect(isUserRoutineUsable({ ...userRoutine, deletedAt: '2026-09-29T00:00:00.000Z' })).toBe(false);
   expect(isUserRoutineUsable(null)).toBe(false);
   expect(isUserRoutineUsable(undefined)).toBe(false);
+});
+
+describe('resolveRoutineRefTitle', () => {
+  it('resolves a symptom ref to its content name and symptom preview link', () => {
+    expect(resolveRoutineRefTitle({ kind: 'symptom', symptomId: 'food_stagnation' }, new Map())).toEqual({
+      title: '체했을 때',
+      href: '/symptom/food_stagnation',
+    });
+  });
+
+  it('returns null for a symptom id no longer in content', () => {
+    expect(resolveRoutineRefTitle({ kind: 'symptom', symptomId: 'no_such_symptom' }, new Map())).toBeNull();
+  });
+
+  it('resolves a user routine ref to its stored name and routine preview link', () => {
+    const routines = new Map([['r1', userRoutine]]);
+    expect(resolveRoutineRefTitle({ kind: 'user', routineId: 'r1' }, routines)).toEqual({
+      title: '내 루틴',
+      href: '/routine/r1',
+    });
+  });
+
+  it('resolves a missing or soft-deleted user routine to the deleted label with no link', () => {
+    expect(resolveRoutineRefTitle({ kind: 'user', routineId: 'gone' }, new Map())).toEqual({ title: '지운 루틴', href: null });
+    const routines = new Map([['r1', { ...userRoutine, deletedAt: '2026-09-29T00:00:00.000Z' }]]);
+    expect(resolveRoutineRefTitle({ kind: 'user', routineId: 'r1' }, routines)).toEqual({ title: '지운 루틴', href: null });
+  });
 });
 
 describe('symptomRoutineName', () => {

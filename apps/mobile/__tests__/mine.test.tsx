@@ -244,4 +244,19 @@ describe('지난 기록', () => {
     expect(await screen.findByText('지운 루틴')).toBeTruthy();
     expect(screen.queryByText('내 아침 루틴')).toBeNull();
   });
+
+  it('shows a 기록 전체 보기 row after the history list, navigating to /records', async () => {
+    mocked.listCompletedSessions.mockResolvedValue([log('s1', today(10, 0))]);
+
+    await render(<MineScreen />);
+    await screen.findByText('머리가 아플 때');
+    await fireEvent.press(screen.getByText('기록 전체 보기'));
+    expect(router.push).toHaveBeenCalledWith('/records');
+  });
+
+  it('hides the 기록 전체 보기 row when there is no history', async () => {
+    await render(<MineScreen />);
+    await screen.findByText('아직 기록이 없어요.');
+    expect(screen.queryByText('기록 전체 보기')).toBeNull();
+  });
 });

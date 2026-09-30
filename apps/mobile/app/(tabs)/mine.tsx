@@ -8,7 +8,7 @@ import { content } from '@/content';
 import { useDb } from '@/db/DbProvider';
 import { formatDayHeader, formatDuration, formatTimeOfDay, localDayKey } from '@/format';
 import { firstSentence, routineSummary, summaryLine, visibleStepsFor } from '@/routine';
-import { DELETED_ROUTINE_LABEL, isUserRoutineUsable } from '@/routines';
+import { resolveRoutineRefTitle } from '@/routines';
 import { useFavorites } from '@/state/favorites';
 import { useSettings } from '@/state/settings';
 import type { Colors } from '@/theme';
@@ -66,15 +66,9 @@ interface Section {
 function toHistoryRows(sessions: SessionLog[], userRoutines: Map<string, UserRoutine | null>): HistoryRow[] {
   const rows: HistoryRow[] = [];
   for (const session of sessions) {
-    if (session.routine.kind === 'symptom') {
-      const symptom = content.symptom(session.routine.symptomId);
-      if (!symptom) continue;
-      rows.push({ session, title: symptom.name, href: `/symptom/${symptom.id}` });
-      continue;
-    }
-    const routine = userRoutines.get(session.routine.routineId);
-    const usable = isUserRoutineUsable(routine);
-    rows.push({ session, title: usable ? routine.name : DELETED_ROUTINE_LABEL, href: usable ? `/routine/${routine.id}` : null });
+    const resolved = resolveRoutineRefTitle(session.routine, userRoutines);
+    if (!resolved) continue;
+    rows.push({ session, title: resolved.title, href: resolved.href });
   }
   return rows;
 }
@@ -195,8 +189,23 @@ export default function MineScreen() {
         ListHeaderComponent={
           <Txt variant="title" style={styles.title}>내 루틴</Txt>
         }
+        ListFooterComponent={historyRows.length > 0 ? <SeeAllRecordsRow /> : null}
       />
     </SafeAreaView>
+  );
+}
+
+function SeeAllRecordsRow() {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="기록 전체 보기"
+      onPress={() => router.push('/records')}
+      style={styles.newRow}
+    >
+      <Txt style={styles.newRowLabel}>기록 전체 보기</Txt>
+    </Pressable>
   );
 }
 
