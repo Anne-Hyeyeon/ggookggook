@@ -1,7 +1,4 @@
 import { DEFAULT_SETTINGS } from '@ggookggook/shared';
-// expo-router's own URL-to-path step for incoming links (internal, but it is exactly what a
-// widget tap goes through); renderRouter's `initialUrl` expects a path, not a scheme URL.
-import { extractExpoPathFromURL } from 'expo-router/build/fork/extractPathFromURL';
 import { renderRouter, screen } from 'expo-router/testing-library';
 import { Text } from 'react-native';
 import { Routes } from '../app/_layout';
@@ -9,7 +6,7 @@ import { useFavorites } from '@/state/favorites';
 import { useOnboarding } from '@/state/onboarding';
 import { useSettings } from '@/state/settings';
 import { ThemeProvider } from '@/theme/ThemeProvider';
-import { widgetUrl } from '@/widget/snapshot';
+import { WIDGET_SCHEME, widgetUrl } from '@/widget/snapshot';
 
 jest.mock('@/db/DbProvider', () => {
   const db = {};
@@ -39,7 +36,19 @@ const routes = {
   'routine/[id]/index': () => <Text>routine</Text>,
 };
 
-const openLink = (url: string) => renderRouter(routes, { initialUrl: `/${extractExpoPathFromURL([], url)}` });
+// Expo Router reads a custom-scheme link's host as the first path segment; renderRouter takes that path.
+function routerPathOf(url: string): string {
+  const parsed = new URL(url);
+  return `/${parsed.hostname}${parsed.pathname}`;
+}
+
+const openLink = (url: string) => renderRouter(routes, { initialUrl: routerPathOf(url) });
+
+it('maps widget links to the preview route paths', () => {
+  expect(widgetUrl({ kind: 'symptom', id: 'headache' })).toBe(`${WIDGET_SCHEME}://symptom/headache`);
+  expect(routerPathOf(widgetUrl({ kind: 'symptom', id: 'headache' }))).toBe('/symptom/headache');
+  expect(routerPathOf(widgetUrl({ kind: 'user', id: 'r1' }))).toBe('/routine/r1');
+});
 
 function setAccepted(accepted: boolean) {
   useOnboarding.setState({ loaded: true, disclaimerAcceptedAt: accepted ? '2026-09-28T00:00:00.000Z' : null, load: jest.fn().mockResolvedValue(undefined) } as never);

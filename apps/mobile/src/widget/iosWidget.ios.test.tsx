@@ -3,7 +3,7 @@ import appJson from '../../app.json';
 import { content } from '@/content';
 import { darkColors, lightColors } from '@/theme';
 import { IOS_WIDGET_NAME, iosWidgetProps, updateIosWidget } from './iosWidget.ios';
-import { buildWidgetSnapshot, widgetTimelineDates } from './snapshot';
+import { buildWidgetSnapshot, suggestionAt, widgetTimelineDates, type WidgetSnapshot } from './snapshot';
 
 jest.mock('expo-widgets', () => ({
   createWidget: jest.fn(() => ({ updateTimeline: jest.fn() })),
@@ -46,9 +46,7 @@ interface Node {
 const COMPONENTS = ['VStack', 'HStack', 'Text', 'Link', 'Spacer'] as const;
 const MODIFIERS = ['containerBackground', 'font', 'foregroundStyle', 'lineLimit', 'widgetURL'] as const;
 
-// The 'widget' directive turns the layout into source text that the widget extension evaluates
-// with @expo/ui's components and modifiers as globals; this evaluates it the same way, with
-// stand-ins that record what was rendered.
+// Evaluates the serialized layout as the extension does (@expo/ui names as globals), with recording stand-ins.
 function evaluateLayout(): (props: unknown, environment: unknown) => unknown {
   if (typeof registeredLayout !== 'string') throw new Error('expected the babel widget plugin to serialize the layout');
   const jsx = (type: string, props: Record<string, unknown>): Node => ({ type, props });
@@ -103,6 +101,23 @@ describe('layout', () => {
     const nodes = render(props, { date: new Date(2026, 9, 1, 15), colorScheme: 'light' });
     expect(texts(nodes)).toEqual(['꾹꾹', '다시 하기', '아침 루틴', '지금 해 보기', content.symptom('eye_fatigue')?.name]);
     expect(links(nodes)).toEqual(['ggookggook://routine/r1', 'ggookggook://symptom/eye_fatigue']);
+  });
+
+  const suggestionTitle = (nodes: Node[]) => {
+    const index = texts(nodes).indexOf('지금 해 보기');
+    return index === -1 ? null : texts(nodes)[index + 1];
+  };
+
+  it.each([
+    ['no usage', snapshot],
+    ['heavy usage', buildWidgetSnapshot({ now: NOW, symptoms: content.symptoms, usage: { headache: 9 }, recentSession: null, recentUserRoutine: null })],
+    ['missing window symptoms', buildWidgetSnapshot({ now: NOW, symptoms: content.symptoms.filter((s) => s.id !== 'fatigue' && s.id !== 'neck_pain'), usage: { headache: 3 }, recentSession: null, recentUserRoutine: null })],
+  ] as const)('matches suggestionAt for every hour of the day (%s)', (_label, source: WidgetSnapshot) => {
+    const layoutProps = iosWidgetProps(source);
+    for (let hour = 0; hour < 24; hour += 1) {
+      const nodes = render(layoutProps, { date: new Date(2026, 9, 2, hour), colorScheme: 'light' });
+      expect({ hour, title: suggestionTitle(nodes) }).toEqual({ hour, title: suggestionAt(source, hour)?.title ?? null });
+    }
   });
 
   it('picks the suggestion by the timeline entry date', () => {

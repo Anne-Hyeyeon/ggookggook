@@ -53,8 +53,7 @@ function resolveRecent(input: WidgetSnapshotInput): WidgetEntry | null {
   return entry({ kind: 'user', id: routine.id }, routine.name);
 }
 
-// Evaluates the app's own suggestFor at every hour of `now`'s day, so the widget can pick the
-// right one later without the app running, and merges neighbouring hours with the same pick.
+// Runs the app's own suggestFor per hour so the widget can pick later without the app running.
 function suggestionsByHour(input: WidgetSnapshotInput): WidgetSuggestion[] {
   const result: WidgetSuggestion[] = [];
   for (let hour = 0; hour < 24; hour += 1) {
@@ -84,8 +83,7 @@ export function suggestionAt(snapshot: WidgetSnapshot, hour: number): WidgetSugg
   return snapshot.suggestions.find((suggestion) => hour >= suggestion.fromHour && hour < suggestion.toHour) ?? null;
 }
 
-// Timeline entry dates for the iOS widget: `now`, then each suggestion window start within
-// the next `days` days, so WidgetKit re-renders when the suggestion should change.
+// iOS timeline dates: `now`, then every window start in the next `days` days, when the pick changes.
 export function widgetTimelineDates(now: Date, snapshot: WidgetSnapshot, days: number): Date[] {
   const dates = [now];
   const end = now.getTime() + days * 24 * 60 * 60 * 1000;
@@ -119,8 +117,7 @@ function parseSuggestion(value: unknown): WidgetSuggestion | null {
   return { ...parsed, fromHour: value.fromHour, toHour: value.toHour };
 }
 
-// The Android widget reads the snapshot back from storage in a headless task: anything left by
-// an older app version or otherwise malformed is dropped rather than rendered.
+// Storage may hold a snapshot from an older app version, so anything malformed is dropped, not rendered.
 export function parseWidgetSnapshot(raw: string | null): WidgetSnapshot | null {
   if (raw === null) return null;
   let value: unknown;

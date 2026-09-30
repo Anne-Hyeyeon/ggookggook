@@ -1,15 +1,14 @@
 import { HStack, Link, Spacer, Text, VStack } from '@expo/ui/swift-ui';
 import { containerBackground, font, foregroundStyle, lineLimit, widgetURL } from '@expo/ui/swift-ui/modifiers';
 import { createWidget, type WidgetEnvironment } from 'expo-widgets';
-import { WIDGET_COPY } from './copy';
-import { WIDGET_PALETTES, type WidgetPalette } from './palette';
-import { widgetTimelineDates, type WidgetSnapshot } from './snapshot';
+import { WIDGET_COPY } from '@/widget/copy';
+import { WIDGET_PALETTES, type WidgetPalette } from '@/widget/palette';
+import { widgetTimelineDates, type WidgetSnapshot } from '@/widget/snapshot';
 
 // Must match the widget `name` in app.json's expo-widgets plugin config.
 export const IOS_WIDGET_NAME = 'GgookWidget';
 
-// A week of window starts: the widget keeps rotating its suggestion that long without the
-// app being opened again; past that it stays on the last one until the next sync.
+// WidgetKit replays these entries (.atEnd), so a week keeps suggestions rotating between app opens.
 const TIMELINE_DAYS = 7;
 
 export interface IosWidgetProps extends WidgetSnapshot {
@@ -18,9 +17,7 @@ export interface IosWidgetProps extends WidgetSnapshot {
   copy: typeof WIDGET_COPY;
 }
 
-// Runs in the widget extension's own JS runtime, serialized by the 'widget' directive: it can
-// only see its arguments and the @expo/ui globals, never module scope. Colors and copy come
-// in through props for that reason, and the suggestion pick repeats suggestionAt() inline.
+// Serialized by the 'widget' directive into the extension's runtime, so it sees only its arguments (not module scope).
 function GgookWidget(props: IosWidgetProps, environment: WidgetEnvironment) {
   'widget';
   if (!props || !props.light || !props.copy) {
